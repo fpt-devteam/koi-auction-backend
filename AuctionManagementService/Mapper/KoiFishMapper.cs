@@ -31,7 +31,8 @@ namespace AuctionManagementService.Mapper
                 Sex = koiFish.Sex,
                 SizeCm = koiFish.SizeCm,
                 YearOfBirth = koiFish.YearOfBirth,
-                WeightKg = koiFish.WeightKg
+                WeightKg = koiFish.WeightKg,
+                KoiMedia = koiFish.KoiMedia.Select(m => m.ToKoiMediaDtoFromKoiMedia()).ToList()
             };
         }
     }

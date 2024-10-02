@@ -18,4 +18,6 @@ public partial class KoiFish
     public decimal WeightKg { get; set; }
 
     public virtual Lot KoiFishNavigation { get; set; } = null!;
+
+    public virtual ICollection<KoiMedia> KoiMedia { get; set; } = new List<KoiMedia>();
 }

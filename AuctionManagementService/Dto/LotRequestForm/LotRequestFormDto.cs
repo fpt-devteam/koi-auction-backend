@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
+using AuctionManagementService.Dto.KoiMedia;
 
 namespace AuctionManagementService.Dto.LotRequestForm
 {
@@ -32,5 +33,8 @@ namespace AuctionManagementService.Dto.LotRequestForm
         [Required]
         [Range(0.01, double.MaxValue, ErrorMessage = "Weight must be greater than 0.")]
         public decimal WeightKg { get; set; }
+        
+        [Required]
+        public List<KoiMediaDto> KoiMedia{ get; set; }
     }
 }

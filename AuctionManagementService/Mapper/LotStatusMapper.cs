@@ -17,6 +17,7 @@ namespace AuctionManagementService.Mapper
             }
             return new LotStatusDto
             {
+                LotStatusId = lotStatus.LotStatusId,
                 LotStatusName = lotStatus.LotStatusName
             };
         }

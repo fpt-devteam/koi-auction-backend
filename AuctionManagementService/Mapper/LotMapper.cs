@@ -26,6 +26,7 @@ namespace AuctionManagementService.Mapper
         {
             return new LotDto
             {
+                LotId = lot.LotId,
                 StartingPrice = lot.StartingPrice,
                 CreatedAt = lot.CreatedAt,
                 AuctionMethod = lot.AuctionMethod.ToAuctionMethodDtoFromAuctionMethod(),

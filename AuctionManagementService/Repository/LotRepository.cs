@@ -48,7 +48,7 @@ namespace AuctionManagementService.Repository
 
         public async Task<List<Lot>> GetAllAsync(LotQueryObject query)
         {
-            var lots = _context.Lots.Include(l => l.KoiFish).
+            var lots = _context.Lots.Include(l => l.KoiFish).ThenInclude(m => m.KoiMedia).
                                         Include(l => l.LotStatus).
                                         Include(l => l.AuctionMethod).AsQueryable();
 
@@ -145,7 +145,7 @@ namespace AuctionManagementService.Repository
 
         public async Task<Lot> GetLotByIdAsync(int id)
         {
-            var lot = await _context.Lots.Include(l => l.KoiFish).
+            var lot = await _context.Lots.Include(l => l.KoiFish).ThenInclude(m => m.KoiMedia).
                                             Include(l => l.LotStatus).
                                             Include(l => l.AuctionMethod).FirstOrDefaultAsync(l => l.LotId == id);
             if (lot == null)

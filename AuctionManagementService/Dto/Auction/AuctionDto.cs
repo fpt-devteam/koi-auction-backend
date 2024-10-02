@@ -6,6 +6,7 @@ namespace AuctionManagementService.Dto.Auction
 {
     public class AuctionDto
     {
+        public int AuctionId { get; set; }
         public int StaffId { get; set; }
 
         public DateTime StartTime { get; set; }

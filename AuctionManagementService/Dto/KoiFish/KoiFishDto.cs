@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AuctionManagementService.Dto.KoiMedia;
 
 namespace AuctionManagementService.Dto.KoiFish
 {
@@ -16,5 +17,7 @@ namespace AuctionManagementService.Dto.KoiFish
         public int YearOfBirth { get; set; }
 
         public decimal WeightKg { get; set; }
+
+        public List<KoiMediaDto?> KoiMedia { get; set; }
     }
 }
