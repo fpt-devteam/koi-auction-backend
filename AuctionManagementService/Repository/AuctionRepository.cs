@@ -18,7 +18,7 @@ namespace AuctionManagementService.Repository
         public async Task<Auction> CreateAsync(Auction auction)
         {
             await _context.AddAsync(auction);
-            await _context.SaveChangesAsync();
+            
             return auction;
         }
 
@@ -26,7 +26,7 @@ namespace AuctionManagementService.Repository
         {
             var auction = await _context.Auctions.Include(a => a.AuctionLots).FirstOrDefaultAsync(a => a.AuctionId == id);
             _context.Remove(auction);
-            await _context.SaveChangesAsync();
+            
             return auction;
         }
 
@@ -64,7 +64,7 @@ namespace AuctionManagementService.Repository
             auction.StaffId = updateAuctionDto.StaffId;
             auction.StartTime = updateAuctionDto.StartTime;
             auction.EndTime = updateAuctionDto.EndTime;
-            await _context.SaveChangesAsync();
+            
             return auction;
         }
 

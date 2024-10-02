@@ -11,15 +11,15 @@ namespace AuctionManagementService.Controller
     [ApiController]
     public class AuctionMethodController : ControllerBase
     {
-        private readonly IAuctionMethodRepository _repo;
-        public AuctionMethodController(IAuctionMethodRepository repo)
+        private readonly IUnitOfWork _unitOfWork;
+        public AuctionMethodController(IUnitOfWork unitOfWork)
         {
-            _repo = repo;
+             _unitOfWork = unitOfWork;
         }
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var methods = await _repo.GetAllAsync();
+            var methods = await _unitOfWork.AuctionMethods.GetAllAsync();
             var methodDtos = methods.Select(m => m.ToAuctionMethodDtoFromAuctionMethod());
             return Ok(methodDtos);
         }
@@ -31,7 +31,7 @@ namespace AuctionManagementService.Controller
             {
                 return BadRequest(ModelState);
             }
-            var method = await _repo.GetByIdAsync(id);
+            var method = await _unitOfWork.AuctionMethods.GetByIdAsync(id);
             if (method == null)
             {
                 return NotFound();
@@ -47,7 +47,8 @@ namespace AuctionManagementService.Controller
                 return BadRequest(ModelState);
             }
             var method = methodDto.ToActionMethodFromCreateAuctionMethodDto();
-            var newMethod = await _repo.CreateAsync(method);
+            var newMethod = await _unitOfWork.AuctionMethods.CreateAsync(method);
+            _unitOfWork.SaveChanges();
             return CreatedAtAction(nameof(GetAuctionMethodByID), new { id = newMethod.AuctionMethodId }, newMethod.ToAuctionMethodDtoFromAuctionMethod());
         }
 
@@ -59,7 +60,8 @@ namespace AuctionManagementService.Controller
             {
                 return BadRequest(ModelState);
             }
-            var updateMethod = await _repo.UpdateAsync(id, methodDto);
+            var updateMethod = await _unitOfWork.AuctionMethods.UpdateAsync(id, methodDto);
+            _unitOfWork.SaveChanges();
             return Ok(updateMethod.ToAuctionMethodDtoFromAuctionMethod());
         }
 
@@ -71,9 +73,10 @@ namespace AuctionManagementService.Controller
             {
                 return BadRequest(ModelState);
             }
-            var deleteMethod = await _repo.DeleteAsync(id);
+            var deleteMethod = await _unitOfWork.AuctionMethods.DeleteAsync(id);
             if (deleteMethod == null)
                 return NotFound();
+            _unitOfWork.SaveChanges();
             return NoContent();
         }
 

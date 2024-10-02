@@ -30,9 +30,20 @@ public partial class AuctionManagementDbContext : DbContext
 
     public virtual DbSet<LotStatus> LotStatuses { get; set; }
 
+   private string GetConnectionString()
+    {
+        IConfiguration config = new ConfigurationBuilder()
+             .SetBasePath(Directory.GetCurrentDirectory())
+                    .AddJsonFile("appsettings.json", true, true)
+                    .Build();
+        var strConn = config["ConnectionStrings:DefaultConnectionStringDB"];
+
+        return strConn;
+    }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=tcp:koiauction.database.windows.net,1433;Initial Catalog=KoiAuctionDB;Persist Security Info=False;User ID=fpt-devteam;Password=sa123456!;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
+        => optionsBuilder.UseSqlServer(GetConnectionString());
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -119,6 +130,8 @@ public partial class AuctionManagementDbContext : DbContext
         {
             entity.HasKey(e => e.KoiMediaId).HasName("PK__KoiMedia__4CC780831BB40894");
 
+            entity.HasIndex(e => e.FilePath, "UQ_KoiMedia_FilePath").IsUnique();
+
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -139,6 +152,10 @@ public partial class AuctionManagementDbContext : DbContext
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+            entity.Property(e => e.Sku)
+                .HasMaxLength(50)
+                .HasDefaultValue("TEMP-SKU")
+                .HasColumnName("SKU");
             entity.Property(e => e.StartingPrice).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")

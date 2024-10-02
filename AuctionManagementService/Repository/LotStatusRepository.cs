@@ -17,7 +17,7 @@ namespace AuctionManagementService.Repository
         public async Task<LotStatus> CreateLotStatusAsync(LotStatus LotStatus)
         {
             await _context.AddAsync(LotStatus);
-            await _context.SaveChangesAsync();
+            
             return LotStatus;
         }
 
@@ -29,7 +29,7 @@ namespace AuctionManagementService.Repository
                 return null;
             }
             _context.Remove(lotStatus);
-            await _context.SaveChangesAsync();
+            
             return lotStatus;
         }
 
@@ -51,7 +51,7 @@ namespace AuctionManagementService.Repository
                 return null;
             }
             lotStatus.LotStatusName = lotStatusDto.LotStatusName;
-            await _context.SaveChangesAsync();
+            
             return lotStatus;
         }
 

@@ -16,7 +16,7 @@ namespace AuctionManagementService.Repository
         public async Task<AuctionMethod> CreateAsync(AuctionMethod auctionMethod)
         {
             await _context.AuctionMethods.AddAsync(auctionMethod);
-            await _context.SaveChangesAsync();
+            
             return auctionMethod;
         }
 
@@ -55,7 +55,7 @@ namespace AuctionManagementService.Repository
             }
             method.AuctionMethodName = updateAuctionMethodDto.AuctionMethodName;
             method.Description = updateAuctionMethodDto.Description;
-            await _context.SaveChangesAsync();
+            
             return method;
         }
     }

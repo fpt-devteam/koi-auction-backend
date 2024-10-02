@@ -10,15 +10,15 @@ namespace AuctionManagementService.Controller
     [ApiController]
     public class AuctionLotController:ControllerBase
     {
-        private readonly IAuctionLotRepository _repo;
-        public AuctionLotController(IAuctionLotRepository repo)
+        private readonly IUnitOfWork _unitOfWork;
+        public AuctionLotController(IUnitOfWork unitOfWork)
         {
-            _repo = repo;
+             _unitOfWork = unitOfWork;
         }
         [HttpGet]
         public async Task<IActionResult> GetAllAuctionLot()
         {
-            var auctionLots = await _repo.GetAllAsync();
+            var auctionLots = await _unitOfWork.AuctionLots.GetAllAsync();
             var auctionLotDtos = auctionLots.Select(a => a.ToAuctionLotDtoFromActionLot());
             return Ok(auctionLotDtos);
         }
@@ -29,7 +29,7 @@ namespace AuctionManagementService.Controller
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var auctionLot = await _repo.GetAuctionLotById(id);
+            var auctionLot = await _unitOfWork.AuctionLots.GetAuctionLotById(id);
             if (auctionLot == null)
                 return NotFound();
             return Ok(auctionLot.ToAuctionLotDtoFromActionLot());
@@ -41,7 +41,8 @@ namespace AuctionManagementService.Controller
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
                 var auctionLot = auctionLotDto.ToAuctionLotFromCreateAuctionLotDto();
-                var newAuctionLot = await _repo.CreateAsync(auctionLot);
+                var newAuctionLot = await _unitOfWork.AuctionLots.CreateAsync(auctionLot);
+                _unitOfWork.SaveChanges();
             return CreatedAtAction(nameof(GetAuctionById), new{id = newAuctionLot.AuctionLotId}, newAuctionLot);   
         }
     }

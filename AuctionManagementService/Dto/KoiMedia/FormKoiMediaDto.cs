@@ -1,10 +1,12 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace AuctionManagementService.Dto.KoiMedia
 {
-    public class KoiMediaDto
+    public class FormKoiMediaDto
     {
-        public int KoiMediaId { get; set; }
-        public int KoiFishId { get; set; }
+        [Required]
         public string FilePath { get; set; } = null!;
+        [Required]
         public bool IsPrimary { get; set; }
     }
 }

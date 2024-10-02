@@ -19,6 +19,8 @@ public partial class Lot
 
     public int? AuctionMethodId { get; set; }
 
+    public string Sku { get; set; } = null!;
+
     public virtual AuctionLot? AuctionLot { get; set; }
 
     public virtual AuctionMethod? AuctionMethod { get; set; }

@@ -13,15 +13,15 @@ namespace AuctionManagementService.Controller
     [ApiController]
     public class LotStatusController : ControllerBase
     {
-        private readonly ILotStatusRepository _repo;
-        public LotStatusController(ILotStatusRepository repo)
+        private readonly IUnitOfWork _unitOfWork;
+        public LotStatusController(IUnitOfWork unitOfWork)
         {
-            _repo = repo;            
+             _unitOfWork = unitOfWork;            
         }
         [HttpGet]
         public async Task<IActionResult> GetAllLotStatus()
         {
-            var lotStatus = await _repo.GetAllAsync();
+            var lotStatus = await _unitOfWork.LotStatuses.GetAllAsync();
             var lotStatusDto = lotStatus.Select(l => l.ToLotStatusDtoFromLotStatus());
             return Ok(lotStatusDto);
         }
@@ -34,7 +34,7 @@ namespace AuctionManagementService.Controller
             {
                 return BadRequest(ModelState);
             }
-            var lotStatus = await _repo.GetLotStatusByIdAsync(id);
+            var lotStatus = await _unitOfWork.LotStatuses.GetLotStatusByIdAsync(id);
             return Ok(lotStatus.ToLotStatusDtoFromLotStatus());
         }
 
@@ -46,7 +46,8 @@ namespace AuctionManagementService.Controller
                 return BadRequest(ModelState);
             }
             var lotStatus = lotStatusDto.ToLotStatusFromCreateLotStatusDto();
-            var newLotStatus = await _repo.CreateLotStatusAsync(lotStatus);
+            var newLotStatus = await _unitOfWork.LotStatuses.CreateLotStatusAsync(lotStatus);
+            _unitOfWork.SaveChanges();
             return CreatedAtAction(nameof(GetLotStatusById), new{id = newLotStatus.LotStatusId}, newLotStatus);
         }
 
@@ -58,7 +59,8 @@ namespace AuctionManagementService.Controller
             {
                 return BadRequest(ModelState);
             }
-            var updateLotStatus = await _repo.UpdateLotStatusAsync(id, lotStatusDto);
+            var updateLotStatus = await _unitOfWork.LotStatuses.UpdateLotStatusAsync(id, lotStatusDto);
+            _unitOfWork.SaveChanges();
             return Ok(updateLotStatus);
         }
 
@@ -70,11 +72,12 @@ namespace AuctionManagementService.Controller
             {
                 return BadRequest(ModelState);
             }
-            var deleteLotStatus = await _repo.DeleteLotStatusAsync(id);
+            var deleteLotStatus = await _unitOfWork.LotStatuses.DeleteLotStatusAsync(id);
             if(deleteLotStatus == null)
             {
                 NotFound();
             }
+            _unitOfWork.SaveChanges();
             return NoContent();
         }
     }

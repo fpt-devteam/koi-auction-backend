@@ -16,7 +16,6 @@ namespace AuctionManagementService.Repository
         public async Task<AuctionLot> CreateAsync(AuctionLot auctionLot)
         {
             await _context.AddAsync(auctionLot);
-            await _context.SaveChangesAsync();
             return auctionLot;
         }
 
@@ -30,10 +29,10 @@ namespace AuctionManagementService.Repository
             return await _context.AuctionLots.
             Include(a => a.AuctionLotNavigation)
                 .ThenInclude(f => f.KoiFish)
-            .Include(a => a.AuctionLotNavigation) 
+            .Include(a => a.AuctionLotNavigation)
                 .ThenInclude(l => l.AuctionMethod)
             .Include(a => a.AuctionLotNavigation)
-                .ThenInclude(s => s.LotStatus)    
+                .ThenInclude(s => s.LotStatus)
             .ToListAsync();
         }
 
@@ -42,11 +41,11 @@ namespace AuctionManagementService.Repository
             var auctionLot = await _context.AuctionLots.
             Include(a => a.AuctionLotNavigation)
                 .ThenInclude(f => f.KoiFish)
-            .Include(a => a.AuctionLotNavigation) 
+            .Include(a => a.AuctionLotNavigation)
                 .ThenInclude(l => l.AuctionMethod)
             .Include(a => a.AuctionLotNavigation)
                 .ThenInclude(s => s.LotStatus).FirstOrDefaultAsync(a => a.AuctionLotId == id);
-            if(auctionLot == null)
+            if (auctionLot == null)
             {
                 return null;
             }

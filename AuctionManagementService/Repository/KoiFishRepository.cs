@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using AuctionManagementService.IRepository;
 using AuctionManagementService.Data;
 using AuctionManagementService.Models;
+using AuctionManagementService.Dto.KoiFish;
+using Microsoft.EntityFrameworkCore;
 
 namespace AuctionManagementService.Repository
 {
@@ -18,9 +20,23 @@ namespace AuctionManagementService.Repository
         public async Task<KoiFish> CreateKoiAsync(KoiFish koiFish)
         {
             await _context.KoiFishes.AddAsync(koiFish);
-            await _context.SaveChangesAsync();
+            
             return koiFish;
         }
 
+        public async Task<KoiFish> UpdateKoiAsync(int id, UpdateKoiFishDto updateKoiDto)
+        {
+            var koiFish = await _context.KoiFishes.FirstOrDefaultAsync(f => f.KoiFishId == id);
+            if (koiFish == null)
+            {
+                return null!;
+            }
+            koiFish.Variety = updateKoiDto.Variety;
+            koiFish.Sex = updateKoiDto.Sex;
+            koiFish.SizeCm = updateKoiDto.SizeCm;
+            koiFish.YearOfBirth = updateKoiDto.YearOfBirth;
+            koiFish.WeightKg = updateKoiDto.WeightKg;
+            return koiFish;
+        }
     }
 }

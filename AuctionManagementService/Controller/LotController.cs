@@ -17,18 +17,16 @@ namespace AuctionManagementService.Controller
     [ApiController]
     public class LotController : ControllerBase
     {
-        private readonly ILotRepository _lotRepository;
-        private readonly IKoiFishRepository _koiFishRepository;
-        public LotController(ILotRepository lotRepository, IKoiFishRepository koiFishRepository)
+        private readonly IUnitOfWork _unitOfWork;
+        public LotController(IUnitOfWork unitOfWork)
         {
-            _lotRepository = lotRepository;
-            _koiFishRepository = koiFishRepository;
+            _unitOfWork = unitOfWork;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAllLot([FromQuery] LotQueryObject query)
         {
-            var lots = await _lotRepository.GetAllAsync(query);
+            var lots = await _unitOfWork.Lots.GetAllAsync(query);
             var lotDtos = lots.Select(l => l.ToLotDtoFromLot());
             return Ok(lotDtos);
         }
@@ -41,7 +39,7 @@ namespace AuctionManagementService.Controller
             {
                 return BadRequest(ModelState);
             }
-            var lot = await _lotRepository.GetLotByIdAsync(id);
+            var lot = await _unitOfWork.Lots.GetLotByIdAsync(id);
             if (lot == null)
             {
                 return NotFound();
@@ -51,30 +49,68 @@ namespace AuctionManagementService.Controller
 
 
         [HttpPost]
-        public async Task<IActionResult> CreateLot([FromBody] LotRequestFormDto lotRequest)
+        public async Task<IActionResult> CreateLot([FromBody] CreateLotRequestFormDto lotRequest)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            var newLot = lotRequest.ToLotFromLotRequestFormDto();
-            var modelLot = await _lotRepository.CreateLotAsync(newLot);
+            //add lot
+            var newLot = lotRequest.ToLotFromCreateLotRequestFormDto();
+            newLot.Sku = LotHelper.GenerateSku(newLot);
+            var modelLot = await _unitOfWork.Lots.CreateLotAsync(newLot);
 
-            var newKoiFish = lotRequest.ToKoiFishFromLotRequestFormDto();
-            newKoiFish.KoiFishId = modelLot.LotId;
-            await _koiFishRepository.CreateKoiAsync(newKoiFish);
+            //add koifish
+            var newKoiFish = lotRequest.ToKoiFishFromCreateLotRequestFormDto();
+            modelLot.KoiFish = newKoiFish;
+            //newKoiFish.KoiFishId = modelLot.LotId;
+            //await _unitOfWork.KoiFishes.CreateKoiAsync(newKoiFish);
+
+            //add media
+            var newKoiMedia = lotRequest.KoiMedia.Select(m => m.ToKoiMediaFromFormKoiMediaDto());
+            if (newKoiMedia == null)
+                return NotFound();
+            foreach (var media in newKoiMedia)
+            {
+                newKoiFish.KoiMedia.Add(media);
+                //media.KoiFishId = newKoiFish.KoiFishId;
+                //await _unitOfWork.KoiMedia.CreateKoiMediaAsync(media);
+            }
+
+            _unitOfWork.SaveChanges();
             return CreatedAtAction(nameof(GetLotById), new { id = newLot.LotId }, newLot.ToLotDtoFromLot());
         }
 
         [HttpPut]
         [Route("{id:int}")]
-        public async Task<IActionResult> UpdateLot([FromRoute] int id, [FromBody] UpdateLotDto updateLotDto)
+        public async Task<IActionResult> UpdateLot([FromRoute] int id, [FromBody] UpdateLotRequestFormDto lotRequest)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            var updateLot = await _lotRepository.UpdateLotAsync(id, updateLotDto);
+            //update lot
+            var updateLotDto = lotRequest.ToUpdateLotDtoFromLotRequestFormDto();
+            var updateLot = await _unitOfWork.Lots.UpdateLotAsync(id, updateLotDto);
+
+            //update koifish
+            var updateKoiFishDto = lotRequest.ToUpdateKoiFishDtoFromUpdateLotRequestFormDto();
+           var updateKoiFish = await _unitOfWork.KoiFishes.UpdateKoiAsync(id, updateKoiFishDto);
+
+            //update media
+            await _unitOfWork.KoiMedia.DeleteKoiMediaAsync(id);
+            var updateKoiMedia = lotRequest.KoiMedia;
+            if(updateKoiMedia == null)
+            {
+                return BadRequest();
+            }
+            foreach (var media in updateKoiMedia)
+            {
+                var newMedia = media.ToKoiMediaFromFormKoiMediaDto();
+                newMedia.KoiFishId = id;
+                await _unitOfWork.KoiMedia.CreateKoiMediaAsync(newMedia);
+            }
+            _unitOfWork.SaveChanges();
             return Ok(updateLot.ToLotDtoFromLot());
         }
 
@@ -86,9 +122,10 @@ namespace AuctionManagementService.Controller
             {
                 return BadRequest(ModelState);
             }
-            var deleteLot = await _lotRepository.DeleteLotAsync(id);
+            var deleteLot = await _unitOfWork.Lots.DeleteLotAsync(id);
             if (deleteLot == null)
                 return NotFound();
+            _unitOfWork.SaveChanges();
             return NoContent();
         }
     }

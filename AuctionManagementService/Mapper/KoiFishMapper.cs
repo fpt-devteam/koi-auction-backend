@@ -10,7 +10,7 @@ namespace AuctionManagementService.Mapper
 {
     public static class KoiFishMapper
     {
-        public static KoiFish ToKoiFishFromLotRequestFormDto(this LotRequestFormDto lotRequestFormDto)
+        public static KoiFish ToKoiFishFromCreateLotRequestFormDto(this CreateLotRequestFormDto lotRequestFormDto)
         {
             return new KoiFish
             {
@@ -21,7 +21,17 @@ namespace AuctionManagementService.Mapper
                 WeightKg = lotRequestFormDto.WeightKg
             };
         }
-
+        public static UpdateKoiFishDto ToUpdateKoiFishDtoFromUpdateLotRequestFormDto(this UpdateLotRequestFormDto lotRequestFormDto)
+        {
+            return new UpdateKoiFishDto
+            {
+                Variety = lotRequestFormDto.Variety,
+                Sex = lotRequestFormDto.Sex,
+                SizeCm = lotRequestFormDto.SizeCm,
+                YearOfBirth = lotRequestFormDto.YearOfBirth,
+                WeightKg = lotRequestFormDto.WeightKg
+            };
+        }
 
         public static KoiFishDto ToKoiFishDtoFromKoiFish(this KoiFish koiFish)
         {

@@ -28,7 +28,7 @@ namespace AuctionManagementService.Repository
             await _context.LotStatuses.FindAsync(lot.LotStatusId);
             await _context.AuctionMethods.FindAsync(lot.AuctionMethodId);
             await _context.Lots.AddAsync(lot);
-            await _context.SaveChangesAsync();
+            
             return lot;
         }
 
@@ -41,7 +41,7 @@ namespace AuctionManagementService.Repository
                                   .FirstOrDefaultAsync(ls => ls.LotStatusName == "Canceled");
             lot.LotStatusId = status.LotStatusId;
             await _context.AuctionMethods.FindAsync(lot.AuctionMethodId);
-            await _context.SaveChangesAsync();
+            
             return lot;
         }
 
@@ -153,7 +153,7 @@ namespace AuctionManagementService.Repository
             return lot;
         }
 
-        public async Task<Lot> UpdateLotAsync(int id, UpdateLotDto lotRequest)
+        public async Task<Lot> UpdateLotAsync(int id, UpdateLotDto updateLotDto)
         {
             var lot = await _context.Lots.Include(l => l.KoiFish).
                                             Include(l => l.LotStatus).
@@ -162,18 +162,11 @@ namespace AuctionManagementService.Repository
                 return null;
 
             var koiFish = lot.KoiFish;
-            var status = await _context.LotStatuses
-                                      .FirstOrDefaultAsync(ls => ls.LotStatusName == "Pending");
-            lot.StartingPrice = lotRequest.StartingPrice;
-            lot.AuctionMethodId = lotRequest.AuctionMethodId;
+            lot.StartingPrice = updateLotDto.StartingPrice;
+            lot.AuctionMethodId = updateLotDto.AuctionMethodId;
             await _context.AuctionMethods.FindAsync(lot.AuctionMethodId);
-            lot.LotStatusId = status.LotStatusId;
-            lot.UpdatedAt = DateTime.Now;
-            koiFish.Variety = lotRequest.Variety;
-            koiFish.SizeCm = lotRequest.SizeCm;
-            koiFish.YearOfBirth = lotRequest.YearOfBirth;
-            koiFish.WeightKg = lotRequest.WeightKg;
-            await _context.SaveChangesAsync();
+            lot.LotStatusId = updateLotDto.LotStatusId;
+            await _context.LotStatuses.FindAsync(lot.LotStatusId);
             return lot;
         }
     }

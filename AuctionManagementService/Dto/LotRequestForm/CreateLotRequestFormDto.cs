@@ -7,14 +7,13 @@ using AuctionManagementService.Dto.KoiMedia;
 
 namespace AuctionManagementService.Dto.LotRequestForm
 {
-    public class LotRequestFormDto
+    public class CreateLotRequestFormDto
     {
         [Required]
         public int BreederId { get; set; }
         [Required]
         [Range(50.0, double.MaxValue, ErrorMessage = "StartPrice must be greater than 50")]
         public decimal StartingPrice { get; set; }
-        
         [Required]
         public int AuctionMethodId { get; set; }
         [Required]
@@ -35,6 +34,6 @@ namespace AuctionManagementService.Dto.LotRequestForm
         public decimal WeightKg { get; set; }
         
         [Required]
-        public List<KoiMediaDto> KoiMedia{ get; set; }
+        public List<FormKoiMediaDto> KoiMedia{ get; set; }
     }
 }

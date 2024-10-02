@@ -6,7 +6,7 @@ namespace AuctionManagementService.IRepository
 {
     public interface ILotStatusRepository
     {
-         Task<List<LotStatus>> GetAllAsync();
+        Task<List<LotStatus>> GetAllAsync();
         Task<LotStatus> GetLotStatusByIdAsync(int id);
         Task<LotStatus> CreateLotStatusAsync(LotStatus LotStatus);
         Task<LotStatus> UpdateLotStatusAsync(int id, UpdateLotStatusDto lotStatusDto);

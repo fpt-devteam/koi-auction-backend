@@ -11,10 +11,10 @@ namespace AuctionManagementService.Controller
     [ApiController]
     public class AuctionController : ControllerBase
     {
-        private readonly IAuctionRepository _repo;
-        public AuctionController(IAuctionRepository repo)
+        private readonly IUnitOfWork _unitOfWork;
+        public AuctionController(IUnitOfWork unitOfWork)
         {
-            _repo = repo;
+            _unitOfWork = unitOfWork;
         }
 
         [HttpGet]
@@ -22,7 +22,7 @@ namespace AuctionManagementService.Controller
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var auctions = await _repo.GetAllAsync(query);
+            var auctions = await _unitOfWork.Auctions.GetAllAsync(query);
             var acutionDtos = auctions.Select(d => d.ToAuctionDtoFromAuction());
             return Ok(acutionDtos);
         }
@@ -33,7 +33,7 @@ namespace AuctionManagementService.Controller
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var auction = await _repo.GetByIdAsync(id);
+            var auction = await _unitOfWork.Auctions.GetByIdAsync(id);
             if(auction == null)
                 return NotFound();
             return Ok(auction.ToAuctionDtoFromAuction());           
@@ -45,7 +45,8 @@ namespace AuctionManagementService.Controller
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             var action = auctionDto.ToAuctionFromCreateAuctionDto();
-            await _repo.CreateAsync(action);
+            await _unitOfWork.Auctions.CreateAsync(action);
+            _unitOfWork.SaveChanges();
             return CreatedAtAction(nameof(GetAuctionById), new{id = action.AuctionId}, action.ToAuctionDtoFromAuction());
 
         }
@@ -56,7 +57,8 @@ namespace AuctionManagementService.Controller
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var action = await _repo.UpdateAsync(id, auctionDto);
+            var action = await _unitOfWork.Auctions.UpdateAsync(id, auctionDto);
+            _unitOfWork.SaveChanges();
             return Ok(action.ToAuctionDtoFromAuction());
         }
 
@@ -66,9 +68,10 @@ namespace AuctionManagementService.Controller
         {
             if(!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var deletaAuction = await _repo.DeleteAsync(id);
+            var deletaAuction = await _unitOfWork.Auctions.DeleteAsync(id);
             if(deletaAuction == null)
                 return NotFound();
+            _unitOfWork.SaveChanges();
             return NoContent(); 
         }
     }

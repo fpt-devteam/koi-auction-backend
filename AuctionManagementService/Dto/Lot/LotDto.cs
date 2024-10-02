@@ -11,6 +11,7 @@ namespace AuctionManagementService.Dto.Lot
     public class LotDto
     {
         public int LotId { get; set; }
+        public string Sku { get; set; }
         public decimal StartingPrice { get; set; }
         public DateTime CreatedAt { get; set; }
         public AuctionMethodDto? AuctionMethod{ get; set; }
