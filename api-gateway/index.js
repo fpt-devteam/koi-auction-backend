@@ -24,12 +24,15 @@ const services = [
       route: "/user-service",
       target: "localhost:3001",
    },
-   // ...
+   {
+      route: "/auction-service",
+      target: "localhost:3002/api",
+   }
 ];
 
 const limiter = rateLimit({
    windowMs: 1 * 60 * 1000, // 1 minute
-   max: 20, // 5 requests per minute
+   max: 20, // 20 requests per minute
    message: "Too many requests from this IP, please try again after a minute",
 });
 
@@ -71,7 +74,7 @@ services.forEach(({ route, target }) => {
          [`^/${route}`]: '',
       },
    };
-   app.use(route, authentification, createProxyMiddleware(proxyOptions));
+   app.use(route, limiter, authentification, createProxyMiddleware(proxyOptions));
 });
 
 const port = process.env.PORT || 3000;
