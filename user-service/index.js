@@ -4,6 +4,8 @@ const argon2 = require('argon2');
 const User = require('./models/user');
 const { sign } = require('jsonwebtoken');
 
+require('dotenv').config();
+
 const app = express();
 
 app.use(express.json());
@@ -39,11 +41,11 @@ app.post('/login', async (req, res) => {
    });
 
    if (match) {
-      const accessToken = sign({ userID: user.UserId, username: username }, "my-jwt-secret");
+      const accessToken = sign({ userID: user.UserId, username: username }, process.env.JWT_SECRET);
       res.cookie('access-token', accessToken, { httpOnly: true, secure: true, sameSite: 'none' });
       return res.json({ message: 'Login successful' });
    }
-   return res.status(401).json({ message: 'Username or Password is incorrect' });
+   res.status(401).json({ message: 'Username or Password is incorrect' });
 })
 
 app.post('/register', async (req, res) => {
@@ -61,7 +63,7 @@ app.post('/register', async (req, res) => {
       Phone: phone,
       Email: email
    })
-   res.json({ message: 'User created' });
+   res.status(201).json({ message: "User Created"})
 })
 
 const port = process.env.PORT || 3001;

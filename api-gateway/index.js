@@ -7,6 +7,8 @@ const rateLimit = require("express-rate-limit");
 const cookieParser = require("cookie-parser");
 const { verify } = require("jsonwebtoken");
 
+require("dotenv").config();
+
 const app = express();
 
 // Middleware setup
@@ -46,7 +48,7 @@ const authentification = (req, res, next) => {
    }
 
    try {
-      verify(accessToken, "my-jwt-secret", (err, decoded) => {
+      verify(accessToken, process.env.JWT_SECRET, (err, decoded) => {
          if (err) {
             delete req.headers.uid;
             return next();
