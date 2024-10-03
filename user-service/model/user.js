@@ -16,27 +16,35 @@ const User = sequelize.define('User', {
       allowNull: false
    },
    Phone: {
-      type: DataTypes.STRING
+      type: DataTypes.STRING,
+      allowNull: false
    },
    Email: {
-      type: DataTypes.STRING
+      type: DataTypes.STRING,
+      allowNull: false
    },
    Active: {
-      type: DataTypes.BOOLEAN
+      type: DataTypes.BOOLEAN,
+      allowNull: false
    },
-   RoleId: {
+   UserRoleId: {
+      type: DataTypes.INTEGER
+   },
+   Balance: {
       type: DataTypes.INTEGER
    },
    FirstName: {
-      type: DataTypes.STRING
+      type: DataTypes.STRING,
+      allowNull: false
    },
    LastName: {
-      type: DataTypes.STRING
+      type: DataTypes.STRING,
+      allowNull: false
    },
-   CreateAt: {
+   CreatedAt: {
       type: DataTypes.DATE
    },
-   UpdateAt: {
+   UpdatedAt: {
       type: DataTypes.DATE
    }
 }, {

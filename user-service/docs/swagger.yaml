@@ -1,0 +1,188 @@
+openapi: 3.0.0
+info:
+  title: User Service API
+  version: 1.0.0
+  description: API for managing user profiles, login, registration, and account updates.
+
+servers:
+  - url: /api
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        UserId:
+          type: integer
+          description: Unique identifier for the user
+        Username:
+          type: string
+        FirstName:
+          type: string
+        LastName:
+          type: string
+        Phone:
+          type: string
+        Email:
+          type: string
+        Active:
+          type: boolean
+        UserRoleId:
+          type: integer
+        Balance:
+          type: number
+          format: float
+        CreatedAt:
+          type: string
+          format: date-time
+        UpdatedAt:
+          type: string
+          format: date-time
+
+paths:
+  /profile:
+    get:
+      summary: Get user profile
+      description: Fetch the authenticated user's profile.
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        401:
+          description: Unauthorized
+
+  /login:
+    post:
+      summary: Login user
+      description: Log in a user with username and password, returns a JWT token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+              required:
+                - username
+                - password
+      responses:
+        200:
+          description: Login successful
+        401:
+          description: Invalid username or password
+
+  /register:
+    post:
+      summary: Register new user
+      description: Registers a new user with the provided details.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                firstname:
+                  type: string
+                lastname:
+                  type: string
+                phone:
+                  type: string
+                email:
+                  type: string
+                roleId:
+                  type: integer
+              required:
+                - username
+                - password
+                - firstname
+                - lastname
+                - phone
+                - email
+                - roleId
+      responses:
+        201:
+          description: User created
+        400:
+          description: User already exists
+
+  /update-profile:
+    patch:
+      summary: Update user profile
+      description: Update the authenticated user's profile.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                firstname:
+                  type: string
+                lastname:
+                  type: string
+                phone:
+                  type: string
+                email:
+                  type: string
+                roleId:
+                  type: integer
+      responses:
+        201:
+          description: Profile updated successfully
+
+  /update-password:
+    patch:
+      summary: Update user password
+      description: Update the authenticated user's password.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                password:
+                  type: string
+              required:
+                - password
+      responses:
+        201:
+          description: Password updated successfully
+        400:
+          description: Password is required
+
+  /delete-account:
+    delete:
+      summary: Deactivate user account
+      description: Soft delete the authenticated user's account (set Active to false).
+      security:
+        - bearerAuth: []
+      responses:
+        201:
+          description: User deleted successfully

@@ -22,7 +22,7 @@ app.disable("x-powered-by"); // Hide Express server information
 const services = [
    {
       route: "/user-service",
-      target: "localhost:3001",
+      target: "localhost:3001/api",
    },
    {
       route: "/auction-service",
@@ -40,28 +40,29 @@ const limiter = rateLimit({
 const authentification = (req, res, next) => {
    if (!req.cookies) {
       console.log("No cookies");
-      delete req.headers.uid;
+      if (req.headers.uid) delete req.headers.uid;
       return next();
    }
 
    const accessToken = req.cookies["access-token"];
    if (!accessToken) {
-      delete req.headers.uid;
+      if (req.headers.uid) delete req.headers.uid;
       return next();
    }
 
    try {
       verify(accessToken, process.env.JWT_SECRET, (err, decoded) => {
          if (err) {
-            delete req.headers.uid;
+            if (req.headers.uid) delete req.headers.uid;
             return next();
          }
-         req.headers.uid = decoded.userID;
+         console.log("Decoded", decoded);
+         req.headers.uid = decoded.userId;
          next();
       });
    } catch (error) {
       console.log("Error");
-      delete req.headers.uid;
+      if (req.headers.uid) delete req.headers.uid;
       next();
    }
 };
