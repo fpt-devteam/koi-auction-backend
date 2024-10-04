@@ -81,6 +81,11 @@ const updatePassword = async (req, res) => {
    res.status(201).json({ message: "Password Updated"})
 }
 
+const logout = async (req, res) => {
+   res.clearCookie('access-token');
+   res.status(200).json({ message: 'Logout successful' });
+}
+
 const deleteAccount = async (req, res) => {
    await User.update({
       Active: false
@@ -94,5 +99,6 @@ module.exports = {
    register,
    updateProfile,
    updatePassword,
-   deleteAccount
+   deleteAccount,
+   logout
 }
