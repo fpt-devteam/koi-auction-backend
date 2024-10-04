@@ -1,4 +1,4 @@
-using AuctionManagementService.Conventions;
+
 using AuctionManagementService.Data;
 using AuctionManagementService.IRepository;
 using AuctionManagementService.Repository;
@@ -40,10 +40,7 @@ builder.Services.AddCors(options =>
     });
 });
 // Thêm Global Route Prefix cho tất cả các Controller
-builder.Services.AddControllers(options =>
-{
-    options.Conventions.Insert(0, new GlobalRoutePrefixConvention("api/auction-service"));
-});
+
 builder.Services.AddAuthorization(); 
 var app = builder.Build();
 

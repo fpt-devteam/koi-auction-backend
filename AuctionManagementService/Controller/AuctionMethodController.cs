@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AuctionManagementService.Controller
 {
-    [Route("auction-methods")]
+    [Route("api/auction-methods")]
     [ApiController]
     public class AuctionMethodController : ControllerBase
     {

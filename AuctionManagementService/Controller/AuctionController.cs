@@ -7,7 +7,7 @@ using Microsoft.VisualBasic;
 
 namespace AuctionManagementService.Controller
 {
-    [Route("auctions")]
+    [Route("api/auctions")]
     [ApiController]
     public class AuctionController : ControllerBase
     {
