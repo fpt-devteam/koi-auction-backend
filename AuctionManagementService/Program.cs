@@ -1,7 +1,7 @@
-using AuctionManagementService.Conventions;
 using AuctionManagementService.Data;
 using AuctionManagementService.IRepository;
 using AuctionManagementService.Repository;
+using AuctionManagementService.Middlewares;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,7 +28,6 @@ builder.Services.AddScoped<IAuctionMethodRepository, AuctionMethodRepository>();
 builder.Services.AddScoped<ILotStatusRepository, LotStatusRepository>();
 builder.Services.AddScoped<IAuctionRepository, AuctionRepository>();
 builder.Services.AddScoped<IAuctionLotRepository, AuctionLotRepository>();
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigins", policy =>
@@ -39,15 +38,10 @@ builder.Services.AddCors(options =>
               .AllowCredentials(); // Cho ph�p cookie, header ???c g?i k�m
     });
 });
-// Thêm Global Route Prefix cho tất cả các Controller
-builder.Services.AddControllers(options =>
-{
-    options.Conventions.Insert(0, new GlobalRoutePrefixConvention("api/auction-service"));
-});
-builder.Services.AddAuthorization(); 
+// builder.Services.AddAuthorization(); 
 var app = builder.Build();
 
-//app.UseMiddleware<AuthorizationMiddleware>();
+app.UseMiddleware<AuthorizationMiddleware>();
 app.UseCors("AllowSpecificOrigins");
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
