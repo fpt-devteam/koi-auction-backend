@@ -12,7 +12,13 @@ require("dotenv").config();
 const app = express();
 
 // Middleware setup
-app.use(cors()); // Enable CORS
+const corsOptions = {
+   origin: [
+       'http://localhost:5173',
+   ],
+   credentials: true,
+};
+app.use(cors(corsOptions));
 app.use(helmet()); // Add security headers
 app.use(morgan("combined")); // Log HTTP requests
 app.use(cookieParser()); // Parse cookies
@@ -40,29 +46,26 @@ const limiter = rateLimit({
 const authentification = (req, res, next) => {
    if (!req.cookies) {
       console.log("No cookies");
-      if (req.headers.uid) delete req.headers.uid;
       return next();
    }
 
    const accessToken = req.cookies["access-token"];
    if (!accessToken) {
-      if (req.headers.uid) delete req.headers.uid;
       return next();
    }
 
    try {
       verify(accessToken, process.env.JWT_SECRET, (err, decoded) => {
          if (err) {
-            if (req.headers.uid) delete req.headers.uid;
             return next();
          }
          console.log("Decoded", decoded);
          req.headers.uid = decoded.userId;
+         req.headers.uri = decoded.userRoleId;
          next();
       });
    } catch (error) {
       console.log("Error");
-      if (req.headers.uid) delete req.headers.uid;
       next();
    }
 };

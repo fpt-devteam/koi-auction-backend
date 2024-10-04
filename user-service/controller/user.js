@@ -24,15 +24,15 @@ const login = async (req, res) => {
    });
 
    if (match) {
-      const accessToken = sign({ userId: user.UserId, username: username }, process.env.JWT_SECRET);
+      const accessToken = sign({ userId: user.UserId, userRoleId: user.UserRoleId }, process.env.JWT_SECRET);
       res.cookie('access-token', accessToken, { httpOnly: true, secure: true, sameSite: 'none' });
-      return res.json({ message: 'Login successful' });
+      return res.status(200).json({ message: 'Login successful', user: user });
    }
    res.status(401).json({ message: 'Username or Password is incorrect' });
 }
 
 const register = async (req, res) => {
-   const { username, password, firstname, lastname, phone, email, roleId } = req.body;
+   const { username, password, firstname, lastname, phone, email } = req.body;
    const existUser = await User.findOne({ where: { Username: username } });
    if (existUser) {
       return res.status(400).json({ message: 'User already exists' });
@@ -46,7 +46,7 @@ const register = async (req, res) => {
       Phone: phone,
       Email: email,
       Active: true,
-      UserRoleId: roleId,
+      UserRoleId: 1,
       Balance: 0,
       CreatedAt: new Date(),
       UpdatedAt: new Date()
