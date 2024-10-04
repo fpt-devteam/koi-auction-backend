@@ -28,10 +28,12 @@ const User = sequelize.define('User', {
       allowNull: false
    },
    UserRoleId: {
-      type: DataTypes.INTEGER
+      type: DataTypes.INTEGER,
+      allowNull: false
    },
    Balance: {
-      type: DataTypes.INTEGER
+      type: DataTypes.INTEGER,
+      allowNull: false
    },
    FirstName: {
       type: DataTypes.STRING,
@@ -42,10 +44,12 @@ const User = sequelize.define('User', {
       allowNull: false
    },
    CreatedAt: {
-      type: DataTypes.DATE
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW
    },
    UpdatedAt: {
-      type: DataTypes.DATE
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW
    }
 }, {
    tableName: 'User',
