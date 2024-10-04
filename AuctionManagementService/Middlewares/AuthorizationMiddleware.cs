@@ -82,7 +82,7 @@ namespace AuctionManagementService.Middlewares
         {
             // Lấy thông tin userid từ header (API Gateway truyền vào)
             var userId = context.Request.Headers["uid"].FirstOrDefault();
-            var userRoleId = context.Request.Headers["role"].FirstOrDefault();
+            var userRoleId = context.Request.Headers["uri"].FirstOrDefault();
             // Lấy thông tin về phương thức HTTP và route đang được yêu cầu
             var httpMethod = context.Request.Method;
             var route = context.Request.Path.Value;
