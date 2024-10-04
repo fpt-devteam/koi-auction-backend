@@ -6,7 +6,6 @@ namespace AuctionManagementService.Dto.KoiMedia
     {
         [Required]
         public string FilePath { get; set; } = null!;
-        [Required]
-        public bool IsPrimary { get; set; }
+        
     }
 }

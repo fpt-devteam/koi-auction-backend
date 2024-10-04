@@ -1,3 +1,4 @@
+using AuctionManagementService.Conventions;
 using AuctionManagementService.Data;
 using AuctionManagementService.IRepository;
 using AuctionManagementService.Repository;
@@ -8,6 +9,12 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+    });
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AuctionManagementDbContext>(option =>
@@ -32,8 +39,15 @@ builder.Services.AddCors(options =>
               .AllowCredentials(); // Cho ph�p cookie, header ???c g?i k�m
     });
 });
-
+// Thêm Global Route Prefix cho tất cả các Controller
+builder.Services.AddControllers(options =>
+{
+    options.Conventions.Insert(0, new GlobalRoutePrefixConvention("api/auction-service"));
+});
+builder.Services.AddAuthorization(); 
 var app = builder.Build();
+
+//app.UseMiddleware<AuthorizationMiddleware>();
 app.UseCors("AllowSpecificOrigins");
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

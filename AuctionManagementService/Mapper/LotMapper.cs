@@ -27,10 +27,10 @@ namespace AuctionManagementService.Mapper
             return new UpdateLotDto
             {
                 StartingPrice = lotRequestDto.StartingPrice,
-                AuctionMethodId = lotRequestDto.AuctionMethodId,
-                LotStatusId = lotRequestDto.LotStatusId
+                AuctionMethodId = lotRequestDto.AuctionMethodId
             };
         }
+
         public static LotDto ToLotDtoFromLot(this Lot lot)
         {
             return new LotDto
@@ -39,9 +39,9 @@ namespace AuctionManagementService.Mapper
                 Sku = lot.Sku,
                 StartingPrice = lot.StartingPrice,
                 CreatedAt = lot.CreatedAt,
-                AuctionMethod = lot.AuctionMethod.ToAuctionMethodDtoFromAuctionMethod(),
+                AuctionMethod = lot.AuctionMethod!.ToAuctionMethodDtoFromAuctionMethod(),
                 BreederId = lot.BreederId,
-                KoiFishDto = lot.KoiFish.ToKoiFishDtoFromKoiFish(),
+                KoiFishDto = lot.KoiFish!.ToKoiFishDtoFromKoiFish(),
                 LotStatusDto = lot.LotStatus.ToLotStatusDtoFromLotStatus()
             };
         }

@@ -24,7 +24,7 @@ namespace AuctionManagementService.Repository
         {
             var status = await _context.LotStatuses
                                      .FirstOrDefaultAsync(ls => ls.LotStatusName == "Pending");
-            lot.LotStatusId = status.LotStatusId;
+            lot.LotStatusId = status!.LotStatusId;
             await _context.LotStatuses.FindAsync(lot.LotStatusId);
             await _context.AuctionMethods.FindAsync(lot.AuctionMethodId);
             await _context.Lots.AddAsync(lot);
@@ -36,10 +36,10 @@ namespace AuctionManagementService.Repository
         {
             var lot = await _context.Lots.Include(l => l.KoiFish).Include(l => l.LotStatus).FirstOrDefaultAsync(l => l.LotId == id);
             if (lot == null)
-                return null;
+                return null!;
             var status = await _context.LotStatuses
                                   .FirstOrDefaultAsync(ls => ls.LotStatusName == "Canceled");
-            lot.LotStatusId = status.LotStatusId;
+            lot.LotStatusId = status!.LotStatusId;
             await _context.AuctionMethods.FindAsync(lot.AuctionMethodId);
             
             return lot;
@@ -48,7 +48,7 @@ namespace AuctionManagementService.Repository
 
         public async Task<List<Lot>> GetAllAsync(LotQueryObject query)
         {
-            var lots = _context.Lots.Include(l => l.KoiFish).ThenInclude(m => m.KoiMedia).
+            var lots = _context.Lots.Include(l => l.KoiFish).ThenInclude(m => m!.KoiMedia).
                                         Include(l => l.LotStatus).
                                         Include(l => l.AuctionMethod).AsQueryable();
 
@@ -79,32 +79,32 @@ namespace AuctionManagementService.Repository
             // Thực hiện tìm kiếm theo các thuộc tính của KoiFish
             if (query.Sex.HasValue)
             {
-                lots = lots.Where(l => l.KoiFish.Sex == query.Sex.Value);
+                lots = lots.Where(l => l.KoiFish!.Sex == query.Sex.Value);
             }
 
             if (query.MinWeightKg.HasValue)
             {
-                lots = lots.Where(l => l.KoiFish.WeightKg >= query.MinWeightKg.Value);
+                lots = lots.Where(l => l.KoiFish!.WeightKg >= query.MinWeightKg.Value);
             }
 
             if (query.MaxWeightKg.HasValue)
             {
-                lots = lots.Where(l => l.KoiFish.WeightKg <= query.MaxWeightKg.Value);
+                lots = lots.Where(l => l.KoiFish!.WeightKg <= query.MaxWeightKg.Value);
             }
 
             if (query.MinSizeCm.HasValue)
             {
-                lots = lots.Where(l => l.KoiFish.SizeCm >= query.MinSizeCm.Value);
+                lots = lots.Where(l => l.KoiFish!.SizeCm >= query.MinSizeCm.Value);
             }
 
             if (query.MaxSizeCm.HasValue)
             {
-                lots = lots.Where(l => l.KoiFish.SizeCm <= query.MaxSizeCm.Value);
+                lots = lots.Where(l => l.KoiFish!.SizeCm <= query.MaxSizeCm.Value);
             }
 
             if (query.YearOfBirth.HasValue)
             {
-                lots = lots.Where(l => l.KoiFish.YearOfBirth == query.YearOfBirth.Value);
+                lots = lots.Where(l => l.KoiFish!.YearOfBirth == query.YearOfBirth.Value);
             }
             if (!string.IsNullOrWhiteSpace(query.SortBy))
             {
@@ -124,14 +124,14 @@ namespace AuctionManagementService.Repository
 
                     case "sizecm":
                         lots = query.IsDescending
-                            ? lots.OrderByDescending(l => l.KoiFish.SizeCm)
-                            : lots.OrderBy(l => l.KoiFish.SizeCm);
+                            ? lots.OrderByDescending(l => l.KoiFish!.SizeCm)
+                            : lots.OrderBy(l => l.KoiFish!.SizeCm);
                         break;
 
                     case "weightkg":
                         lots = query.IsDescending
-                            ? lots.OrderByDescending(l => l.KoiFish.WeightKg)
-                            : lots.OrderBy(l => l.KoiFish.WeightKg);
+                            ? lots.OrderByDescending(l => l.KoiFish!.WeightKg)
+                            : lots.OrderBy(l => l.KoiFish!.WeightKg);
                         break;
 
                     default:
@@ -145,11 +145,11 @@ namespace AuctionManagementService.Repository
 
         public async Task<Lot> GetLotByIdAsync(int id)
         {
-            var lot = await _context.Lots.Include(l => l.KoiFish).ThenInclude(m => m.KoiMedia).
+            var lot = await _context.Lots.Include(l => l.KoiFish).ThenInclude(m => m!.KoiMedia).
                                             Include(l => l.LotStatus).
                                             Include(l => l.AuctionMethod).FirstOrDefaultAsync(l => l.LotId == id);
             if (lot == null)
-                return null;
+                return null!;
             return lot;
         }
 
@@ -159,14 +159,25 @@ namespace AuctionManagementService.Repository
                                             Include(l => l.LotStatus).
                                             Include(l => l.AuctionMethod).FirstOrDefaultAsync(l => l.LotId == id);
             if (lot == null)
-                return null;
+                return null!;
 
             var koiFish = lot.KoiFish;
             lot.StartingPrice = updateLotDto.StartingPrice;
             lot.AuctionMethodId = updateLotDto.AuctionMethodId;
             await _context.AuctionMethods.FindAsync(lot.AuctionMethodId);
-            lot.LotStatusId = updateLotDto.LotStatusId;
             await _context.LotStatuses.FindAsync(lot.LotStatusId);
+            return lot;
+        }
+
+        public async Task<Lot> UpdateLotStatusAsync(int id, UpdateLotStatusDto updateLot)
+        {
+            var lot = await _context.Lots.Include(l => l.KoiFish).
+                                            Include(l => l.LotStatus).
+                                            Include(l => l.AuctionMethod).FirstOrDefaultAsync(l => l.LotId == id);
+            if (lot == null)
+                return null!;
+            var status = await _context.LotStatuses.FirstOrDefaultAsync(x => x.LotStatusName == updateLot.LotStatusName);
+            lot.LotStatusId = status!.LotStatusId;
             return lot;
         }
     }

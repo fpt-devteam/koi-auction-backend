@@ -7,7 +7,7 @@ using Microsoft.VisualBasic;
 
 namespace AuctionManagementService.Controller
 {
-    [Route("api/auctions")]
+    [Route("auctions")]
     [ApiController]
     public class AuctionController : ControllerBase
     {
@@ -68,9 +68,18 @@ namespace AuctionManagementService.Controller
         {
             if(!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var deletaAuction = await _unitOfWork.Auctions.DeleteAsync(id);
-            if(deletaAuction == null)
+            var deletedAuction = await _unitOfWork.Auctions.GetByIdAsync(id);
+            if(deletedAuction == null)
                 return NotFound();
+            var auctionLots = deletedAuction.AuctionLots;
+            if(auctionLots != null)
+            {
+                foreach(var acutionLot in auctionLots)
+                {
+                    await _unitOfWork.AuctionLots.DeleteAsync(acutionLot.AuctionLotId);
+                }
+            }
+            await _unitOfWork.Auctions.DeleteAsync(id);
             _unitOfWork.SaveChanges();
             return NoContent(); 
         }

@@ -11,8 +11,7 @@ namespace AuctionManagementService.Mapper
         {
             return new KoiMedia
             {
-                FilePath = koiMediaDto.FilePath,
-                IsPrimary = koiMediaDto.IsPrimary
+                FilePath = koiMediaDto.FilePath
             };
         }
        
@@ -22,8 +21,7 @@ namespace AuctionManagementService.Mapper
             {
                 KoiMediaId = koiMedia.KoiMediaId,
                 KoiFishId = koiMedia.KoiFishId,
-                FilePath = koiMedia.FilePath,
-                IsPrimary = koiMedia.IsPrimary
+                FilePath = koiMedia.FilePath
             };
         }
 

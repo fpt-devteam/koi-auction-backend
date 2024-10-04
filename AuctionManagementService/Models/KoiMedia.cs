@@ -11,8 +11,6 @@ public partial class KoiMedia
 
     public string FilePath { get; set; } = null!;
 
-    public bool IsPrimary { get; set; }
-
     public DateTime CreatedAt { get; set; }
 
     public virtual KoiFish KoiFish { get; set; } = null!;

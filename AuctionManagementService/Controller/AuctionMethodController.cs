@@ -3,11 +3,12 @@
 using AuctionManagementService.Dto;
 using AuctionManagementService.IRepository;
 using AuctionManagementService.Mapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AuctionManagementService.Controller
 {
-    [Route("api/auction-methods")]
+    [Route("auction-methods")]
     [ApiController]
     public class AuctionMethodController : ControllerBase
     {

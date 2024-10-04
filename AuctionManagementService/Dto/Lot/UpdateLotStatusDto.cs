@@ -1,10 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace AuctionManagementService.Dto.LotStatus
+namespace AuctionManagementService.Dto.Lot
 {
     public class UpdateLotStatusDto
     {
         [Required]
-        public string LotStatusName { get; set; }
+        public string? LotStatusName { get; set; }
     }
 }

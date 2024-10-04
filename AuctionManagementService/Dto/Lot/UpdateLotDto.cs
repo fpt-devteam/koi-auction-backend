@@ -10,9 +10,6 @@ namespace AuctionManagementService.Dto.Lot
     public class UpdateLotDto
     {
         [Required]
-        public int LotStatusId { get; set; }
-  
-        [Required]
         public decimal StartingPrice { get; set; }
         [Required]
         public int AuctionMethodId { get; set; }

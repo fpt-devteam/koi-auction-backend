@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AuctionManagementService.Controller
 {
-    [Route("api/auction-lots")]
+    [Route("auction-lots")]
     [ApiController]
     public class AuctionLotController:ControllerBase
     {
@@ -41,9 +41,43 @@ namespace AuctionManagementService.Controller
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
                 var auctionLot = auctionLotDto.ToAuctionLotFromCreateAuctionLotDto();
+                await _unitOfWork.Lots.UpdateLotStatusAsync(auctionLot.AuctionLotId, 
+                                                new Dto.Lot.UpdateLotStatusDto {LotStatusName = "In auction"} );
                 var newAuctionLot = await _unitOfWork.AuctionLots.CreateAsync(auctionLot);
                 _unitOfWork.SaveChanges();
             return CreatedAtAction(nameof(GetAuctionById), new{id = newAuctionLot.AuctionLotId}, newAuctionLot);   
+        }
+
+        [HttpPut]
+        [Route("{id:int}")]
+        public async Task<ActionResult> UpdateAuctionLot([FromRoute] int id, [FromBody] UpdateAuctionLotDto auctionLotDto )
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var auctionLot = await _unitOfWork.AuctionLots.UpdateAsync(id, auctionLotDto);
+            _unitOfWork.SaveChanges();
+            return Ok(auctionLot.ToAuctionLotDtoFromActionLot());
+        }
+
+        [HttpDelete]
+        [Route("{id:int}")]
+        public async Task<ActionResult> DeleteAuctionLot([FromRoute] int id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var auctionLot = await _unitOfWork.AuctionLots.DeleteAsync(id);
+            if(auctionLot == null)
+            {
+                return NotFound();
+            }
+            await _unitOfWork.Lots.UpdateLotStatusAsync(auctionLot.AuctionLotId, 
+                                                new Dto.Lot.UpdateLotStatusDto {LotStatusName = "Approved"} );
+            _unitOfWork.SaveChanges();
+            return NoContent();
         }
     }
 }

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AuctionManagementService.Dto.KoiFish;
 using AuctionManagementService.Dto.Lot;
 using AuctionManagementService.Dto.LotRequestForm;
+using AuctionManagementService.Dto.LotStatus;
 using AuctionManagementService.Helper;
 using AuctionManagementService.IRepository;
 using AuctionManagementService.Mapper;
@@ -13,7 +14,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AuctionManagementService.Controller
 {
-    [Route("api/lots")]
+    [Route("lots")]
     [ApiController]
     public class LotController : ControllerBase
     {
@@ -95,12 +96,12 @@ namespace AuctionManagementService.Controller
 
             //update koifish
             var updateKoiFishDto = lotRequest.ToUpdateKoiFishDtoFromUpdateLotRequestFormDto();
-           var updateKoiFish = await _unitOfWork.KoiFishes.UpdateKoiAsync(id, updateKoiFishDto);
+            var updateKoiFish = await _unitOfWork.KoiFishes.UpdateKoiAsync(id, updateKoiFishDto);
 
             //update media
             await _unitOfWork.KoiMedia.DeleteKoiMediaAsync(id);
             var updateKoiMedia = lotRequest.KoiMedia;
-            if(updateKoiMedia == null)
+            if (updateKoiMedia == null)
             {
                 return BadRequest();
             }
@@ -110,6 +111,16 @@ namespace AuctionManagementService.Controller
                 newMedia.KoiFishId = id;
                 await _unitOfWork.KoiMedia.CreateKoiMediaAsync(newMedia);
             }
+            _unitOfWork.SaveChanges();
+            return Ok(updateLot.ToLotDtoFromLot());
+        }
+
+        [HttpPut("{id:int}/status")]
+        public async Task<IActionResult> UpdateLotStatus(int id, UpdateLotStatusDto lotStatusDto)
+        {
+            var updateLot = await _unitOfWork.Lots.UpdateLotStatusAsync(id, lotStatusDto);
+            if (updateLot == null)
+                return BadRequest();
             _unitOfWork.SaveChanges();
             return Ok(updateLot.ToLotDtoFromLot());
         }

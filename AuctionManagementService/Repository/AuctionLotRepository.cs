@@ -19,9 +19,19 @@ namespace AuctionManagementService.Repository
             return auctionLot;
         }
 
-        public Task<AuctionLot> DeleteAsync(int id)
+        public async Task<AuctionLot> DeleteAsync(int id)
         {
-            throw new NotImplementedException();
+            var auctionLot = await _context.AuctionLots.
+                                Include(a => a.AuctionLotNavigation)
+                                    .ThenInclude(f => f.KoiFish)
+                                .Include(a => a.AuctionLotNavigation)
+                                    .ThenInclude(l => l.AuctionMethod)
+                                .Include(a => a.AuctionLotNavigation)
+                                    .ThenInclude(s => s.LotStatus).FirstOrDefaultAsync(a => a.AuctionLotId == id);
+            if(auctionLot == null)
+                return null!;
+            _context.Remove(auctionLot);
+            return auctionLot;
         }
 
         public async Task<List<AuctionLot>> GetAllAsync()
@@ -47,14 +57,27 @@ namespace AuctionManagementService.Repository
                 .ThenInclude(s => s.LotStatus).FirstOrDefaultAsync(a => a.AuctionLotId == id);
             if (auctionLot == null)
             {
-                return null;
+                return null!;
             }
             return auctionLot;
         }
 
-        public Task<AuctionLot> UpdateAsync(int id, UpdateAuctionLotDto updateAuctionLotDto)
+        public async Task<AuctionLot> UpdateAsync(int id, UpdateAuctionLotDto updateAuctionLotDto)
         {
-            throw new NotImplementedException();
+            var auctionLot = await _context.AuctionLots.
+                                Include(a => a.AuctionLotNavigation)
+                                    .ThenInclude(f => f.KoiFish)
+                                .Include(a => a.AuctionLotNavigation)
+                                    .ThenInclude(l => l.AuctionMethod)
+                                .Include(a => a.AuctionLotNavigation)
+                                    .ThenInclude(s => s.LotStatus).FirstOrDefaultAsync(a => a.AuctionLotId == id);
+            if(auctionLot == null)
+                return null!;
+            auctionLot.Duration = updateAuctionLotDto.Duration;
+            auctionLot.OrderInAuction = updateAuctionLotDto.OrderInAuction;
+            auctionLot.StepPercent = updateAuctionLotDto.StepPercent;
+            auctionLot.AuctionId = updateAuctionLotDto.AuctionId;
+            return auctionLot;
         }
 
     }

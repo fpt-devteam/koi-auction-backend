@@ -5,6 +5,7 @@ namespace AuctionManagementService.Dto.Auction
 {
     public class CreateAuctionDto
     {
+        
         [Required]
         public int StaffId { get; set; }
         [Required]

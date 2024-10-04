@@ -43,7 +43,7 @@ namespace AuctionManagementService.Repository
             return await _context.LotStatuses.FirstOrDefaultAsync(l => l.LotStatusId == id);
         }
 
-        public async Task<LotStatus> UpdateLotStatusAsync(int id, UpdateLotStatusDto lotStatusDto)
+        public async Task<LotStatus> UpdateLotStatusAsync(int id, UpdateStatusDto lotStatusDto)
         {
             var lotStatus = await _context.LotStatuses.FirstOrDefaultAsync(l => l.LotStatusId == id);
             if (lotStatus == null)

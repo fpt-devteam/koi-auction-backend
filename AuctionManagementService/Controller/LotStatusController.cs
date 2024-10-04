@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AuctionManagementService.Controller
 {
-    [Route("api/lot-statuses")]
+    [Route("lot-statuses")]
     [ApiController]
     public class LotStatusController : ControllerBase
     {
@@ -53,7 +53,7 @@ namespace AuctionManagementService.Controller
 
         [HttpPut]
         [Route("{id:int}")]
-        public async Task<IActionResult> UpdateLotStatus([FromRoute] int id, [FromBody] UpdateLotStatusDto lotStatusDto)
+        public async Task<IActionResult> UpdateLotStatus([FromRoute] int id, [FromBody] UpdateStatusDto lotStatusDto)
         {
             if (!ModelState.IsValid)
             {
