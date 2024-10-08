@@ -1,5 +1,6 @@
 using AuctionManagementService.Data;
 using AuctionManagementService.Dto.AuctionLot;
+using AuctionManagementService.Helper;
 using AuctionManagementService.IRepository;
 using AuctionManagementService.Models;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +20,12 @@ namespace AuctionManagementService.Repository
             return auctionLot;
         }
 
+        public async Task<List<AuctionLot>> CreateListAsync(List<AuctionLot> auctionLots)
+        {
+            await _context.AddRangeAsync(auctionLots);
+            return auctionLots;
+        }
+
         public async Task<AuctionLot> DeleteAsync(int id)
         {
             var auctionLot = await _context.AuctionLots.
@@ -28,15 +35,15 @@ namespace AuctionManagementService.Repository
                                     .ThenInclude(l => l.AuctionMethod)
                                 .Include(a => a.AuctionLotNavigation)
                                     .ThenInclude(s => s.LotStatus).FirstOrDefaultAsync(a => a.AuctionLotId == id);
-            if(auctionLot == null)
+            if (auctionLot == null)
                 return null!;
             _context.Remove(auctionLot);
             return auctionLot;
         }
 
-        public async Task<List<AuctionLot>> GetAllAsync()
+        public async Task<List<AuctionLot>> GetAllAsync(AuctionLotQueryObject query)
         {
-            return await _context.AuctionLots.
+            var auctionLots = await _context.AuctionLots.
             Include(a => a.AuctionLotNavigation)
                 .ThenInclude(f => f.KoiFish)
             .Include(a => a.AuctionLotNavigation)
@@ -44,6 +51,12 @@ namespace AuctionManagementService.Repository
             .Include(a => a.AuctionLotNavigation)
                 .ThenInclude(s => s.LotStatus)
             .ToListAsync();
+
+            if (query.AuctionId.HasValue)
+            {
+                auctionLots = auctionLots.Where(l => l.AuctionId == query.AuctionId.Value).ToList();
+            }
+            return auctionLots;
         }
 
         public async Task<AuctionLot> GetAuctionLotById(int id)
@@ -71,7 +84,7 @@ namespace AuctionManagementService.Repository
                                     .ThenInclude(l => l.AuctionMethod)
                                 .Include(a => a.AuctionLotNavigation)
                                     .ThenInclude(s => s.LotStatus).FirstOrDefaultAsync(a => a.AuctionLotId == id);
-            if(auctionLot == null)
+            if (auctionLot == null)
                 return null!;
             auctionLot.Duration = updateAuctionLotDto.Duration;
             auctionLot.OrderInAuction = updateAuctionLotDto.OrderInAuction;

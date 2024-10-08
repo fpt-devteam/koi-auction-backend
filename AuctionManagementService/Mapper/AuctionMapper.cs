@@ -14,7 +14,6 @@ namespace AuctionManagementService.Mapper
                 StartTime = auction.StartTime,
                 EndTime = auction.EndTime,
                 CreatedAt = auction.CreatedAt,
-                AuctionLots = auction.AuctionLots.Select(a => a.ToAuctionLotDtoFromActionLot()).ToList()
             };
         }
 

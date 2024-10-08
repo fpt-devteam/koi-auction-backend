@@ -14,8 +14,6 @@ namespace AuctionManagementService.Dto.Auction
         public DateTime? EndTime { get; set; }
 
         public DateTime CreatedAt { get; set; }
-        
-        public List<AuctionLotDto?> AuctionLots { get; set; }
 
     }
 }

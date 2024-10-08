@@ -1,4 +1,5 @@
 using AuctionManagementService.Dto.AuctionLot;
+using AuctionManagementService.Helper;
 using AuctionManagementService.IRepository;
 using AuctionManagementService.Mapper;
 using AuctionManagementService.Models;
@@ -8,18 +9,28 @@ namespace AuctionManagementService.Controller
 {
     [Route("api/auction-lots")]
     [ApiController]
-    public class AuctionLotController:ControllerBase
+    public class AuctionLotController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
-        public AuctionLotController(IUnitOfWork unitOfWork)
+        private readonly BreederDetailController _breederDetailController;
+        public AuctionLotController(IUnitOfWork unitOfWork, BreederDetailController breederDetailController)
         {
-             _unitOfWork = unitOfWork;
+            _unitOfWork = unitOfWork;
+            _breederDetailController = breederDetailController;
         }
+
         [HttpGet]
-        public async Task<IActionResult> GetAllAuctionLot()
+        public async Task<IActionResult> GetAllAuctionLot([FromQuery] AuctionLotQueryObject query)
         {
-            var auctionLots = await _unitOfWork.AuctionLots.GetAllAsync();
-            var auctionLotDtos = auctionLots.Select(a => a.ToAuctionLotDtoFromActionLot());
+            var auctionLots = await _unitOfWork.AuctionLots.GetAllAsync(query);
+            var tasks = auctionLots.Select(async auctionLot =>
+            {
+                var auctionLotDto = auctionLot.ToAuctionLotDtoFromActionLot();
+                auctionLotDto!.LotDto!.BreederDetailDto = await _breederDetailController.GetBreederByIdAsync(auctionLotDto.LotDto.BreederId);
+                return auctionLotDto;
+            }).ToList();
+
+            var auctionLotDtos = await Task.WhenAll(tasks);
             return Ok(auctionLotDtos);
         }
 
@@ -32,7 +43,9 @@ namespace AuctionManagementService.Controller
             var auctionLot = await _unitOfWork.AuctionLots.GetAuctionLotById(id);
             if (auctionLot == null)
                 return NotFound();
-            return Ok(auctionLot.ToAuctionLotDtoFromActionLot());
+            var auctionLotDto = auctionLot.ToAuctionLotDtoFromActionLot();
+            auctionLotDto!.LotDto!.BreederDetailDto = await _breederDetailController.GetBreederByIdAsync(auctionLotDto.LotDto.BreederId);
+            return Ok(auctionLotDto);
         }
 
         [HttpPost]
@@ -40,17 +53,40 @@ namespace AuctionManagementService.Controller
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-                var auctionLot = auctionLotDto.ToAuctionLotFromCreateAuctionLotDto();
-                await _unitOfWork.Lots.UpdateLotStatusAsync(auctionLot.AuctionLotId, 
-                                                new Dto.Lot.UpdateLotStatusDto {LotStatusName = "In auction"} );
-                var newAuctionLot = await _unitOfWork.AuctionLots.CreateAsync(auctionLot);
-                _unitOfWork.SaveChanges();
-            return CreatedAtAction(nameof(GetAuctionById), new{id = newAuctionLot.AuctionLotId}, newAuctionLot);   
+            var auctionLot = auctionLotDto.ToAuctionLotFromCreateAuctionLotDto();
+            await _unitOfWork.Lots.UpdateLotStatusAsync(auctionLot.AuctionLotId,
+                                            new Dto.Lot.UpdateLotStatusDto { LotStatusName = "In auction" });
+            var newAuctionLot = await _unitOfWork.AuctionLots.CreateAsync(auctionLot);
+            _unitOfWork.SaveChanges();
+            return CreatedAtAction(nameof(GetAuctionById), new { id = newAuctionLot.AuctionLotId }, newAuctionLot);
+        }
+        [HttpPost("listAuctionLot")]
+        public async Task<ActionResult> CreateListAuctionLot([FromBody] List<CreateAuctionLotDto> listAuctionLotDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var auctionLots = listAuctionLotDto.Select(dto => dto.ToAuctionLotFromCreateAuctionLotDto()).ToList();
+
+            foreach (var auctionLot in auctionLots)
+            {
+                await _unitOfWork.Lots.UpdateLotStatusAsync(auctionLot.AuctionLotId, new Dto.Lot.UpdateLotStatusDto
+                {
+                    LotStatusName = "In auction"
+                });
+            }
+
+            await _unitOfWork.AuctionLots.CreateListAsync(auctionLots);
+            _unitOfWork.SaveChanges();
+
+            return CreatedAtAction(nameof(GetAuctionById), new { id = auctionLots.First().AuctionLotId }, auctionLots);
         }
 
         [HttpPut]
         [Route("{id:int}")]
-        public async Task<ActionResult> UpdateAuctionLot([FromRoute] int id, [FromBody] UpdateAuctionLotDto auctionLotDto )
+        public async Task<ActionResult> UpdateAuctionLot([FromRoute] int id, [FromBody] UpdateAuctionLotDto auctionLotDto)
         {
             if (!ModelState.IsValid)
             {
@@ -70,12 +106,12 @@ namespace AuctionManagementService.Controller
                 return BadRequest(ModelState);
             }
             var auctionLot = await _unitOfWork.AuctionLots.DeleteAsync(id);
-            if(auctionLot == null)
+            if (auctionLot == null)
             {
                 return NotFound();
             }
-            await _unitOfWork.Lots.UpdateLotStatusAsync(auctionLot.AuctionLotId, 
-                                                new Dto.Lot.UpdateLotStatusDto {LotStatusName = "Approved"} );
+            await _unitOfWork.Lots.UpdateLotStatusAsync(auctionLot.AuctionLotId,
+                                                new Dto.Lot.UpdateLotStatusDto { LotStatusName = "Approved" });
             _unitOfWork.SaveChanges();
             return NoContent();
         }

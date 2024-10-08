@@ -19,7 +19,7 @@ namespace AuctionManagementService.Dto.Lot
         public int BreederId { get; set; }
         public KoiFishDto? KoiFishDto { get; set; }
         public LotStatusDto? LotStatusDto { get; set; }
-        public BreederDetailDto? breederDetailDto { get; set; }
+        public BreederDetailDto? BreederDetailDto { get; set; }
 
     }
 }

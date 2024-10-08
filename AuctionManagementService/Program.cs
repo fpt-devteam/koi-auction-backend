@@ -1,4 +1,5 @@
 
+using AuctionManagementService.Controller;
 using AuctionManagementService.Data;
 using AuctionManagementService.IRepository;
 using AuctionManagementService.Repository;
@@ -9,6 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddControllers();
+builder.Services.AddTransient<BreederDetailController>();
 builder.Services.AddControllers().AddNewtonsoftJson(options =>
 {
     options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
