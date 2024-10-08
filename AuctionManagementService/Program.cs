@@ -27,7 +27,8 @@ builder.Services.AddScoped<IAuctionMethodRepository, AuctionMethodRepository>();
 builder.Services.AddScoped<ILotStatusRepository, LotStatusRepository>();
 builder.Services.AddScoped<IAuctionRepository, AuctionRepository>();
 builder.Services.AddScoped<IAuctionLotRepository, AuctionLotRepository>();
-
+// Đăng ký MemoryCache
+builder.Services.AddMemoryCache();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigins", policy =>
@@ -38,9 +39,10 @@ builder.Services.AddCors(options =>
               .AllowCredentials(); // Cho ph�p cookie, header ???c g?i k�m
     });
 });
-// Thêm Global Route Prefix cho tất cả các Controller
 
-builder.Services.AddAuthorization();
+// Thêm HttpClient vào DI
+builder.Services.AddHttpClient();
+
 var app = builder.Build();
 
 //app.UseMiddleware<AuthorizationMiddleware>();

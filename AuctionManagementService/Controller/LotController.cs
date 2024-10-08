@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
+using AuctionManagementService.Dto.BreederDetail;
 using AuctionManagementService.Dto.KoiFish;
 using AuctionManagementService.Dto.Lot;
 using AuctionManagementService.Dto.LotRequestForm;
@@ -11,6 +13,7 @@ using AuctionManagementService.IRepository;
 using AuctionManagementService.Mapper;
 using AuctionManagementService.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace AuctionManagementService.Controller
 {
@@ -19,18 +22,90 @@ namespace AuctionManagementService.Controller
     public class LotController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
-        public LotController(IUnitOfWork unitOfWork)
+        private readonly HttpClient _httpClient;
+        private readonly IMemoryCache _cache;
+        public LotController(IUnitOfWork unitOfWork, HttpClient httpClient, IMemoryCache memoryCache)
         {
             _unitOfWork = unitOfWork;
+            _httpClient = httpClient;
+            _cache = memoryCache;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAllLot([FromQuery] LotQueryObject query)
         {
+
             var lots = await _unitOfWork.Lots.GetAllAsync(query);
-            var lotDtos = lots.Select(l => l.ToLotDtoFromLot());
+            var lotDtos = new List<LotDto>();
+            foreach (var lot in lots)
+            {
+                // Kiểm tra xem UserId đã có trong cache chưa
+                if (!_cache.TryGetValue(lot.BreederId, out BreederDetailDto? breeder))
+                {
+                    // Nếu không có trong cache thì gọi API
+                    var userResponse = await _httpClient.GetAsync($"https://67035c76bd7c8c1ccd412a4e.mockapi.io/api/profiles/{lot.BreederId}");
+                    if (userResponse.IsSuccessStatusCode)
+                    {
+                        var userContent = await userResponse.Content.ReadAsStringAsync();
+                        breeder = JsonSerializer.Deserialize<BreederDetailDto>(userContent);
+
+                        // Lưu thông tin vào cache với TTL là 10 phút
+                        _cache.Set(lot.BreederId, breeder, TimeSpan.FromMinutes(1));
+                    }
+                }
+
+                // Tạo LotDto và gán thông tin người dùng
+                var lotDto = lot.ToLotDtoFromLot();
+                lotDto.breederDetailDto = breeder;
+                lotDtos.Add(lotDto);
+            }
             return Ok(lotDtos);
         }
+        // public async Task<IActionResult> GetAllLot([FromQuery] LotQueryObject query)
+        // {
+        //     // Lấy danh sách Lot
+        //     var lots = await _unitOfWork.Lots.GetAllAsync(query);
+
+        //     // Tạo danh sách các BreederId chưa có trong cache
+        //     var breederIds = lots
+        //         .Where(l => !_cache.TryGetValue(l.BreederId, out BreederDetailDto? _)) // Chỉ lấy các BreederId chưa có trong cache
+        //         .Select(l => l.BreederId)
+        //         .Distinct()
+        //         .ToList();
+
+        //     // Nếu có BreederId chưa có trong cache thì gọi batch API để lấy thông tin
+        //     if (breederIds.Any())
+        //     {
+        //         var userResponse = await _httpClient.GetAsync($"https://67035c76bd7c8c1ccd412a4e.mockapi.io/api/profiles?ids={string.Join(",", breederIds)}");
+        //         if (userResponse.IsSuccessStatusCode)
+        //         {
+        //             var userContent = await userResponse.Content.ReadAsStringAsync();
+        //             var breeders = JsonSerializer.Deserialize<List<BreederDetailDto>>(userContent);
+
+        //             // Lưu tất cả BreederDetailDto vào cache
+        //             foreach (var breeder in breeders)
+        //             {
+        //                 _cache.Set(breeder.FarmName!, breeder, TimeSpan.FromMinutes(1));
+        //             }
+        //         }
+        //     }
+
+        //     // Tạo danh sách LotDto và lấy thông tin từ cache
+        //     var lotDtos = lots.Select(lot =>
+        //     {
+        //         // Lấy thông tin breeder từ cache
+        //         _cache.TryGetValue(lot.BreederId, out BreederDetailDto? breeder);
+
+        //         // Tạo LotDto và gán thông tin người dùng
+        //         var lotDto = lot.ToLotDtoFromLot();
+        //         lotDto.breederDetailDto = breeder;
+
+        //         return lotDto;
+        //     }).ToList();
+
+        //     return Ok(lotDtos);
+        // }
+
         [HttpGet]
         [ActionName(nameof(GetLotById))]
         [Route("{id:int}")]
