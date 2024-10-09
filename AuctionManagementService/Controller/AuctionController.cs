@@ -12,9 +12,12 @@ namespace AuctionManagementService.Controller
     public class AuctionController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
-        public AuctionController(IUnitOfWork unitOfWork)
+        private readonly BreederDetailController _breederDetailController;
+
+        public AuctionController(IUnitOfWork unitOfWork, BreederDetailController breederDetailController)
         {
             _unitOfWork = unitOfWork;
+            _breederDetailController = breederDetailController;
         }
 
         [HttpGet]
@@ -34,9 +37,9 @@ namespace AuctionManagementService.Controller
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             var auction = await _unitOfWork.Auctions.GetByIdAsync(id);
-            if(auction == null)
+            if (auction == null)
                 return NotFound();
-            return Ok(auction.ToAuctionDtoFromAuction());           
+            return Ok(auction.ToAuctionDtoFromAuction());
         }
 
         [HttpPost]
@@ -44,10 +47,11 @@ namespace AuctionManagementService.Controller
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var action = auctionDto.ToAuctionFromCreateAuctionDto();
-            await _unitOfWork.Auctions.CreateAsync(action);
+            var auction = auctionDto.ToAuctionFromCreateAuctionDto();
+            auction.AuctionName = AuctionHelper.GenerateAuctionName(auction);
+            await _unitOfWork.Auctions.CreateAsync(auction);
             _unitOfWork.SaveChanges();
-            return CreatedAtAction(nameof(GetAuctionById), new{id = action.AuctionId}, action.ToAuctionDtoFromAuction());
+            return CreatedAtAction(nameof(GetAuctionById), new { id = auction.AuctionId }, auction.ToAuctionDtoFromAuction());
 
         }
 
@@ -66,22 +70,22 @@ namespace AuctionManagementService.Controller
         [Route("{id:int}")]
         public async Task<ActionResult> DeleteAuction([FromRoute] int id)
         {
-            if(!ModelState.IsValid)
+            if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             var deletedAuction = await _unitOfWork.Auctions.GetByIdAsync(id);
-            if(deletedAuction == null)
+            if (deletedAuction == null)
                 return NotFound();
             var auctionLots = deletedAuction.AuctionLots;
-            if(auctionLots != null)
+            if (auctionLots != null)
             {
-                foreach(var acutionLot in auctionLots)
+                foreach (var acutionLot in auctionLots)
                 {
                     await _unitOfWork.AuctionLots.DeleteAsync(acutionLot.AuctionLotId);
                 }
             }
             await _unitOfWork.Auctions.DeleteAsync(id);
             _unitOfWork.SaveChanges();
-            return NoContent(); 
+            return NoContent();
         }
     }
 }

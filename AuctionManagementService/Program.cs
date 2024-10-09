@@ -1,3 +1,5 @@
+
+using AuctionManagementService.Controller;
 using AuctionManagementService.Data;
 using AuctionManagementService.IRepository;
 using AuctionManagementService.Repository;
@@ -9,12 +11,11 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddControllers();
-
-builder.Services.AddControllers()
-    .AddNewtonsoftJson(options =>
-    {
-        options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
-    });
+builder.Services.AddTransient<BreederDetailController>();
+builder.Services.AddControllers().AddNewtonsoftJson(options =>
+{
+    options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+});
 
 
 builder.Services.AddEndpointsApiExplorer();
@@ -30,6 +31,8 @@ builder.Services.AddScoped<IAuctionMethodRepository, AuctionMethodRepository>();
 builder.Services.AddScoped<ILotStatusRepository, LotStatusRepository>();
 builder.Services.AddScoped<IAuctionRepository, AuctionRepository>();
 builder.Services.AddScoped<IAuctionLotRepository, AuctionLotRepository>();
+// Đăng ký MemoryCache
+builder.Services.AddMemoryCache();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigins", policy =>
@@ -40,6 +43,10 @@ builder.Services.AddCors(options =>
               .AllowCredentials(); // Cho ph�p cookie, header ???c g?i k�m
     });
 });
+
+// Thêm HttpClient vào DI
+builder.Services.AddHttpClient();
+
 var app = builder.Build();
 
 app.UseMiddleware<AuthorizationMiddleware>();

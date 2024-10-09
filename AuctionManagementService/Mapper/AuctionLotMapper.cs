@@ -9,11 +9,12 @@ namespace AuctionManagementService.Mapper
         {
             if (auctionLot == null)
             {
-                return null;
+                return null!;
             }
-            
+
             return new AuctionLotDto
             {
+                AuctionId = auctionLot.AuctionId,
                 Duration = auctionLot.Duration,
                 OrderInAuction = auctionLot.OrderInAuction,
                 CreatedAt = auctionLot.CreatedAt,

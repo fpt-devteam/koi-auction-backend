@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
+using AuctionManagementService.Dto.BreederDetail;
 using AuctionManagementService.Dto.KoiFish;
 using AuctionManagementService.Dto.Lot;
 using AuctionManagementService.Dto.LotRequestForm;
@@ -11,6 +13,7 @@ using AuctionManagementService.IRepository;
 using AuctionManagementService.Mapper;
 using AuctionManagementService.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace AuctionManagementService.Controller
 {
@@ -19,18 +22,34 @@ namespace AuctionManagementService.Controller
     public class LotController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
-        public LotController(IUnitOfWork unitOfWork)
+        private readonly BreederDetailController _breederDetailController;
+        public LotController(IUnitOfWork unitOfWork, BreederDetailController breederDetailController)
         {
             _unitOfWork = unitOfWork;
+            _breederDetailController = breederDetailController;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAllLot([FromQuery] LotQueryObject query)
         {
+
             var lots = await _unitOfWork.Lots.GetAllAsync(query);
-            var lotDtos = lots.Select(l => l.ToLotDtoFromLot());
+
+            // Tạo LotDto và gán thông tin người dùng
+            var tasks = lots.Select(async lot =>
+            {
+                var breeder = await _breederDetailController.GetBreederByIdAsync(lot.BreederId);
+                var lotDto = lot.ToLotDtoFromLot();
+                lotDto.BreederDetailDto = breeder;
+                return lotDto;
+            }).ToList();
+
+            // Đợi tất cả các tác vụ hoàn thành
+            var lotDtos = await Task.WhenAll(tasks);
+
             return Ok(lotDtos);
         }
+
         [HttpGet]
         [ActionName(nameof(GetLotById))]
         [Route("{id:int}")]
@@ -41,11 +60,11 @@ namespace AuctionManagementService.Controller
                 return BadRequest(ModelState);
             }
             var lot = await _unitOfWork.Lots.GetLotByIdAsync(id);
-            if (lot == null)
-            {
-                return NotFound();
-            }
-            return Ok(lot.ToLotDtoFromLot());
+
+            var lotDto = lot.ToLotDtoFromLot();
+            lotDto.BreederDetailDto = await _breederDetailController.GetBreederByIdAsync(lot.BreederId);
+
+            return Ok(lotDto);
         }
 
 
@@ -64,8 +83,6 @@ namespace AuctionManagementService.Controller
             //add koifish
             var newKoiFish = lotRequest.ToKoiFishFromCreateLotRequestFormDto();
             modelLot.KoiFish = newKoiFish;
-            //newKoiFish.KoiFishId = modelLot.LotId;
-            //await _unitOfWork.KoiFishes.CreateKoiAsync(newKoiFish);
 
             //add media
             var newKoiMedia = lotRequest.KoiMedia.Select(m => m.ToKoiMediaFromFormKoiMediaDto());
@@ -74,8 +91,6 @@ namespace AuctionManagementService.Controller
             foreach (var media in newKoiMedia)
             {
                 newKoiFish.KoiMedia.Add(media);
-                //media.KoiFishId = newKoiFish.KoiFishId;
-                //await _unitOfWork.KoiMedia.CreateKoiMediaAsync(media);
             }
 
             _unitOfWork.SaveChanges();

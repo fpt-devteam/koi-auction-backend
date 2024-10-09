@@ -30,10 +30,19 @@ public partial class AuctionManagementDbContext : DbContext
 
     public virtual DbSet<LotStatus> LotStatuses { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=tcp:koiauction.database.windows.net,1433;Initial Catalog=KoiAuctionDB;Persist Security Info=False;User ID=fpt-devteam;Password=sa123456!;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
+    private string GetConnectionString()
+    {
+        IConfiguration config = new ConfigurationBuilder()
+             .SetBasePath(Directory.GetCurrentDirectory())
+                    .AddJsonFile("appsettings.json", true, true)
+                    .Build();
+        var strConn = config["ConnectionStrings:DefaultConnectionStringDB"];
 
+        return strConn!;
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        => optionsBuilder.UseSqlServer(GetConnectionString());
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Auction>(entity =>
@@ -42,6 +51,9 @@ public partial class AuctionManagementDbContext : DbContext
 
             entity.ToTable("Auction", tb => tb.HasTrigger("trg_Auction_Update"));
 
+            entity.HasIndex(e => e.AuctionName, "UQ_Auction_AuctionName").IsUnique();
+
+            entity.Property(e => e.AuctionName).HasMaxLength(100);
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");

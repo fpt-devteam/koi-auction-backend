@@ -7,6 +7,7 @@ namespace AuctionManagementService.Dto.Auction
     public class AuctionDto
     {
         public int AuctionId { get; set; }
+        public string? AuctionName { get; set; }
         public int StaffId { get; set; }
 
         public DateTime StartTime { get; set; }
@@ -14,8 +15,6 @@ namespace AuctionManagementService.Dto.Auction
         public DateTime? EndTime { get; set; }
 
         public DateTime CreatedAt { get; set; }
-        
-        public List<AuctionLotDto?> AuctionLots { get; set; }
 
     }
 }
