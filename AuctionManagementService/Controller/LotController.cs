@@ -83,8 +83,6 @@ namespace AuctionManagementService.Controller
             //add koifish
             var newKoiFish = lotRequest.ToKoiFishFromCreateLotRequestFormDto();
             modelLot.KoiFish = newKoiFish;
-            //newKoiFish.KoiFishId = modelLot.LotId;
-            //await _unitOfWork.KoiFishes.CreateKoiAsync(newKoiFish);
 
             //add media
             var newKoiMedia = lotRequest.KoiMedia.Select(m => m.ToKoiMediaFromFormKoiMediaDto());
@@ -93,8 +91,6 @@ namespace AuctionManagementService.Controller
             foreach (var media in newKoiMedia)
             {
                 newKoiFish.KoiMedia.Add(media);
-                //media.KoiFishId = newKoiFish.KoiFishId;
-                //await _unitOfWork.KoiMedia.CreateKoiMediaAsync(media);
             }
 
             _unitOfWork.SaveChanges();

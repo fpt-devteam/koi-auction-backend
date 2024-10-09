@@ -10,6 +10,7 @@ namespace AuctionManagementService.Mapper
             return new AuctionDto
             {
                 AuctionId = auction.AuctionId,
+                AuctionName = auction.AuctionName,
                 StaffId = auction.StaffId,
                 StartTime = auction.StartTime,
                 EndTime = auction.EndTime,

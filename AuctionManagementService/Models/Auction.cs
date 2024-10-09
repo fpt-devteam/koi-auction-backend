@@ -17,5 +17,7 @@ public partial class Auction
 
     public DateTime UpdatedAt { get; set; }
 
+    public string AuctionName { get; set; } = null!;
+
     public virtual ICollection<AuctionLot> AuctionLots { get; set; } = new List<AuctionLot>();
 }

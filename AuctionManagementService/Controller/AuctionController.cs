@@ -47,10 +47,11 @@ namespace AuctionManagementService.Controller
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var action = auctionDto.ToAuctionFromCreateAuctionDto();
-            await _unitOfWork.Auctions.CreateAsync(action);
+            var auction = auctionDto.ToAuctionFromCreateAuctionDto();
+            auction.AuctionName = AuctionHelper.GenerateAuctionName(auction);
+            await _unitOfWork.Auctions.CreateAsync(auction);
             _unitOfWork.SaveChanges();
-            return CreatedAtAction(nameof(GetAuctionById), new { id = action.AuctionId }, action.ToAuctionDtoFromAuction());
+            return CreatedAtAction(nameof(GetAuctionById), new { id = auction.AuctionId }, auction.ToAuctionDtoFromAuction());
 
         }
 
