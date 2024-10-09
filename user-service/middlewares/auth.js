@@ -1,4 +1,4 @@
-// const UserRole = require('../models/userRole');
+const Role = require('../models/role');
 
 const authenticate = (req, res, next) => {
    const userId = req.headers["uid"];
@@ -14,7 +14,8 @@ const authenticate = (req, res, next) => {
 
 const verifyRole = (role) => {
    return async (req, res, next) => {
-      if (req.user.UserRoleId !== role) {
+      const userRole = await Role.findOne({ where: { RoleId: req.user.userRoleId } });
+      if (!role.includes(userRole.RoleName)) {
          return res.status(403).json({ message: 'Forbidden' });
       }
       next();

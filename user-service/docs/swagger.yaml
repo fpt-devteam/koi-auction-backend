@@ -1,11 +1,275 @@
 openapi: 3.0.0
 info:
-  title: User Service API
+  title: User and Breeder Management API
   version: 1.0.0
-  description: API for managing user profiles, login, registration, and account updates.
-
-servers:
-  - url: /api
+  description: API for managing users and breeders in the system.
+paths:
+  /profile:
+    get:
+      summary: Get the current user profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved successfully.
+        '401':
+          description: Unauthorized access.
+  /register:
+    post:
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                firstname:
+                  type: string
+                lastname:
+                  type: string
+                phone:
+                  type: string
+                email:
+                  type: string
+      responses:
+        '201':
+          description: User created successfully.
+        '400':
+          description: User already exists.
+  /login:
+    post:
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful.
+        '401':
+          description: Invalid credentials or user is not active.
+  /logout:
+    post:
+      summary: Logout user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logout successful.
+  /update-password:
+    patch:
+      summary: Update user password
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                password:
+                  type: string
+      responses:
+        '201':
+          description: Password updated successfully.
+  /update-profile:
+    patch:
+      summary: Update user profile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                firstname:
+                  type: string
+                lastname:
+                  type: string
+                phone:
+                  type: string
+                email:
+                  type: string
+      responses:
+        '201':
+          description: User profile updated successfully.
+  /delete:
+    delete:
+      summary: Deactivate user account
+      security:
+        - bearerAuth: []
+      responses:
+        '201':
+          description: User deactivated successfully.
+  /breeder/profile:
+    get:
+      summary: Get the breeder profile of the current user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Breeder profile retrieved successfully.
+  /manage/profile:
+    get:
+      summary: Get all user profiles
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of all user profiles.
+    post:
+      summary: Create a new user profile (admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                firstname:
+                  type: string
+                lastname:
+                  type: string
+                phone:
+                  type: string
+                email:
+                  type: string
+                userRoleId:
+                  type: integer
+      responses:
+        '201':
+          description: User profile created successfully.
+  /manage/profile/{id}:
+    get:
+      summary: Get a user profile by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User profile retrieved successfully.
+    patch:
+      summary: Update a user profile by ID
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                firstname:
+                  type: string
+                lastname:
+                  type: string
+                phone:
+                  type: string
+                email:
+                  type: string
+                userRoleId:
+                  type: integer
+      responses:
+        '201':
+          description: User profile updated successfully.
+    delete:
+      summary: Delete a user profile by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User profile deleted successfully.
+  /manage/breeder/profile:
+    get:
+      summary: Get all breeder profiles
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of all breeder profiles.
+  /manage/breeder/profile/{id}:
+    get:
+      summary: Get a breeder profile by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Breeder profile retrieved successfully.
+    patch:
+      summary: Update a breeder profile by ID
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                farmName:
+                  type: string
+                location:
+                  type: string
+                contact:
+                  type: string
+      responses:
+        '201':
+          description: Breeder profile updated successfully.
+    delete:
+      summary: Delete a breeder profile by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Breeder profile deleted successfully.
 
 components:
   securitySchemes:
@@ -13,192 +277,3 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
-  schemas:
-    User:
-      type: object
-      properties:
-        UserId:
-          type: integer
-          description: Unique identifier for the user
-        Username:
-          type: string
-        FirstName:
-          type: string
-        LastName:
-          type: string
-        Phone:
-          type: string
-        Email:
-          type: string
-        Active:
-          type: boolean
-        UserRoleId:
-          type: integer
-        Balance:
-          type: number
-          format: float
-        CreatedAt:
-          type: string
-          format: date-time
-        UpdatedAt:
-          type: string
-          format: date-time
-
-paths:
-  /profile:
-    get:
-      summary: Get user profile
-      description: Fetch the authenticated user's profile.
-      security:
-        - bearerAuth: []
-      responses:
-        200:
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        401:
-          description: Unauthorized
-
-  /login:
-    post:
-      summary: Login user
-      description: Log in a user with username and password, returns a JWT token.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                username:
-                  type: string
-                password:
-                  type: string
-              required:
-                - username
-                - password
-      responses:
-        200:
-          description: Login successful
-        401:
-          description: Invalid username or password
-
-  /register:
-    post:
-      summary: Register new user
-      description: Registers a new user with the provided details.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                username:
-                  type: string
-                password:
-                  type: string
-                firstname:
-                  type: string
-                lastname:
-                  type: string
-                phone:
-                  type: string
-                email:
-                  type: string
-                roleId:
-                  type: integer
-              required:
-                - username
-                - password
-                - firstname
-                - lastname
-                - phone
-                - email
-                - roleId
-      responses:
-        201:
-          description: User created
-        400:
-          description: User already exists
-
-  /update-profile:
-    patch:
-      summary: Update user profile
-      description: Update the authenticated user's profile.
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                username:
-                  type: string
-                firstname:
-                  type: string
-                lastname:
-                  type: string
-                phone:
-                  type: string
-                email:
-                  type: string
-                roleId:
-                  type: integer
-      responses:
-        201:
-          description: Profile updated successfully
-        401:
-          description: Unauthorized
-
-  /update-password:
-    patch:
-      summary: Update user password
-      description: Update the authenticated user's password.
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                password:
-                  type: string
-              required:
-                - password
-      responses:
-        201:
-          description: Password updated successfully
-        400:
-          description: Password is required
-
-  /delete-account:
-    delete:
-      summary: Deactivate user account
-      description: Soft delete the authenticated user's account (set Active to false).
-      security:
-        - bearerAuth: []
-      responses:
-        201:
-          description: User deleted successfully
-        401:
-          description: Unauthorized
-
-  /logout:
-    post:
-      summary: Logout user
-      description: Log out the authenticated user.
-      security:
-        - bearerAuth: []
-      responses:
-        200:
-          description: Logout successful
-        401:
-          description: Unauthorized

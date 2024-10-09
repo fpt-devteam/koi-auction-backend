@@ -14,7 +14,9 @@ const app = express();
 // Middleware setup
 const corsOptions = {
    origin: [
-       'http://localhost:5173',
+      'http://localhost:5173',
+      'http://localhost:3001',
+      'http://localhost:3002',
    ],
    credentials: true,
 };
@@ -38,7 +40,7 @@ const services = [
 
 const limiter = rateLimit({
    windowMs: 1 * 60 * 1000, // 1 minute
-   max: 20, // 20 requests per minute
+   max: 100, // 100 requests per minute
    message: "Too many requests from this IP, please try again after a minute",
 });
 
