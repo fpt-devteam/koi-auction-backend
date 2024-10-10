@@ -93,7 +93,10 @@ namespace AuctionManagementService.Controller
                 newKoiFish.KoiMedia.Add(media);
             }
 
-            _unitOfWork.SaveChanges();
+            if (!await _unitOfWork.SaveChangesAsync())
+            {
+                return BadRequest("An error occurred while saving the data");
+            }
             return CreatedAtAction(nameof(GetLotById), new { id = newLot.LotId }, newLot.ToLotDtoFromLot());
         }
 
@@ -126,7 +129,10 @@ namespace AuctionManagementService.Controller
                 newMedia.KoiFishId = id;
                 await _unitOfWork.KoiMedia.CreateKoiMediaAsync(newMedia);
             }
-            _unitOfWork.SaveChanges();
+            if (!await _unitOfWork.SaveChangesAsync())
+            {
+                return BadRequest("An error occurred while saving the data");
+            }
             return Ok(updateLot.ToLotDtoFromLot());
         }
 
@@ -136,7 +142,10 @@ namespace AuctionManagementService.Controller
             var updateLot = await _unitOfWork.Lots.UpdateLotStatusAsync(id, lotStatusDto);
             if (updateLot == null)
                 return BadRequest();
-            _unitOfWork.SaveChanges();
+            if (!await _unitOfWork.SaveChangesAsync())
+            {
+                return BadRequest("An error occurred while saving the data");
+            }
             return Ok(updateLot.ToLotDtoFromLot());
         }
 
@@ -151,7 +160,10 @@ namespace AuctionManagementService.Controller
             var deleteLot = await _unitOfWork.Lots.DeleteLotAsync(id);
             if (deleteLot == null)
                 return NotFound();
-            _unitOfWork.SaveChanges();
+            if (!await _unitOfWork.SaveChangesAsync())
+            {
+                return BadRequest("An error occurred while saving the data");
+            }
             return NoContent();
         }
     }

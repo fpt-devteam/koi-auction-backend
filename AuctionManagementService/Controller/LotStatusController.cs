@@ -16,7 +16,7 @@ namespace AuctionManagementService.Controller
         private readonly IUnitOfWork _unitOfWork;
         public LotStatusController(IUnitOfWork unitOfWork)
         {
-             _unitOfWork = unitOfWork;            
+            _unitOfWork = unitOfWork;
         }
         [HttpGet]
         public async Task<IActionResult> GetAllLotStatus()
@@ -47,8 +47,11 @@ namespace AuctionManagementService.Controller
             }
             var lotStatus = lotStatusDto.ToLotStatusFromCreateLotStatusDto();
             var newLotStatus = await _unitOfWork.LotStatuses.CreateLotStatusAsync(lotStatus);
-            _unitOfWork.SaveChanges();
-            return CreatedAtAction(nameof(GetLotStatusById), new{id = newLotStatus.LotStatusId}, newLotStatus);
+            if (!await _unitOfWork.SaveChangesAsync())
+            {
+                return BadRequest("An error occurred while saving the data");
+            }
+            return CreatedAtAction(nameof(GetLotStatusById), new { id = newLotStatus.LotStatusId }, newLotStatus);
         }
 
         [HttpPut]
@@ -60,7 +63,10 @@ namespace AuctionManagementService.Controller
                 return BadRequest(ModelState);
             }
             var updateLotStatus = await _unitOfWork.LotStatuses.UpdateLotStatusAsync(id, lotStatusDto);
-            _unitOfWork.SaveChanges();
+            if (!await _unitOfWork.SaveChangesAsync())
+            {
+                return BadRequest("An error occurred while saving the data");
+            }
             return Ok(updateLotStatus);
         }
 
@@ -73,11 +79,14 @@ namespace AuctionManagementService.Controller
                 return BadRequest(ModelState);
             }
             var deleteLotStatus = await _unitOfWork.LotStatuses.DeleteLotStatusAsync(id);
-            if(deleteLotStatus == null)
+            if (deleteLotStatus == null)
             {
                 NotFound();
             }
-            _unitOfWork.SaveChanges();
+            if (!await _unitOfWork.SaveChangesAsync())
+            {
+                return BadRequest("An error occurred while saving the data");
+            }
             return NoContent();
         }
     }

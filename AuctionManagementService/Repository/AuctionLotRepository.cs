@@ -30,7 +30,7 @@ namespace AuctionManagementService.Repository
         {
             var auctionLot = await _context.AuctionLots.
                                 Include(a => a.AuctionLotNavigation)
-                                    .ThenInclude(f => f.KoiFish)
+                                    .ThenInclude(f => f.KoiFish).ThenInclude(m => m!.KoiMedia)
                                 .Include(a => a.AuctionLotNavigation)
                                     .ThenInclude(l => l.AuctionMethod)
                                 .Include(a => a.AuctionLotNavigation)
@@ -45,7 +45,7 @@ namespace AuctionManagementService.Repository
         {
             var auctionLots = await _context.AuctionLots.
             Include(a => a.AuctionLotNavigation)
-                .ThenInclude(f => f.KoiFish)
+                .ThenInclude(f => f.KoiFish).ThenInclude(m => m!.KoiMedia)
             .Include(a => a.AuctionLotNavigation)
                 .ThenInclude(l => l.AuctionMethod)
             .Include(a => a.AuctionLotNavigation)
@@ -63,7 +63,7 @@ namespace AuctionManagementService.Repository
         {
             var auctionLot = await _context.AuctionLots.
             Include(a => a.AuctionLotNavigation)
-                .ThenInclude(f => f.KoiFish)
+                .ThenInclude(f => f.KoiFish).ThenInclude(m => m!.KoiMedia)
             .Include(a => a.AuctionLotNavigation)
                 .ThenInclude(l => l.AuctionMethod)
             .Include(a => a.AuctionLotNavigation)
@@ -79,7 +79,7 @@ namespace AuctionManagementService.Repository
         {
             var auctionLot = await _context.AuctionLots.
                                 Include(a => a.AuctionLotNavigation)
-                                    .ThenInclude(f => f.KoiFish)
+                                    .ThenInclude(f => f.KoiFish).ThenInclude(m => m!.KoiMedia)
                                 .Include(a => a.AuctionLotNavigation)
                                     .ThenInclude(l => l.AuctionMethod)
                                 .Include(a => a.AuctionLotNavigation)

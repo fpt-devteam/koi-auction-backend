@@ -1,5 +1,8 @@
 using AuctionManagementService.Data;
 using AuctionManagementService.IRepository;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 
 namespace AuctionManagementService.Repository
 {
@@ -27,9 +30,25 @@ namespace AuctionManagementService.Repository
         public ILotRepository Lots { get; private set; }
         public ILotStatusRepository LotStatuses { get; private set; }
 
-        public void SaveChanges()
+        public async Task<bool> SaveChangesAsync()
         {
-             _context.SaveChanges();
+            try
+            {
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (DbUpdateException ex)
+            {
+                if (ex.InnerException is SqlException sqlEx && (sqlEx.Number == 547)) // 547 là mã lỗi khóa ngoại của SQL Server
+                {
+                    return false;
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
         }
 
         public void Dispose()

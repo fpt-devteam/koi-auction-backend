@@ -57,7 +57,10 @@ namespace AuctionManagementService.Controller
             await _unitOfWork.Lots.UpdateLotStatusAsync(auctionLot.AuctionLotId,
                                             new Dto.Lot.UpdateLotStatusDto { LotStatusName = "In auction" });
             var newAuctionLot = await _unitOfWork.AuctionLots.CreateAsync(auctionLot);
-            _unitOfWork.SaveChanges();
+            if (!await _unitOfWork.SaveChangesAsync())
+            {
+                return BadRequest("An error occurred while saving the data");
+            }
             return CreatedAtAction(nameof(GetAuctionById), new { id = newAuctionLot.AuctionLotId }, newAuctionLot);
         }
         [HttpPost("listAuctionLot")]
@@ -79,8 +82,10 @@ namespace AuctionManagementService.Controller
             }
 
             await _unitOfWork.AuctionLots.CreateListAsync(auctionLots);
-            _unitOfWork.SaveChanges();
-
+            if (!await _unitOfWork.SaveChangesAsync())
+            {
+                return BadRequest("An error occurred while saving the data");
+            }
             return CreatedAtAction(nameof(GetAuctionById), new { id = auctionLots.First().AuctionLotId }, auctionLots);
         }
 
@@ -93,7 +98,10 @@ namespace AuctionManagementService.Controller
                 return BadRequest(ModelState);
             }
             var auctionLot = await _unitOfWork.AuctionLots.UpdateAsync(id, auctionLotDto);
-            _unitOfWork.SaveChanges();
+            if (!await _unitOfWork.SaveChangesAsync())
+            {
+                return BadRequest("An error occurred while saving the data");
+            }
             return Ok(auctionLot.ToAuctionLotDtoFromActionLot());
         }
 
@@ -112,7 +120,10 @@ namespace AuctionManagementService.Controller
             }
             await _unitOfWork.Lots.UpdateLotStatusAsync(auctionLot.AuctionLotId,
                                                 new Dto.Lot.UpdateLotStatusDto { LotStatusName = "Approved" });
-            _unitOfWork.SaveChanges();
+            if (!await _unitOfWork.SaveChangesAsync())
+            {
+                return BadRequest("An error occurred while saving the data");
+            }
             return NoContent();
         }
     }

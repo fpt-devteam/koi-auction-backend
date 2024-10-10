@@ -40,10 +40,11 @@ builder.Services.AddCors(options =>
         policy.WithOrigins("http://localhost:5173", "https://example.com") // Thay th? b?ng URL frontend c?a b?n
               .AllowAnyHeader()
               .AllowAnyMethod()
-              .AllowCredentials(); // Cho ph�p cookie, header ???c g?i k�m
+              .AllowCredentials(); // Cho ph p cookie, header ???c g?i k m
     });
 });
 
+builder.Services.AddHttpContextAccessor();
 // Thêm HttpClient vào DI
 builder.Services.AddHttpClient();
 

@@ -50,9 +50,11 @@ namespace AuctionManagementService.Controller
             var auction = auctionDto.ToAuctionFromCreateAuctionDto();
             auction.AuctionName = AuctionHelper.GenerateAuctionName(auction);
             await _unitOfWork.Auctions.CreateAsync(auction);
-            _unitOfWork.SaveChanges();
+            if (!await _unitOfWork.SaveChangesAsync())
+            {
+                return BadRequest("An error occurred while saving the data");
+            }
             return CreatedAtAction(nameof(GetAuctionById), new { id = auction.AuctionId }, auction.ToAuctionDtoFromAuction());
-
         }
 
         [HttpPut]
@@ -62,7 +64,10 @@ namespace AuctionManagementService.Controller
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             var action = await _unitOfWork.Auctions.UpdateAsync(id, auctionDto);
-            _unitOfWork.SaveChanges();
+            if (!await _unitOfWork.SaveChangesAsync())
+            {
+                return BadRequest("An error occurred while saving the data");
+            }
             return Ok(action.ToAuctionDtoFromAuction());
         }
 
@@ -84,7 +89,10 @@ namespace AuctionManagementService.Controller
                 }
             }
             await _unitOfWork.Auctions.DeleteAsync(id);
-            _unitOfWork.SaveChanges();
+            if (!await _unitOfWork.SaveChangesAsync())
+            {
+                return BadRequest("An error occurred while saving the data");
+            }
             return NoContent();
         }
     }
