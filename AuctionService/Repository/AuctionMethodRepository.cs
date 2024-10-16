@@ -10,6 +10,7 @@ namespace AuctionService.Repository
     public class AuctionMethodRepository : IAuctionMethodRepository
     {
         private readonly AuctionManagementDbContext _context;
+
         public AuctionMethodRepository(AuctionManagementDbContext context)
         {
             _context = context;
@@ -17,7 +18,6 @@ namespace AuctionService.Repository
         public async Task<AuctionMethod> CreateAsync(AuctionMethod auctionMethod)
         {
             await _context.AuctionMethods.AddAsync(auctionMethod);
-
             return auctionMethod;
         }
 
