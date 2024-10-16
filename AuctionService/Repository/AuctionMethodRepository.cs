@@ -9,6 +9,7 @@ namespace AuctionService.Repository
     public class AuctionMethodRepository : IAuctionMethodRepository
     {
         private readonly AuctionManagementDbContext _context;
+
         public AuctionMethodRepository(AuctionManagementDbContext context)
         {
             _context = context;
@@ -16,7 +17,6 @@ namespace AuctionService.Repository
         public async Task<AuctionMethod> CreateAsync(AuctionMethod auctionMethod)
         {
             await _context.AuctionMethods.AddAsync(auctionMethod);
-
             return auctionMethod;
         }
 
@@ -25,10 +25,9 @@ namespace AuctionService.Repository
             var method = await _context.AuctionMethods.FirstOrDefaultAsync(m => m.AuctionMethodId == id);
             if (method == null)
             {
-                return null;
+                return null!;
             }
             _context.Remove(method);
-            _context.SaveChangesAsync();
             return method;
         }
 
@@ -42,7 +41,7 @@ namespace AuctionService.Repository
             var method = await _context.AuctionMethods.FirstOrDefaultAsync(m => m.AuctionMethodId == id);
             if (method == null)
             {
-                return null;
+                return null!;
             }
             return method;
         }
@@ -51,7 +50,7 @@ namespace AuctionService.Repository
             var method = await _context.AuctionMethods.FirstOrDefaultAsync(m => m.AuctionMethodId == id);
             if (method == null)
             {
-                return null;
+                return null!;
             }
             method.AuctionMethodName = updateAuctionMethodDto.AuctionMethodName;
             method.Description = updateAuctionMethodDto.Description;
