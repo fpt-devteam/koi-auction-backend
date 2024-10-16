@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using AuctionManagementService.Models;
 using AuctionService.Models;
 
 namespace AuctionService.Helper

@@ -1,3 +1,4 @@
+using AuctionManagementService.Models;
 using AuctionService.Models;
 
 namespace AuctionService.Helper

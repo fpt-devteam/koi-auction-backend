@@ -1,4 +1,5 @@
-using AuctionService.Data;
+using AuctionManagementService.Data;
+using AuctionManagementService.Models;
 using AuctionService.Dto.Auction;
 using AuctionService.Helper;
 using AuctionService.IRepository;
@@ -33,9 +34,9 @@ namespace AuctionService.Repository
                                             .Include(a => a.AuctionLots)
                                                 .ThenInclude(a => a.AuctionLotNavigation)
                                                     .ThenInclude(s => s.LotStatus).FirstOrDefaultAsync(a => a.AuctionId == id);
-            _context.Remove(auction);
+            _context.Remove(auction!);
 
-            return auction;
+            return auction!;
         }
 
         public async Task<List<Auction>> GetAllAsync(AuctionQueryObject query)
@@ -71,7 +72,7 @@ namespace AuctionService.Repository
 
         public async Task<Auction> GetByIdAsync(int id)
         {
-            return await _context.Auctions.Include(a => a.AuctionLots)
+            var auction = await _context.Auctions.Include(a => a.AuctionLots)
                                                 .ThenInclude(l => l.AuctionLotNavigation)
                                                     .ThenInclude(k => k.KoiFish)
                                             .Include(a => a.AuctionLots)
@@ -80,6 +81,7 @@ namespace AuctionService.Repository
                                             .Include(a => a.AuctionLots)
                                                 .ThenInclude(a => a.AuctionLotNavigation)
                                                     .ThenInclude(s => s.LotStatus).FirstOrDefaultAsync(a => a.AuctionId == id);
+            return auction!;
         }
 
         public async Task<Auction> UpdateAsync(int id, UpdateAuctionDto updateAuctionDto)
@@ -93,7 +95,7 @@ namespace AuctionService.Repository
                                             .Include(a => a.AuctionLots)
                                                 .ThenInclude(a => a.AuctionLotNavigation)
                                                     .ThenInclude(s => s.LotStatus).FirstOrDefaultAsync(a => a.AuctionId == id);
-            auction.StaffId = updateAuctionDto.StaffId;
+            auction!.StaffId = updateAuctionDto.StaffId;
             auction.StartTime = updateAuctionDto.StartTime;
             auction.EndTime = updateAuctionDto.EndTime;
 

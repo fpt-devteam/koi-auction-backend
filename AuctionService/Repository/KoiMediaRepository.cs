@@ -1,4 +1,4 @@
-using AuctionService.Data;
+using AuctionManagementService.Data;
 using AuctionService.Dto.KoiMedia;
 using AuctionService.IRepository;
 using AuctionService.Models;
@@ -25,7 +25,7 @@ namespace AuctionService.Repository
             var deleteKoiMedia = await _context.KoiMedia.Where(m => m.KoiFishId == id).ToListAsync();
             if (deleteKoiMedia == null)
             {
-                return null;
+                return null!;
             }
             foreach (var media in deleteKoiMedia)
             {

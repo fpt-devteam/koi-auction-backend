@@ -83,9 +83,11 @@ namespace AuctionService.Controller
             var auctionLots = deletedAuction.AuctionLots;
             if (auctionLots != null)
             {
-                foreach (var acutionLot in auctionLots)
+                foreach (var auctionLot in auctionLots)
                 {
-                    await _unitOfWork.AuctionLots.DeleteAsync(acutionLot.AuctionLotId);
+                    await _unitOfWork.AuctionLots.DeleteAsync(auctionLot.AuctionLotId);
+                    await _unitOfWork.Lots.UpdateLotStatusAsync(auctionLot.AuctionLotId,
+                                            new Dto.Lot.UpdateLotStatusDto { LotStatusName = "Approved" });
                 }
             }
             await _unitOfWork.Auctions.DeleteAsync(id);

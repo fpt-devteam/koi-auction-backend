@@ -10,8 +10,9 @@ namespace AuctionService.Dto.AuctionLot
         public int OrderInAuction { get; set; }
         [Required]
         public int StepPercent { get; set; }
-
         [Required]
         public int AuctionId { get; set; }
+        public DateTime? StartTime { get; set; }
+        public DateTime? EndTime { get; set; }
     }
 }

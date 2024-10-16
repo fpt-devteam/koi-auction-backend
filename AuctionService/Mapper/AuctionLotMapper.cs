@@ -1,3 +1,4 @@
+using AuctionManagementService.Models;
 using AuctionService.Dto.AuctionLot;
 using AuctionService.Models;
 
@@ -20,6 +21,7 @@ namespace AuctionService.Mapper
                 CreatedAt = auctionLot.CreatedAt,
                 StepPercent = auctionLot.StepPercent,
                 EndTime = auctionLot.EndTime,
+                StartTime = auctionLot.StartTime,
                 LotDto = auctionLot.AuctionLotNavigation.ToLotDtoFromLot()
             };
         }

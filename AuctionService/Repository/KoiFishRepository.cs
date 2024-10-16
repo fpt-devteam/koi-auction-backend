@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AuctionService.IRepository;
-using AuctionService.Data;
 using AuctionService.Models;
 using AuctionService.Dto.KoiFish;
 using Microsoft.EntityFrameworkCore;
+using AuctionManagementService.Models;
+using AuctionManagementService.Data;
 
 namespace AuctionService.Repository
 {

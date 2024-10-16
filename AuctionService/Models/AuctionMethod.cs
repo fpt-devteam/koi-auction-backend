@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace AuctionService.Models;
+namespace AuctionManagementService.Models;
 
 public partial class AuctionMethod
 {

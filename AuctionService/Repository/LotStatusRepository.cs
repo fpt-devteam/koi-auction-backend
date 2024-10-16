@@ -1,4 +1,5 @@
-using AuctionService.Data;
+using AuctionManagementService.Data;
+using AuctionManagementService.Models;
 using AuctionService.Dto.AuctionLot;
 using AuctionService.Dto.LotStatus;
 using AuctionService.IRepository;
@@ -26,7 +27,7 @@ namespace AuctionService.Repository
             var lotStatus = await _context.LotStatuses.FirstOrDefaultAsync(l => l.LotStatusId == id);
             if (lotStatus == null)
             {
-                return null;
+                return null!;
             }
             _context.Remove(lotStatus);
 
@@ -48,9 +49,9 @@ namespace AuctionService.Repository
             var lotStatus = await _context.LotStatuses.FirstOrDefaultAsync(l => l.LotStatusId == id);
             if (lotStatus == null)
             {
-                return null;
+                return null!;
             }
-            lotStatus.LotStatusName = lotStatusDto.LotStatusName;
+            lotStatus.LotStatusName = lotStatusDto.LotStatusName!;
 
             return lotStatus;
         }

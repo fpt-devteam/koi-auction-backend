@@ -11,5 +11,6 @@ namespace AuctionService.Dto.AuctionLot
         public int StepPercent { get; set; }
         public DateTime? EndTime { get; set; }
         public LotDto? LotDto { get; set; }
+        public DateTime? StartTime { get; set; }
     }
 }

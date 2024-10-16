@@ -1,4 +1,4 @@
-using AuctionService.Data;
+using AuctionManagementService.Data;
 using AuctionService.IRepository;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Data.SqlClient;

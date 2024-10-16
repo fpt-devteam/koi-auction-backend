@@ -126,5 +126,35 @@ namespace AuctionService.Controller
             }
             return NoContent();
         }
+
+        [HttpDelete("listAuctionLot")]
+        public async Task<ActionResult> DeleteListAuctionLot([FromBody] List<int> ids)
+        {
+            if (ids == null)
+            {
+                return BadRequest("List is empty");
+            }
+
+            var deletedAuctionLots = await _unitOfWork.AuctionLots.DeleteListAsync(ids);
+
+            if (deletedAuctionLots == null)
+            {
+                return NotFound("ids not existed");
+            }
+
+            foreach (var auctionLot in deletedAuctionLots)
+            {
+                await _unitOfWork.Lots.UpdateLotStatusAsync(auctionLot.AuctionLotId,
+                                            new Dto.Lot.UpdateLotStatusDto { LotStatusName = "Approved" });
+            }
+
+            if (!await _unitOfWork.SaveChangesAsync())
+            {
+                return BadRequest("An error occurred while saving the data");
+            }
+
+            return Ok(deletedAuctionLots);
+        }
     }
+
 }

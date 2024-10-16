@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace AuctionService.Models;
+namespace AuctionManagementService.Models;
 
 public partial class AuctionLot
 {
@@ -20,6 +20,8 @@ public partial class AuctionLot
     public int StepPercent { get; set; }
 
     public DateTime? EndTime { get; set; }
+
+    public DateTime? StartTime { get; set; }
 
     public virtual Auction Auction { get; set; } = null!;
 

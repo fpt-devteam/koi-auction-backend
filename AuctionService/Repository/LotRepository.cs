@@ -2,13 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AuctionService.Data;
 using AuctionService.Models;
 using AuctionService.Dto.Lot;
 using AuctionService.Dto.LotRequestForm;
 using AuctionService.IRepository;
 using Microsoft.EntityFrameworkCore;
 using AuctionService.Helper;
+using AuctionManagementService.Models;
+using AuctionManagementService.Data;
 
 namespace AuctionService.Repository
 {
@@ -120,6 +121,11 @@ namespace AuctionService.Repository
                         lots = query.IsDescending
                             ? lots.OrderByDescending(l => l.CreatedAt)
                             : lots.OrderBy(l => l.CreatedAt);
+                        break;
+                    case "updatedat":
+                        lots = query.IsDescending
+                            ? lots.OrderByDescending(l => l.UpdatedAt)
+                            : lots.OrderBy(l => l.UpdatedAt);
                         break;
 
                     case "sizecm":

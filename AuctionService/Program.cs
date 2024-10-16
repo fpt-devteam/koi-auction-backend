@@ -1,10 +1,10 @@
 
 using AuctionService.Controller;
-using AuctionService.Data;
 using AuctionService.IRepository;
 using AuctionService.Repository;
 using AuctionService.Middlewares;
 using Microsoft.EntityFrameworkCore;
+using AuctionManagementService.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 

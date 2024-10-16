@@ -1,3 +1,4 @@
+using AuctionManagementService.Models;
 using AuctionService.Dto.Auction;
 using AuctionService.Helper;
 using AuctionService.Models;

@@ -1,3 +1,4 @@
+using AuctionManagementService.Models;
 using AuctionService.Dto.AuctionLot;
 using AuctionService.Helper;
 using AuctionService.Models;
@@ -12,6 +13,7 @@ namespace AuctionService.IRepository
         Task<List<AuctionLot>> CreateListAsync(List<AuctionLot> auctionLots);
         Task<AuctionLot> UpdateAsync(int id, UpdateAuctionLotDto updateAuctionLotDto);
         Task<AuctionLot> DeleteAsync(int id);
+        Task<List<AuctionLot>> DeleteListAsync(List<int> ids);
 
     }
 }

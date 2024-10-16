@@ -1,4 +1,5 @@
-using AuctionService.Data;
+using AuctionManagementService.Data;
+using AuctionManagementService.Models;
 using AuctionService.Dto.AuctionLot;
 using AuctionService.Helper;
 using AuctionService.IRepository;
@@ -39,6 +40,27 @@ namespace AuctionService.Repository
                 return null!;
             _context.Remove(auctionLot);
             return auctionLot;
+        }
+
+        public async Task<List<AuctionLot>> DeleteListAsync(List<int> ids)
+        {
+            var auctionLots = await _context.AuctionLots
+                                .Where(a => ids.Contains(a.AuctionLotId))
+                                .Include(a => a.AuctionLotNavigation)
+                                    .ThenInclude(f => f.KoiFish)
+                                        .ThenInclude(m => m!.KoiMedia)
+                                .Include(a => a.AuctionLotNavigation)
+                                    .ThenInclude(l => l.AuctionMethod)
+                                .Include(a => a.AuctionLotNavigation)
+                                    .ThenInclude(s => s.LotStatus)
+                                    .ToListAsync();
+
+            if (auctionLots == null)
+            {
+                return null!; // Không tìm thấy bất kỳ AuctionLot nào để xóa
+            }
+            _context.AuctionLots.RemoveRange(auctionLots);
+            return auctionLots; // Trả về danh sách các AuctionLot đã xóa
         }
 
         public async Task<List<AuctionLot>> GetAllAsync(AuctionLotQueryObject query)
@@ -90,6 +112,8 @@ namespace AuctionService.Repository
             auctionLot.OrderInAuction = updateAuctionLotDto.OrderInAuction;
             auctionLot.StepPercent = updateAuctionLotDto.StepPercent;
             auctionLot.AuctionId = updateAuctionLotDto.AuctionId;
+            auctionLot.StartTime = updateAuctionLotDto.StartTime;
+            auctionLot.EndTime = updateAuctionLotDto.EndTime;
             return auctionLot;
         }
 

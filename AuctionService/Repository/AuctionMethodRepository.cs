@@ -1,4 +1,5 @@
-using AuctionService.Data;
+using AuctionManagementService.Data;
+using AuctionManagementService.Models;
 using AuctionService.Dto;
 using AuctionService.IRepository;
 using AuctionService.Models;
@@ -25,10 +26,9 @@ namespace AuctionService.Repository
             var method = await _context.AuctionMethods.FirstOrDefaultAsync(m => m.AuctionMethodId == id);
             if (method == null)
             {
-                return null;
+                return null!;
             }
             _context.Remove(method);
-            _context.SaveChangesAsync();
             return method;
         }
 
@@ -42,7 +42,7 @@ namespace AuctionService.Repository
             var method = await _context.AuctionMethods.FirstOrDefaultAsync(m => m.AuctionMethodId == id);
             if (method == null)
             {
-                return null;
+                return null!;
             }
             return method;
         }
@@ -51,7 +51,7 @@ namespace AuctionService.Repository
             var method = await _context.AuctionMethods.FirstOrDefaultAsync(m => m.AuctionMethodId == id);
             if (method == null)
             {
-                return null;
+                return null!;
             }
             method.AuctionMethodName = updateAuctionMethodDto.AuctionMethodName;
             method.Description = updateAuctionMethodDto.Description;
