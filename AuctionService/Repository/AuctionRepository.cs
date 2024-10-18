@@ -102,5 +102,23 @@ namespace AuctionService.Repository
             return auction;
         }
 
+        public async Task<IEnumerable<Auction>> GetAuctionsReadyToStartAsync(DateTime? currentTime)
+        {
+            // var auctions = _context.Auctions.Include(a => a.AuctionLots)
+            //                                     .ThenInclude(l => l.AuctionLotNavigation)
+            //                                         .ThenInclude(k => k.KoiFish)
+            //                                 .Include(a => a.AuctionLots)
+            //                                     .ThenInclude(a => a.AuctionLotNavigation)
+            //                                         .ThenInclude(l => l.AuctionMethod)
+            //                                 .Include(a => a.AuctionLots)
+            //                                     .ThenInclude(a => a.AuctionLotNavigation)
+            //                                         .ThenInclude(s => s.LotStatus).AsQueryable();
+            // if (currentTime.HasValue)
+            // {
+            //     auctions = auctions.Where(a => a. && a.StartTime <= currentTime);
+            // }
+            // return await auctions.ToListAsync();
+            return null;
+        }
     }
 }
