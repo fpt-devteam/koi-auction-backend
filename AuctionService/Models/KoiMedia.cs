@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using AuctionManagementService.Models;
+using AuctionService.Models;
 
 namespace AuctionService.Models;
 

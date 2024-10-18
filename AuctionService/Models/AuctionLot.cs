@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace AuctionManagementService.Models;
+namespace AuctionService.Models;
 
 public partial class AuctionLot
 {
@@ -17,7 +17,7 @@ public partial class AuctionLot
 
     public DateTime UpdatedAt { get; set; }
 
-    public int StepPercent { get; set; }
+    public int? StepPercent { get; set; }
 
     public DateTime? EndTime { get; set; }
 

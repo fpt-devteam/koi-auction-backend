@@ -2,9 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AuctionManagementService.Models;
-using AuctionService.Dto.KoiFish;
 using AuctionService.Models;
+using AuctionService.Dto.KoiFish;
 
 namespace AuctionService.IRepository
 {

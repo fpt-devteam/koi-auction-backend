@@ -1,7 +1,6 @@
-using AuctionManagementService.Models;
+using AuctionService.Models;
 using AuctionService.Dto.AuctionLot;
 using AuctionService.Dto.LotStatus;
-using AuctionService.Models;
 
 namespace AuctionService.IRepository
 {

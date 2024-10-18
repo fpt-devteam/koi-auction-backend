@@ -3,6 +3,7 @@ using AuctionService.Helper;
 using AuctionService.IRepository;
 using AuctionService.Mapper;
 using AuctionService.Models;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AuctionService.Controller
@@ -25,7 +26,7 @@ namespace AuctionService.Controller
             var auctionLots = await _unitOfWork.AuctionLots.GetAllAsync(query);
             var tasks = auctionLots.Select(async auctionLot =>
             {
-                var auctionLotDto = auctionLot.ToAuctionLotDtoFromActionLot();
+                var auctionLotDto = auctionLot.ToAuctionLotDtoFromAuctionLot();
                 auctionLotDto!.LotDto!.BreederDetailDto = await _breederDetailController.GetBreederByIdAsync(auctionLotDto.LotDto.BreederId);
                 return auctionLotDto;
             }).ToList();
@@ -43,7 +44,7 @@ namespace AuctionService.Controller
             var auctionLot = await _unitOfWork.AuctionLots.GetAuctionLotById(id);
             if (auctionLot == null)
                 return NotFound();
-            var auctionLotDto = auctionLot.ToAuctionLotDtoFromActionLot();
+            var auctionLotDto = auctionLot.ToAuctionLotDtoFromAuctionLot();
             auctionLotDto!.LotDto!.BreederDetailDto = await _breederDetailController.GetBreederByIdAsync(auctionLotDto.LotDto.BreederId);
             return Ok(auctionLotDto);
         }
@@ -97,13 +98,18 @@ namespace AuctionService.Controller
             {
                 return BadRequest(ModelState);
             }
-            var auctionLot = await _unitOfWork.AuctionLots.UpdateAsync(id, auctionLotDto);
+            var auctionLot = await _unitOfWork.AuctionLots.GetAuctionLotById(id);
+            if (auctionLot == null)
+                return NotFound();
+            _unitOfWork.AuctionLots.Update(auctionLot, auctionLotDto);
             if (!await _unitOfWork.SaveChangesAsync())
             {
                 return BadRequest("An error occurred while saving the data");
             }
-            return Ok(auctionLot.ToAuctionLotDtoFromActionLot());
+            return Ok(auctionLot.ToAuctionLotDtoFromAuctionLot());
         }
+
+
 
         [HttpDelete]
         [Route("{id:int}")]

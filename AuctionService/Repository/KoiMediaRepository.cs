@@ -1,4 +1,4 @@
-using AuctionManagementService.Data;
+using AuctionService.Data;
 using AuctionService.Dto.KoiMedia;
 using AuctionService.IRepository;
 using AuctionService.Models;
