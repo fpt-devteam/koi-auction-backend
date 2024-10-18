@@ -28,6 +28,11 @@ namespace AuctionService.Middlewares
                     { HttpMethods.Delete, new[] { UserRole.Breeder, UserRole.Staff,  UserRole.Admin } } // DELETE cho Breeder và Staff
                 }
             },
+            { "/api/lots/{id}/status", new Dictionary<string, UserRole[]>
+                {
+                    { HttpMethods.Put, new[] { UserRole.Staff,  UserRole.Admin } }, // PUT cho Breeder và Staff
+                }
+            },
             { "/api/auctions", new Dictionary<string, UserRole[]>
                 {
                     { HttpMethods.Post, new[] { UserRole.Staff,  UserRole.Admin } } // POST chỉ dành cho Staff
@@ -45,6 +50,12 @@ namespace AuctionService.Middlewares
                 }
             },
             { "/api/auction-lots/{id}", new Dictionary<string, UserRole[]>
+                {
+                    { HttpMethods.Put, new[] { UserRole.Staff,  UserRole.Admin } }, // PUT chỉ dành cho Staff
+                    { HttpMethods.Delete, new[] { UserRole.Staff,  UserRole.Admin } } // DELETE chỉ dành cho Staff
+                }
+            },
+            { "/api/auction-lots/listAuctionLot", new Dictionary<string, UserRole[]>
                 {
                     { HttpMethods.Put, new[] { UserRole.Staff,  UserRole.Admin } }, // PUT chỉ dành cho Staff
                     { HttpMethods.Delete, new[] { UserRole.Staff,  UserRole.Admin } } // DELETE chỉ dành cho Staff
@@ -90,7 +101,7 @@ namespace AuctionService.Middlewares
             Console.WriteLine($"User ID: {userId}, Role: {userRoleId}, Route: {route}");
 
             // Kiểm tra nếu route không cần phân quyền (không có trong Dictionary)
-            if (!_routePermissions.ContainsKey(route) || !_routePermissions[route].ContainsKey(httpMethod))
+            if (!_routePermissions.ContainsKey(route!) || !_routePermissions[route!].ContainsKey(httpMethod))
             {
                 await _next(context);
                 return;
@@ -115,9 +126,9 @@ namespace AuctionService.Middlewares
             var userRole = (UserRole)roleId; // Chuyển đổi int thành Enum
 
             // Kiểm tra quyền hạn dựa trên route và phương thức HTTP
-            if (_routePermissions.ContainsKey(route) && _routePermissions[route].ContainsKey(httpMethod))
+            if (_routePermissions.ContainsKey(route!) && _routePermissions[route!].ContainsKey(httpMethod))
             {
-                var allowedRoles = _routePermissions[route][httpMethod];
+                var allowedRoles = _routePermissions[route!][httpMethod];
                 if (!allowedRoles.Contains(userRole))
                 {
                     context.Response.StatusCode = StatusCodes.Status403Forbidden;

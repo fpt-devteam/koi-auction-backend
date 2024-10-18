@@ -6,8 +6,8 @@ using AuctionService.IRepository;
 using AuctionService.Models;
 using AuctionService.Dto.KoiFish;
 using Microsoft.EntityFrameworkCore;
-using AuctionManagementService.Models;
-using AuctionManagementService.Data;
+using AuctionService.Models;
+using AuctionService.Data;
 
 namespace AuctionService.Repository
 {

@@ -1,7 +1,6 @@
-using AuctionManagementService.Models;
+using AuctionService.Models;
 using AuctionService.Dto.AuctionLot;
 using AuctionService.Helper;
-using AuctionService.Models;
 
 namespace AuctionService.IRepository
 {
@@ -11,7 +10,7 @@ namespace AuctionService.IRepository
         Task<AuctionLot> GetAuctionLotById(int id);
         Task<AuctionLot> CreateAsync(AuctionLot auctionLot);
         Task<List<AuctionLot>> CreateListAsync(List<AuctionLot> auctionLots);
-        Task<AuctionLot> UpdateAsync(int id, UpdateAuctionLotDto updateAuctionLotDto);
+        AuctionLot Update(AuctionLot auctionLot, UpdateAuctionLotDto updateAuctionLotDto);
         Task<AuctionLot> DeleteAsync(int id);
         Task<List<AuctionLot>> DeleteListAsync(List<int> ids);
 
