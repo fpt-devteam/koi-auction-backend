@@ -23,7 +23,11 @@ public partial class AuctionLot
 
     public DateTime? StartTime { get; set; }
 
+    public int AuctionLotStatusId { get; set; }
+
     public virtual Auction Auction { get; set; } = null!;
 
     public virtual Lot AuctionLotNavigation { get; set; } = null!;
+
+    public virtual AuctionLotStatus AuctionLotStatus { get; set; } = null!;
 }

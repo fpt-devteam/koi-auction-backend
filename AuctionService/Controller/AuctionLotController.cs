@@ -37,7 +37,7 @@ namespace AuctionService.Controller
 
         [HttpGet]
         [Route("{id:int}")]
-        public async Task<IActionResult> GetAuctionById([FromRoute] int id)
+        public async Task<IActionResult> GetAuctionLotById([FromRoute] int id)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -62,7 +62,7 @@ namespace AuctionService.Controller
             {
                 return BadRequest("An error occurred while saving the data");
             }
-            return CreatedAtAction(nameof(GetAuctionById), new { id = newAuctionLot.AuctionLotId }, newAuctionLot);
+            return CreatedAtAction(nameof(GetAuctionLotById), new { id = newAuctionLot.AuctionLotId }, newAuctionLot);
         }
         [HttpPost("listAuctionLot")]
         public async Task<ActionResult> CreateListAuctionLot([FromBody] List<CreateAuctionLotDto> listAuctionLotDto)
@@ -87,13 +87,14 @@ namespace AuctionService.Controller
             {
                 return BadRequest("An error occurred while saving the data");
             }
-            return CreatedAtAction(nameof(GetAuctionById), new { id = auctionLots.First().AuctionLotId }, auctionLots);
+            return CreatedAtAction(nameof(GetAuctionLotById), new { id = auctionLots.First().AuctionLotId }, auctionLots);
         }
 
         [HttpPut]
         [Route("{id:int}")]
         public async Task<ActionResult> UpdateAuctionLot([FromRoute] int id, [FromBody] UpdateAuctionLotDto auctionLotDto)
         {
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
