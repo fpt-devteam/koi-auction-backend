@@ -33,7 +33,8 @@ namespace AuctionService.Repository
                                                     .ThenInclude(l => l.AuctionMethod)
                                             .Include(a => a.AuctionLots)
                                                 .ThenInclude(a => a.AuctionLotNavigation)
-                                                    .ThenInclude(s => s.LotStatus).FirstOrDefaultAsync(a => a.AuctionId == id);
+                                                    .ThenInclude(s => s.LotStatus)
+                                            .Include(a => a.AuctionStatus).FirstOrDefaultAsync(a => a.AuctionId == id);
             _context.Remove(auction!);
 
             return auction!;
@@ -49,7 +50,7 @@ namespace AuctionService.Repository
                                                     .ThenInclude(l => l.AuctionMethod)
                                             .Include(a => a.AuctionLots)
                                                 .ThenInclude(a => a.AuctionLotNavigation)
-                                                    .ThenInclude(s => s.LotStatus).AsQueryable();
+                                                    .ThenInclude(s => s.LotStatus).Include(a => a.AuctionStatus).AsQueryable();
             // Lọc theo StaffId nếu có
             if (query.StaffId.HasValue)
             {
@@ -80,7 +81,7 @@ namespace AuctionService.Repository
                                                     .ThenInclude(l => l.AuctionMethod)
                                             .Include(a => a.AuctionLots)
                                                 .ThenInclude(a => a.AuctionLotNavigation)
-                                                    .ThenInclude(s => s.LotStatus).FirstOrDefaultAsync(a => a.AuctionId == id);
+                                                    .ThenInclude(s => s.LotStatus).Include(a => a.AuctionStatus).FirstOrDefaultAsync(a => a.AuctionId == id);
             return auction!;
         }
 
@@ -94,7 +95,7 @@ namespace AuctionService.Repository
                                                     .ThenInclude(l => l.AuctionMethod)
                                             .Include(a => a.AuctionLots)
                                                 .ThenInclude(a => a.AuctionLotNavigation)
-                                                    .ThenInclude(s => s.LotStatus).FirstOrDefaultAsync(a => a.AuctionId == id);
+                                                    .ThenInclude(s => s.LotStatus).Include(a => a.AuctionStatus).FirstOrDefaultAsync(a => a.AuctionId == id);
             auction!.StaffId = updateAuctionDto.StaffId;
             auction.StartTime = updateAuctionDto.StartTime;
             auction.EndTime = updateAuctionDto.EndTime;

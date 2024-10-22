@@ -31,6 +31,8 @@ builder.Services.AddScoped<IAuctionMethodRepository, AuctionMethodRepository>();
 builder.Services.AddScoped<ILotStatusRepository, LotStatusRepository>();
 builder.Services.AddScoped<IAuctionRepository, AuctionRepository>();
 builder.Services.AddScoped<IAuctionLotRepository, AuctionLotRepository>();
+builder.Services.AddScoped<IAuctionStatusRepository, AuctionStatusRepository>();
+builder.Services.AddScoped<IAuctionLotStatusRepository, AuctionLotStatusRepository>();
 // Đăng ký MemoryCache
 builder.Services.AddMemoryCache();
 builder.Services.AddCors(options =>
