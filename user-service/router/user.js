@@ -27,6 +27,7 @@ router.delete("/manage/profile/:id", authenticate, highRole, controller.manageDe
 
 router.get("/manage/breeder/profile", controller.getAllBreederProfiles);
 router.get("/manage/breeder/profile/:id", controller.getBreederProfileById);
+router.get("/manage/breeder/detail-profile/:id", authenticate, highRole, controller.manageGetBreederProfile);
 router.patch("/manage/breeder/profile/:id", authenticate, highRole, controller.manageUpdateBreederProfile);
 router.delete("/manage/breeder/profile/:id", authenticate, highRole, controller.manageDeleteBreederProfile);
 
