@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using BiddingService.IRepositories;
 using BiddingService.IServices;
-using BiddingService.Mapper;
+using BiddingService.Mappers;
 using BiddingService.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
@@ -18,43 +18,43 @@ namespace BiddingService.Services
         {
             _unitOfWork = unitOfWork;
         }
-        public async Task<BidLog> CreateBidLog(BidLog bidLog)
-        {
-            try
-            {
-                var curBid = await _unitOfWork.BidLog.GetMaxAmountByAuctionLotIdAsync(bidLog.AuctionLotId);
+        // public async Task<BidLog> CreateBidLog(BidLog bidLog)
+        // {
+        //     try
+        //     {
+        //         var curBid = await _unitOfWork.BidLog.GetMaxAmountByAuctionLotIdAsync(bidLog.AuctionLotId);
 
-                if (curBid != null)
-                {
-                    if (bidLog.BidAmount <= curBid.MaxBidAmount)
-                    {
-                        throw new InvalidOperationException("Bid amount must be higher than the current highest bid.");
-                    }
-                }
+        //         if (curBid != null)
+        //         {
+        //             if (bidLog.BidAmount <= curBid.MaxBidAmount)
+        //             {
+        //                 throw new InvalidOperationException("Bid amount must be higher than the current highest bid.");
+        //             }
+        //         }
 
-                var newBid = await _unitOfWork.BidLog.CreateAsync(bidLog);
-                if (!await _unitOfWork.SaveChangesAsync())
-                {
-                    throw new Exception("An error occurred while saving the data");
-                }
-                return newBid;
-            }
-            catch (InvalidOperationException ex)
-            {
-                // Xử lý ngoại lệ liên quan đến giá thầu không hợp lệ
-                throw new InvalidOperationException(ex.Message, ex);
-            }
-            catch (DbUpdateException ex)
-            {
-                // Xử lý lỗi khi cập nhật cơ sở dữ liệu
-                throw new Exception("An error occurred while saving the bid log. Please try again.", ex);
-            }
-            catch (Exception ex)
-            {
-                // Xử lý các ngoại lệ không mong đợi
-                throw new Exception("An unexpected error occurred while creating the bid log.", ex);
-            }
-        }
+        //         var newBid = await _unitOfWork.BidLog.CreateAsync(bidLog);
+        //         if (!await _unitOfWork.SaveChangesAsync())
+        //         {
+        //             throw new Exception("An error occurred while saving the data");
+        //         }
+        //         return newBid;
+        //     }
+        //     catch (InvalidOperationException ex)
+        //     {
+        //         // Xử lý ngoại lệ liên quan đến giá thầu không hợp lệ
+        //         throw new InvalidOperationException(ex.Message, ex);
+        //     }
+        //     catch (DbUpdateException ex)
+        //     {
+        //         // Xử lý lỗi khi cập nhật cơ sở dữ liệu
+        //         throw new Exception("An error occurred while saving the bid log. Please try again.", ex);
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         // Xử lý các ngoại lệ không mong đợi
+        //         throw new Exception("An unexpected error occurred while creating the bid log.", ex);
+        //     }
+        // }
 
         public async Task<List<BidLog>> GetAllBidLog()
         {

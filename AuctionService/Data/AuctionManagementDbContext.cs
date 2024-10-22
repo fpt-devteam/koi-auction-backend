@@ -42,7 +42,7 @@ public partial class AuctionManagementDbContext : DbContext
                     .Build();
         var strConn = config["ConnectionStrings:DefaultConnectionStringDB"];
 
-        return strConn;
+        return strConn!;
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

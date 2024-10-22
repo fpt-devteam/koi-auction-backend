@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using BiddingService.Dto.BidLog;
 using BiddingService.IServices;
-using BiddingService.Mapper;
+using BiddingService.Mappers;
 using BiddingService.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -19,11 +19,11 @@ namespace BiddingService.Controllers
         private readonly IBidLogService _service;
 
 
-        private readonly PlaceBidService _placeBidService;
-        public BidLogController(IBidLogService service, PlaceBidService placeBidService)
+        // private readonly PlaceBidService _placeBidService;
+        public BidLogController(IBidLogService service)
         {
             _service = service;
-            _placeBidService = placeBidService;
+            // _placeBidService = placeBidService;
         }
         [HttpGet]
         public async Task<IActionResult> GetAllBidLog()
@@ -62,45 +62,28 @@ namespace BiddingService.Controllers
             }
         }
 
-        [HttpPost]
-        public async Task<IActionResult> PlaceBid(CreateBidLogDto placeBid)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
+        // [HttpPost]
+        // public async Task<IActionResult> PlaceBid(CreateBidLogDto placeBid)
+        // {
+        //     try
+        //     {
+        //         if (!ModelState.IsValid)
+        //             return BadRequest(ModelState);
 
-                var newBid = await _service.CreateBidLog(placeBid.ToBidLogFromCreateBidLogDto());
-                var newBidDto = newBid.ToBidLogDtoFromBidLog();
-                return CreatedAtAction(nameof(GetBidLogById), new { id = newBid.BidLogId }, newBidDto);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                // Log the exception (optional)
-                return StatusCode(500, "Internal server error: " + ex.Message);
-            }
-        }
-
-        [HttpPost("send")]
-        public async Task<IActionResult> SendMessage([FromBody] CreateBidLogDto message)
-        {
-            // Gọi service để xử lý logic và lưu vào database
-            // Kiểm tra tính hợp lệ của message
-            if (_placeBidService.ValidateBid(message))
-            {
-                _placeBidService.PlaceBid(message);
-                // Phát broadcast đến các client
-                await _placeBidService.ProcessMessageAsync(message);
-                return Ok();
-            }
-            else
-            {
-                return BadRequest("Invalid message");
-            }
-        }
+        //         var newBid = await _service.CreateBidLog(placeBid.ToBidLogFromCreateBidLogDto());
+        //         var newBidDto = newBid.ToBidLogDtoFromBidLog();
+        //         return CreatedAtAction(nameof(GetBidLogById), new { id = newBid.BidLogId }, newBidDto);
+        //     }
+        //     catch (InvalidOperationException ex)
+        //     {
+        //         return BadRequest(new { message = ex.Message });
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         // Log the exception (optional)
+        //         return StatusCode(500, "Internal server error: " + ex.Message);
+        //     }
+        // }
     }
 }
+

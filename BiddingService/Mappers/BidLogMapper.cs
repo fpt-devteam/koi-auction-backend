@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using BiddingService.Dto.BidLog;
 using BiddingService.Models;
 
-namespace BiddingService.Mapper
+namespace BiddingService.Mappers
 {
     public static class BidLogMapper
     {

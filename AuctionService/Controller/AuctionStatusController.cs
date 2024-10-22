@@ -7,24 +7,24 @@ namespace AuctionService.Controller
     [Route("api/auction-statuses")]
     [ApiController]
 
-    public class AuctionStatusController : ControllerBase
+    public class AuctionStatusesController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
-        public AuctionStatusController(IUnitOfWork unitOfWork)
+        public AuctionStatusesController(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
         }
         [HttpGet]
-        public async Task<IActionResult> GetAllAuctionStatus()
+        public async Task<IActionResult> GetAllAuctionStatuses()
         {
-            var AuctionStatus = await _unitOfWork.AuctionStatus.GetAllAsync();
-            var AuctionStatusDto = AuctionStatus.Select(s => s.ToAuctionStatusDtoFromAuctionStatus());
-            return Ok(AuctionStatusDto);
+            var AuctionStatuses = await _unitOfWork.AuctionStatuses.GetAllAsync();
+            var AuctionStatusesDto = AuctionStatuses.Select(s => s.ToAuctionStatusDtoFromAuctionStatus());
+            return Ok(AuctionStatusesDto);
         }
 
         [HttpGet]
         [Route("{id:int}")]
-        public async Task<IActionResult> GetAuctionStatusById([FromRoute] int id)
+        public async Task<IActionResult> GetAuctionStatusesById([FromRoute] int id)
         {
             if (!ModelState.IsValid)
             {
@@ -32,8 +32,8 @@ namespace AuctionService.Controller
             }
             try
             {
-                var AuctionStatus = await _unitOfWork.AuctionStatus.GetAuctionStatusByIdAsync(id);
-                return Ok(AuctionStatus.ToAuctionStatusDtoFromAuctionStatus());
+                var AuctionStatuses = await _unitOfWork.AuctionStatuses.GetAuctionStatusByIdAsync(id);
+                return Ok(AuctionStatuses.ToAuctionStatusDtoFromAuctionStatus());
             }
             catch (Exception ex)
             {

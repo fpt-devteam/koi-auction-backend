@@ -36,21 +36,5 @@ namespace BiddingService.Repositories
             return bid ?? throw new KeyNotFoundException($"No bid found with ID: {id}"); // Ném ngoại lệ nếu không tìm thấy
         }
 
-        public async Task<MaxBidAmountDto> GetMaxAmountByAuctionLotIdAsync(int auctionLotId)
-        {
-
-            var bid = await _context.BidLogs
-                .Where(b => b.AuctionLotId == auctionLotId)
-                .GroupBy(b => b.AuctionLotId)
-                .Select(g => new MaxBidAmountDto
-                {
-                    AuctionLotId = g.Key,
-                    MaxBidAmount = g.Max(b => b.BidAmount)
-                })
-                .FirstOrDefaultAsync();
-
-            return bid!; // Trả về kết quả (có thể là null nếu không có bid nào)
-        }
-
     }
 }

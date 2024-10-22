@@ -11,8 +11,7 @@ namespace BiddingService.IRepositories
     {
         Task<List<BidLog>> GetAllAsync();
         Task<BidLog> GetByIdAsync(int id);
-        Task<BidLog> CreateAsync(BidLog bidLog);
-        Task<MaxBidAmountDto> GetMaxAmountByAuctionLotIdAsync(int auctionLotId);
+        //Task<BidLog> CreateAsync(BidLog bidLog);
     }
 
 }

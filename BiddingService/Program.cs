@@ -1,4 +1,6 @@
 using BiddingService.Data;
+using BiddingService.Dto.BidLog;
+using BiddingService.Dto.UserConnection;
 using BiddingService.Hubs;
 using BiddingService.IRepositories;
 using BiddingService.IServices;
@@ -14,6 +16,19 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddSingleton<IDictionary<string, UserConnectionDto>>(new Dictionary<string, UserConnectionDto>());
+// Cấu hình CORS cho phép bất kỳ domain nào
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(builder =>
+    {
+        builder.AllowAnyHeader()
+               .AllowAnyMethod()
+               .AllowCredentials()  // Cho phép cookie và xác thực
+               .SetIsOriginAllowed(origin => true);  // Cho phép mọi nguồn (hoặc tùy chỉnh nguồn cần thiết)
+    });
+});
 builder.Services.AddSignalR();
 builder.Services.AddControllers().AddNewtonsoftJson(options =>
 {
@@ -39,7 +54,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-app.MapHub<PlaceBidHub>("/placeBidHub");
+app.MapHub<PlaceBidHub>("/hub");
 app.UseHttpsRedirection();
 app.MapControllers();
+app.UseCors();
 app.Run();
+

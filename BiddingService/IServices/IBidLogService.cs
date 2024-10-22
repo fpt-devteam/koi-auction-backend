@@ -10,7 +10,7 @@ namespace BiddingService.IServices
     {
         Task<List<BidLog>> GetAllBidLog();
         Task<BidLog> GetBidLogById(int id);
-        Task<BidLog> CreateBidLog(BidLog bidLog);
+        //Task<BidLog> CreateBidLog(BidLog bidLog);
 
     }
 }
