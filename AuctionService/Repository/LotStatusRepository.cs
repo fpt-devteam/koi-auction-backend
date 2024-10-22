@@ -1,5 +1,5 @@
-using AuctionManagementService.Data;
-using AuctionManagementService.Models;
+using AuctionService.Data;
+using AuctionService.Models;
 using AuctionService.Dto.AuctionLot;
 using AuctionService.Dto.LotStatus;
 using AuctionService.IRepository;

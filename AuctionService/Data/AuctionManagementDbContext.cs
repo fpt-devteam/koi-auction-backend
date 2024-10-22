@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using AuctionManagementService.Models;
 using AuctionService.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace AuctionManagementService.Data;
+namespace AuctionService.Data;
 
 public partial class AuctionManagementDbContext : DbContext
 {
@@ -22,6 +21,8 @@ public partial class AuctionManagementDbContext : DbContext
     public virtual DbSet<AuctionLot> AuctionLots { get; set; }
 
     public virtual DbSet<AuctionMethod> AuctionMethods { get; set; }
+
+    public virtual DbSet<AuctionStatus> AuctionStatuses { get; set; }
 
     public virtual DbSet<KoiFish> KoiFishes { get; set; }
 
@@ -46,6 +47,7 @@ public partial class AuctionManagementDbContext : DbContext
             entity.HasIndex(e => e.AuctionName, "UQ_Auction_AuctionName").IsUnique();
 
             entity.Property(e => e.AuctionName).HasMaxLength(100);
+            entity.Property(e => e.AuctionStatusId).HasDefaultValue(1);
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -54,6 +56,11 @@ public partial class AuctionManagementDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+
+            entity.HasOne(d => d.AuctionStatus).WithMany(p => p.Auctions)
+                .HasForeignKey(d => d.AuctionStatusId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Auction_AuctionStatus");
         });
 
         modelBuilder.Entity<AuctionLot>(entity =>
@@ -94,6 +101,21 @@ public partial class AuctionManagementDbContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<AuctionStatus>(entity =>
+        {
+            entity.HasKey(e => e.AuctionStatusId).HasName("PK__AuctionS__B2535E95171EA4F2");
+
+            entity.ToTable("AuctionStatus", tb => tb.HasTrigger("trg_Update_AuctionStatus"));
+
+            entity.Property(e => e.AuctionStatusName).HasMaxLength(50);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -146,6 +168,7 @@ public partial class AuctionManagementDbContext : DbContext
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+            entity.Property(e => e.LotStatusId).HasDefaultValue(1);
             entity.Property(e => e.Sku)
                 .HasMaxLength(50)
                 .HasDefaultValue("TEMP-SKU")

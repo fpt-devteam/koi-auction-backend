@@ -1,5 +1,5 @@
-using AuctionManagementService.Data;
-using AuctionManagementService.Models;
+using AuctionService.Data;
+using AuctionService.Models;
 using AuctionService.Dto.Auction;
 using AuctionService.Helper;
 using AuctionService.IRepository;

@@ -4,7 +4,7 @@ using AuctionService.IRepository;
 using AuctionService.Repository;
 using AuctionService.Middlewares;
 using Microsoft.EntityFrameworkCore;
-using AuctionManagementService.Data;
+using AuctionService.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 

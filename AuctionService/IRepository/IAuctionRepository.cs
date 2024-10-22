@@ -1,7 +1,6 @@
-using AuctionManagementService.Models;
+using AuctionService.Models;
 using AuctionService.Dto.Auction;
 using AuctionService.Helper;
-using AuctionService.Models;
 
 namespace AuctionService.IRepository
 {

@@ -1,4 +1,4 @@
-using AuctionManagementService.Models;
+using AuctionService.Models;
 using AuctionService.Dto.Auction;
 using AuctionService.Models;
 
@@ -13,6 +13,7 @@ namespace AuctionService.Mapper
                 AuctionId = auction.AuctionId,
                 AuctionName = auction.AuctionName,
                 StaffId = auction.StaffId,
+                AuctionStatus = auction.AuctionStatus.ToAuctionStatusDtoFromAuctionStatus(),
                 StartTime = auction.StartTime,
                 EndTime = auction.EndTime,
                 CreatedAt = auction.CreatedAt,
