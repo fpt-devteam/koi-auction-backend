@@ -1,3 +1,4 @@
+using AuctionService.Dto.AuctionLotStatus;
 using AuctionService.Dto.Lot;
 
 namespace AuctionService.Dto.AuctionLot
@@ -12,5 +13,6 @@ namespace AuctionService.Dto.AuctionLot
         public DateTime? EndTime { get; set; }
         public LotDto? LotDto { get; set; }
         public DateTime? StartTime { get; set; }
+        public AuctionLotStatusDto? AuctionLotStatusDto { get; set; }
     }
 }

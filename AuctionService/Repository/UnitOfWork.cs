@@ -20,6 +20,8 @@ namespace AuctionService.Repository
             KoiMedia = new KoiMediaRepository(_context);
             Lots = new LotRepository(_context);
             LotStatuses = new LotStatusRepository(_context);
+            AuctionLotStatuses = new AuctionLotStatusRepository(_context);
+            AuctionStatuses = new AuctionStatusRepository(_context);
         }
 
         public IAuctionLotRepository AuctionLots { get; private set; }
@@ -29,6 +31,9 @@ namespace AuctionService.Repository
         public IKoiMediaRepository KoiMedia { get; private set; }
         public ILotRepository Lots { get; private set; }
         public ILotStatusRepository LotStatuses { get; private set; }
+        public IAuctionStatusRepository AuctionStatuses { get; private set; }
+
+        public IAuctionLotStatusRepository AuctionLotStatuses { get; private set; }
 
         public async Task<bool> SaveChangesAsync()
         {
