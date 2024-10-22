@@ -306,6 +306,11 @@ const manageCreateProfile = async (req, res) => {
 
       if (userRoleId == 2) {
          const { farmName, certificate, about } = req.body;
+
+         if (!farmName || !certificate) {
+            return res.status(400).json({ message: "All fields are required" });
+         }
+
          await BreederDetail.create({
             BreederId: userId,
             FarmName: farmName,
@@ -393,6 +398,39 @@ const manageDeleteBreederProfile = async (req, res) => {
    }
 };
 
+const manageGetBreederProfile = async (req, res) => {
+   const { id } = req.params;
+   if (!id) {
+      return res.status(400).json({ message: "Breeder ID is required" });
+   }
+   try {
+      User.hasOne(BreederDetail, { foreignKey: "BreederId" });
+      BreederDetail.belongsTo(User, { foreignKey: "BreederId" });
+      const breeder = await User.findOne({
+         where: { UserId: id },
+         include: [{ model: BreederDetail }],
+      });
+      if (!breeder) {
+         return res.status(404).json({ message: "Breeder Profile not found" });
+      }
+
+      res.status(200).json({
+         UserId: breeder.UserId,
+         Username: breeder.Username,
+         FirstName: breeder.FirstName,
+         LastName: breeder.LastName,
+         Phone: breeder.Phone,
+         Email: breeder.Email,
+         Balance: breeder.Balance,
+         UserRoleId: breeder.UserRoleId,
+         Breeder: breeder.BreederDetail,
+      });
+   } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Internal server error" });
+   }
+}
+
 module.exports = {
    profile,
    login,
@@ -405,6 +443,7 @@ module.exports = {
    logout,
    getAllProfiles,
    getProfileById,
+   manageGetBreederProfile,
    manageDeleteProfile,
    manageUpdateProfile,
    manageCreateProfile,
