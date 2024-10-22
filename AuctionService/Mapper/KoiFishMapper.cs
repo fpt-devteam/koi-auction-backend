@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AuctionManagementService.Models;
+using AuctionService.Models;
 using AuctionService.Dto.KoiFish;
 using AuctionService.Dto.LotRequestForm;
 using AuctionService.Models;

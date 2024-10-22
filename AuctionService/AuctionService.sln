@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.002.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AuctionManagementService", "AuctionManagementService.csproj", "{9E1DE0A5-223E-4FBF-B710-8AA7AE9D7966}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AuctionService", "AuctionService.csproj", "{7B671CBF-629E-429C-B756-BE3662E1E5DF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,15 +11,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{9E1DE0A5-223E-4FBF-B710-8AA7AE9D7966}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9E1DE0A5-223E-4FBF-B710-8AA7AE9D7966}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9E1DE0A5-223E-4FBF-B710-8AA7AE9D7966}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9E1DE0A5-223E-4FBF-B710-8AA7AE9D7966}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7B671CBF-629E-429C-B756-BE3662E1E5DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B671CBF-629E-429C-B756-BE3662E1E5DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B671CBF-629E-429C-B756-BE3662E1E5DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B671CBF-629E-429C-B756-BE3662E1E5DF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {87752E65-F3BF-4140-B98B-84BA747AC3F7}
+		SolutionGuid = {1870762E-6FF5-4007-97E9-26F268F56A27}
 	EndGlobalSection
 EndGlobal

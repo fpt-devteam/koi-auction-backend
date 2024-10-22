@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AuctionManagementService.Models;
+using AuctionService.Models;
 using AuctionService.Dto.LotStatus;
 using AuctionService.Models;
 
@@ -14,7 +14,7 @@ namespace AuctionService.Mapper
         {
             if (lotStatus == null)
             {
-                return null;
+                return null!;
             }
             return new LotStatusDto
             {

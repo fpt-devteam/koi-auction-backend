@@ -1,12 +1,11 @@
-using AuctionManagementService.Models;
-using AuctionService.Dto.AuctionLot;
 using AuctionService.Models;
+using AuctionService.Dto.AuctionLot;
 
 namespace AuctionService.Mapper
 {
     public static class AuctionLotMapper
     {
-        public static AuctionLotDto ToAuctionLotDtoFromActionLot(this AuctionLot auctionLot)
+        public static AuctionLotDto ToAuctionLotDtoFromAuctionLot(this AuctionLot auctionLot)
         {
             if (auctionLot == null)
             {
@@ -22,7 +21,27 @@ namespace AuctionService.Mapper
                 StepPercent = auctionLot.StepPercent,
                 EndTime = auctionLot.EndTime,
                 StartTime = auctionLot.StartTime,
-                LotDto = auctionLot.AuctionLotNavigation.ToLotDtoFromLot()
+                LotDto = auctionLot.AuctionLotNavigation.ToLotDtoFromLot(),
+                AuctionLotStatusDto = auctionLot.AuctionLotStatus.ToAuctionLotStatusDtoFromAuctionLotStatus()
+            };
+        }
+
+        public static UpdateAuctionLotDto ToUpdateAuctionLotDtoFromAuctionLot(this AuctionLot auctionLot)
+        {
+            if (auctionLot == null)
+            {
+                return null!;
+            }
+
+            return new UpdateAuctionLotDto
+            {
+                AuctionId = auctionLot.AuctionId,
+                Duration = auctionLot.Duration,
+                OrderInAuction = auctionLot.OrderInAuction,
+                StepPercent = auctionLot.StepPercent,
+                EndTime = auctionLot.EndTime,
+                StartTime = auctionLot.StartTime,
+                AuctionLotStatusDto = auctionLot.AuctionLotStatus.ToAuctionLotStatusDtoFromAuctionLotStatus()
             };
         }
 

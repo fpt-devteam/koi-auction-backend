@@ -9,7 +9,8 @@ namespace AuctionService.IRepository
         IKoiMediaRepository KoiMedia { get; }
         ILotRepository Lots { get; }
         ILotStatusRepository LotStatuses { get; }
-
+        IAuctionStatusRepository AuctionStatuses { get; }
+        IAuctionLotStatusRepository AuctionLotStatuses { get; }
         Task<bool> SaveChangesAsync();
 
     }

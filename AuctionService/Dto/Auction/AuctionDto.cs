@@ -1,5 +1,6 @@
-using AuctionService.Dto.AuctionLot;
 using AuctionService.Models;
+using AuctionService.Dto.AuctionLot;
+using AuctionService.Dto.AuctionStatus;
 
 
 namespace AuctionService.Dto.Auction
@@ -15,6 +16,8 @@ namespace AuctionService.Dto.Auction
         public DateTime? EndTime { get; set; }
 
         public DateTime CreatedAt { get; set; }
+
+        public AuctionStatusDto? AuctionStatus { get; set; }
 
     }
 }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace AuctionManagementService.Models;
+namespace AuctionService.Models;
 
 public partial class Lot
 {

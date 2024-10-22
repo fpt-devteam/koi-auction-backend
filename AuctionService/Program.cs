@@ -4,7 +4,7 @@ using AuctionService.IRepository;
 using AuctionService.Repository;
 using AuctionService.Middlewares;
 using Microsoft.EntityFrameworkCore;
-using AuctionManagementService.Data;
+using AuctionService.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +31,8 @@ builder.Services.AddScoped<IAuctionMethodRepository, AuctionMethodRepository>();
 builder.Services.AddScoped<ILotStatusRepository, LotStatusRepository>();
 builder.Services.AddScoped<IAuctionRepository, AuctionRepository>();
 builder.Services.AddScoped<IAuctionLotRepository, AuctionLotRepository>();
+builder.Services.AddScoped<IAuctionStatusRepository, AuctionStatusRepository>();
+builder.Services.AddScoped<IAuctionLotStatusRepository, AuctionLotStatusRepository>();
 // Đăng ký MemoryCache
 builder.Services.AddMemoryCache();
 builder.Services.AddCors(options =>

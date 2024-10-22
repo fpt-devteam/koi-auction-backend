@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace AuctionManagementService.Models;
+namespace AuctionService.Models;
 
 public partial class Auction
 {
@@ -19,5 +19,9 @@ public partial class Auction
 
     public string AuctionName { get; set; } = null!;
 
+    public int AuctionStatusId { get; set; }
+
     public virtual ICollection<AuctionLot> AuctionLots { get; set; } = new List<AuctionLot>();
+
+    public virtual AuctionStatus AuctionStatus { get; set; } = null!;
 }

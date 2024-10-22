@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using AuctionService.Models;
 
-namespace AuctionManagementService.Models;
+namespace AuctionService.Models;
 
 public partial class KoiFish
 {
