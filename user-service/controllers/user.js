@@ -13,7 +13,16 @@ const profile = async (req, res) => {
             console.log(err);
          }
       );
-   res.status(200).json(user);
+   res.status(200).json({
+      UserId: user.UserId,
+      Username: user.Username,
+      FirstName: user.FirstName,
+      LastName: user.LastName,
+      Phone: user.Phone,
+      Email: user.Email,
+      Balance: user.Balance,
+      UserRoleId: user.UserRoleId,
+   });
 };
 
 const login = async (req, res) => {
@@ -226,7 +235,7 @@ const getProfileById = async (req, res) => {
 
 const manageDeleteProfile = async (req, res) => {
    await User
-      .destroy({ where: { UserId: req.params.id } })
+      .update( { Active: false, }, { where: { UserId: req.params.id } })
       .catch((err) => {
          console.log(err);
       });
@@ -234,7 +243,7 @@ const manageDeleteProfile = async (req, res) => {
 };
 
 const manageUpdateProfile = async (req, res) => {
-   const { username, firstname, lastname, phone, email, roleId } = req.body;
+   const { username, firstname, lastname, phone, email, roleId, active } = req.body;
    await User.update(
       {
          Username: username,
@@ -243,6 +252,7 @@ const manageUpdateProfile = async (req, res) => {
          Phone: phone,
          Email: email,
          UserRoleId: roleId,
+         Active: active || true,
          CreatedAt: new Date(),
          UpdatedAt: new Date(),
       },
@@ -349,7 +359,7 @@ const getBreederProfileById = async (req, res) => {
 
 const manageUpdateBreederProfile = async (req, res) => {
    const { farmName, location, contact } = req.body;
-   await BreederDetai
+   await BreederDetail
       .update(
          {
             FarmName: farmName,
@@ -364,7 +374,12 @@ const manageUpdateBreederProfile = async (req, res) => {
 };
 
 const manageDeleteBreederProfile = async (req, res) => {
-   await BreederDetail.destroy({ where: { UserId: req.params.id } });
+   await User.update(
+      { Active: false, },
+      { where: { UserId: req.params.id } }
+   ).catch((err) => {
+      console.log(err);
+   });
    res.status(200).json({ message: "Breeder Profile Deleted" });
 };
 
