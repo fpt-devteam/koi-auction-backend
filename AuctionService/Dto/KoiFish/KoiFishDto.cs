@@ -18,6 +18,6 @@ namespace AuctionService.Dto.KoiFish
 
         public decimal WeightKg { get; set; }
 
-        public List<KoiMediaDto?> KoiMedia { get; set; }
+        public List<KoiMediaDto?> KoiMedia { get; set; } = new List<KoiMediaDto?>();
     }
 }

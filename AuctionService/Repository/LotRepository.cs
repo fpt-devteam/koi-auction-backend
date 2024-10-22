@@ -8,7 +8,6 @@ using AuctionService.Dto.LotRequestForm;
 using AuctionService.IRepository;
 using Microsoft.EntityFrameworkCore;
 using AuctionService.Helper;
-using AuctionService.Models;
 using AuctionService.Data;
 
 namespace AuctionService.Repository

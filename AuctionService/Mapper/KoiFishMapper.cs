@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using AuctionService.Models;
 using AuctionService.Dto.KoiFish;
 using AuctionService.Dto.LotRequestForm;
-using AuctionService.Models;
 
 namespace AuctionService.Mapper
 {

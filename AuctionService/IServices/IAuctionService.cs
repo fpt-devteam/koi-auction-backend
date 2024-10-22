@@ -2,8 +2,10 @@
 
 namespace AuctionService.IServices
 {
-    interface IAuctionService
+    public interface IAuctionService
     {
-        public void CheckAndStartAuction();
+        public void ScheduleAuction(int auctionId, DateTime startTime);
+
+        // public Task StartAuction(int auctionId, DateTime startTime);
     }
 }

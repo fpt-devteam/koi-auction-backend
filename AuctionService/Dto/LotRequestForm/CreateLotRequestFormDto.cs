@@ -34,6 +34,6 @@ namespace AuctionService.Dto.LotRequestForm
         public decimal WeightKg { get; set; }
 
         [Required]
-        public List<FormKoiMediaDto> KoiMedia { get; set; }
+        public List<FormKoiMediaDto> KoiMedia { get; set; } = new List<FormKoiMediaDto>();
     }
 }

@@ -35,7 +35,7 @@ namespace AuctionService.Controller
                 return BadRequest(ModelState);
             }
             var lotStatus = await _unitOfWork.LotStatuses.GetLotStatusByIdAsync(id);
-            return Ok(lotStatus.ToLotStatusDtoFromLotStatus());
+            return Ok(lotStatus?.ToLotStatusDtoFromLotStatus());
         }
 
         [HttpPost]

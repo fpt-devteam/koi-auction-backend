@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using AuctionService.Models;
 using AuctionService.Dto.LotStatus;
-using AuctionService.Models;
 
 namespace AuctionService.Mapper
 {
