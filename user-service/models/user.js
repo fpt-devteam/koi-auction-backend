@@ -58,7 +58,7 @@ const User = sequelize.define('User', {
    timestamps: false
 });
 
-User.sync({ alter: true  }).then(() => {
+User.sync({ force: false  }).then(() => {
    console.log('User table created');
 }).catch(err => {
    console.log(err);
