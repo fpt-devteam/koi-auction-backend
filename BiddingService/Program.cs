@@ -44,8 +44,6 @@ builder.Services.AddScoped<IBidLogRepository, BidLogRepository>();
 builder.Services.AddScoped<IBidLogService, BidLogService>();
 builder.Services.AddScoped<PlaceBidService>();
 
-
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
