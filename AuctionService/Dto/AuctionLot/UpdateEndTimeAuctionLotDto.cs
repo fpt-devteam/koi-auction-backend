@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace AuctionService.Dto.AuctionLot
 {
-    public class EndAuctionLotDto
+    public class UpdateEndTimeAuctionLotDto
     {
         [Required]
         public DateTime EndTime { get; set; }

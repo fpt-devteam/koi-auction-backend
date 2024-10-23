@@ -20,6 +20,8 @@ public partial class AuctionManagementDbContext : DbContext
 
     public virtual DbSet<AuctionLot> AuctionLots { get; set; }
 
+    public virtual DbSet<AuctionLotJob> AuctionLotJobs { get; set; }
+
     public virtual DbSet<AuctionLotStatus> AuctionLotStatuses { get; set; }
 
     public virtual DbSet<AuctionMethod> AuctionMethods { get; set; }
@@ -34,27 +36,17 @@ public partial class AuctionManagementDbContext : DbContext
 
     public virtual DbSet<LotStatus> LotStatuses { get; set; }
 
-    private string GetConnectionString()
-    {
-        IConfiguration config = new ConfigurationBuilder()
-             .SetBasePath(Directory.GetCurrentDirectory())
-                    .AddJsonFile("appsettings.json", true, true)
-                    .Build();
-        var strConn = config["ConnectionStrings:DefaultConnectionStringDB"];
-
-        return strConn!;
-    }
-
-    // protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    //     => optionsBuilder.UseSqlServer("Server=tcp:koiauction.database.windows.net,1433;Initial Catalog=KoiAuctionDB;Persist Security Info=False;User ID=fpt-devteam;Password=sa123456!;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
+    //     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    // #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+    //         => optionsBuilder.UseSqlServer("Server=tcp:fpt-koi.database.windows.net,1433;Initial Catalog=KoiAuctionDB;Persist Security Info=False;User ID=fptdevteam;Password=12345Fpt;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Auction>(entity =>
         {
-            entity.HasKey(e => e.AuctionId).HasName("PK__Auction__51004A4C59DF4F8C");
+            entity.HasKey(e => e.AuctionId).HasName("PK__Auction__51004A4CAA2054EE");
 
-            entity.ToTable("Auction", tb => tb.HasTrigger("trg_Auction_Update"));
+            entity.ToTable("Auction");
 
             entity.HasIndex(e => e.AuctionName, "UQ_Auction_AuctionName").IsUnique();
 
@@ -77,9 +69,9 @@ public partial class AuctionManagementDbContext : DbContext
 
         modelBuilder.Entity<AuctionLot>(entity =>
         {
-            entity.HasKey(e => e.AuctionLotId).HasName("PK__AuctionL__8A0269CF99A7491A");
+            entity.HasKey(e => e.AuctionLotId).HasName("PK__AuctionL__8A0269CF4469A727");
 
-            entity.ToTable("AuctionLot", tb => tb.HasTrigger("trg_AuctionLot_Update"));
+            entity.ToTable("AuctionLot");
 
             entity.Property(e => e.AuctionLotId).ValueGeneratedNever();
             entity.Property(e => e.AuctionLotStatusId).HasDefaultValue(1);
@@ -88,6 +80,7 @@ public partial class AuctionManagementDbContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.EndTime).HasColumnType("datetime");
             entity.Property(e => e.StartTime).HasColumnType("datetime");
+            entity.Property(e => e.StepPercent).HasDefaultValue(0);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -108,11 +101,25 @@ public partial class AuctionManagementDbContext : DbContext
                 .HasConstraintName("FK_AuctionLot_AuctionLotStatus");
         });
 
+        modelBuilder.Entity<AuctionLotJob>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__AuctionL__3214EC076F2A7208");
+
+            entity.ToTable("AuctionLotJob");
+
+            entity.Property(e => e.HangfireJobId).HasMaxLength(100);
+
+            entity.HasOne(d => d.AuctionLot).WithMany(p => p.AuctionLotJobs)
+                .HasForeignKey(d => d.AuctionLotId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_AuctionLotJob_AuctionLot");
+        });
+
         modelBuilder.Entity<AuctionLotStatus>(entity =>
         {
-            entity.HasKey(e => e.AuctionLotStatusId).HasName("PK__AuctionL__07A5E3C3499D6785");
+            entity.HasKey(e => e.AuctionLotStatusId).HasName("PK__AuctionL__07A5E3C39FE294C8");
 
-            entity.ToTable("AuctionLotStatus", tb => tb.HasTrigger("trg_AuctionLotStatus_Update"));
+            entity.ToTable("AuctionLotStatus");
 
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -125,9 +132,9 @@ public partial class AuctionManagementDbContext : DbContext
 
         modelBuilder.Entity<AuctionMethod>(entity =>
         {
-            entity.HasKey(e => e.AuctionMethodId).HasName("PK__AuctionM__FCD1A18B9425F901");
+            entity.HasKey(e => e.AuctionMethodId).HasName("PK__AuctionM__FCD1A18B371CBB3F");
 
-            entity.ToTable("AuctionMethod", tb => tb.HasTrigger("trg_Update_AuctionMethod"));
+            entity.ToTable("AuctionMethod");
 
             entity.Property(e => e.AuctionMethodName).HasMaxLength(100);
             entity.Property(e => e.CreatedAt)
@@ -141,9 +148,9 @@ public partial class AuctionManagementDbContext : DbContext
 
         modelBuilder.Entity<AuctionStatus>(entity =>
         {
-            entity.HasKey(e => e.AuctionStatusId).HasName("PK__AuctionS__B2535E95171EA4F2");
+            entity.HasKey(e => e.AuctionStatusId).HasName("PK__AuctionS__B2535E95B679012E");
 
-            entity.ToTable("AuctionStatus", tb => tb.HasTrigger("trg_Update_AuctionStatus"));
+            entity.ToTable("AuctionStatus");
 
             entity.Property(e => e.AuctionStatusName).HasMaxLength(50);
             entity.Property(e => e.CreatedAt)
@@ -156,7 +163,7 @@ public partial class AuctionManagementDbContext : DbContext
 
         modelBuilder.Entity<KoiFish>(entity =>
         {
-            entity.HasKey(e => e.KoiFishId).HasName("PK__KoiFish__44D35C258EF63F2F");
+            entity.HasKey(e => e.KoiFishId).HasName("PK__KoiFish__44D35C25776325B3");
 
             entity.ToTable("KoiFish");
 
@@ -177,7 +184,7 @@ public partial class AuctionManagementDbContext : DbContext
 
         modelBuilder.Entity<KoiMedia>(entity =>
         {
-            entity.HasKey(e => e.KoiMediaId).HasName("PK__KoiMedia__4CC780831BB40894");
+            entity.HasKey(e => e.KoiMediaId).HasName("PK__KoiMedia__4CC7808360C9C026");
 
             entity.HasIndex(e => e.FilePath, "UQ_KoiMedia_FilePath").IsUnique();
 
@@ -194,7 +201,7 @@ public partial class AuctionManagementDbContext : DbContext
 
         modelBuilder.Entity<Lot>(entity =>
         {
-            entity.HasKey(e => e.LotId).HasName("PK__Lot__4160EFAD09632CC5");
+            entity.HasKey(e => e.LotId).HasName("PK__Lot__4160EFAD2877410E");
 
             entity.ToTable("Lot");
 
@@ -223,9 +230,9 @@ public partial class AuctionManagementDbContext : DbContext
 
         modelBuilder.Entity<LotStatus>(entity =>
         {
-            entity.HasKey(e => e.LotStatusId).HasName("PK__LotStatu__B5B838777D8DB099");
+            entity.HasKey(e => e.LotStatusId).HasName("PK__LotStatu__B5B83877A3248B3F");
 
-            entity.ToTable("LotStatus", tb => tb.HasTrigger("trg_Update_LotStatus"));
+            entity.ToTable("LotStatus");
 
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")

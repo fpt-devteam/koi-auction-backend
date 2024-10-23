@@ -7,7 +7,7 @@ public partial class LotStatus
 {
     public int LotStatusId { get; set; }
 
-    public string? LotStatusName { get; set; } = null!;
+    public string LotStatusName { get; set; } = null!;
 
     public DateTime CreatedAt { get; set; }
 

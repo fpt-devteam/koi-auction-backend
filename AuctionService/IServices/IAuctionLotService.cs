@@ -9,9 +9,13 @@ namespace AuctionService.IServices
     {
         // public void ScheduleAuctionLot(int auctionLotId, DateTime startTime);
 
-        public Task StartAuctionLot(int auctionLotId, DateTime startTime);
+        public Task StartAuctionLot(int auctionLotId, DateTime startTime, TimeOnly duration);
 
-        public Task EndAuctionLot(int auctionLotId, DateTime endTime);
+        // public Task EndAuctionLot(int auctionLotId, DateTime endTime);
+
+        public void ScheduleEndAuctionLot(int auctionLotId, DateTime endTime);
+
+        public Task UpdateEndTimeAuctionLot(int auctionLotId, DateTime newEndTime);
 
     }
 }
