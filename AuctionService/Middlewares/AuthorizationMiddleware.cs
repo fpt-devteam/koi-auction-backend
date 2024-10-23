@@ -98,7 +98,7 @@ namespace AuctionService.Middlewares
             var httpMethod = context.Request.Method;
             var route = context.Request.Path.Value;
 
-            Console.WriteLine($"User ID: {userId}, Role: {userRoleId}, Route: {route}");
+            // Console.WriteLine($"User ID: {userId}, Role: {userRoleId}, Route: {route}");
 
             // Kiểm tra nếu route không cần phân quyền (không có trong Dictionary)
             if (!_routePermissions.ContainsKey(route!) || !_routePermissions[route!].ContainsKey(httpMethod))

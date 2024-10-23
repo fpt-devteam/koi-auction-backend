@@ -14,5 +14,13 @@ namespace AuctionService.IRepository
         Task<AuctionLot> DeleteAsync(int id);
         Task<List<AuctionLot>> DeleteListAsync(List<int> ids);
 
+        Task<AuctionLot?> UpdateStatusAsync(int id, int statusId);
+
+        Task<AuctionLot?> UpdateStartTimeAsync(int id, DateTime startTime);
+
+        Task<AuctionLot?> UpdateEndTimeAsync(int id, DateTime endTime);
+
+        Task<AuctionLot?> GetAuctionLotByOrderInAuction(int auctionId, int orderInAuction);
+
     }
 }

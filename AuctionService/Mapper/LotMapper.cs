@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using AuctionService.Models;
 using AuctionService.Dto.Lot;
 using AuctionService.Dto.LotRequestForm;
-using AuctionService.Models;
 using AuctionService.Repository;
 using Microsoft.EntityFrameworkCore.Storage;
 

@@ -1,7 +1,6 @@
 using AuctionService.Models;
 using AuctionService.Dto;
 using AuctionService.Dto.AuctionMethod;
-using AuctionService.Models;
 
 namespace AuctionService.Mapper
 {

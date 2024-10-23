@@ -1,6 +1,7 @@
 using AuctionService.Dto.Auction;
 using AuctionService.Helper;
 using AuctionService.IRepository;
+using AuctionService.IServices;
 using AuctionService.Mapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VisualBasic;
@@ -13,12 +14,15 @@ namespace AuctionService.Controller
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly BreederDetailController _breederDetailController;
+        private readonly IAuctionService _auctionService;
 
-        public AuctionController(IUnitOfWork unitOfWork, BreederDetailController breederDetailController)
+        public AuctionController(IUnitOfWork unitOfWork, BreederDetailController breederDetailController, IAuctionService auctionService)
         {
             _unitOfWork = unitOfWork;
             _breederDetailController = breederDetailController;
+            _auctionService = auctionService;
         }
+
 
         [HttpGet]
         public async Task<IActionResult> GetAllAuction([FromQuery] AuctionQueryObject query)
@@ -45,14 +49,29 @@ namespace AuctionService.Controller
         [HttpPost]
         public async Task<IActionResult> CreateAuction([FromBody] CreateAuctionDto auctionDto)
         {
+            var uidHeader = HttpContext.Request.Headers["uid"].FirstOrDefault();
+            if (string.IsNullOrEmpty(uidHeader) || !int.TryParse(uidHeader, out var uid))
+            {
+                return BadRequest("Invalid or missing uid header");
+            }
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var auction = auctionDto.ToAuctionFromCreateAuctionDto();
+            var auction = auctionDto.ToAuctionFromCreateAuctionDto(uid);
             auction.AuctionName = AuctionHelper.GenerateAuctionName(auction);
             await _unitOfWork.Auctions.CreateAsync(auction);
             if (!await _unitOfWork.SaveChangesAsync())
             {
                 return BadRequest("An error occurred while saving the data");
+            }
+
+            // Schedule auction
+            try
+            {
+                _auctionService.ScheduleAuction(auction.AuctionId, auction.StartTime);
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
             }
             return CreatedAtAction(nameof(GetAuctionById), new { id = auction.AuctionId }, auction.ToAuctionDtoFromAuction());
         }

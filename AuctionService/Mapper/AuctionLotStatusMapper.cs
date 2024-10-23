@@ -13,8 +13,8 @@ namespace AuctionService.Mapper
             }
             return new AuctionLotStatusDto
             {
-                AuctionStatusId = auctionLotStatus.AuctionLotStatusId,
-                AuctionStatusName = auctionLotStatus.StatusName
+                AuctionLotStatusId = auctionLotStatus.AuctionLotStatusId,
+                AuctionLotStatusName = auctionLotStatus.StatusName
             };
         }
     }
