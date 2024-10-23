@@ -81,6 +81,8 @@ namespace AuctionService.Services
 
             // Cập nhật trạng thái phiên đấu giá trong cơ sở dữ liệu
             await _unitOfWork.Auctions.UpdateStatusAsync(auctionId, AUCTION_STATUS_ENDED);
+            // Cập nhật thời gian kết thúc phiên đấu giá
+            await _unitOfWork.Auctions.UpdateEndTimeAsync(auctionId, endTime);
             if (!await _unitOfWork.SaveChangesAsync())
             {
                 throw new Exception("An error occurred while saving the data");

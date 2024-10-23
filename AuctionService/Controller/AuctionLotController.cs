@@ -41,7 +41,7 @@ namespace AuctionService.Controller
 
         [HttpGet]
         [Route("{id:int}")]
-        public async Task<IActionResult> GetAuctionById([FromRoute] int id)
+        public async Task<IActionResult> GetAuctionLotById([FromRoute] int id)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -66,19 +66,19 @@ namespace AuctionService.Controller
             {
                 return BadRequest("An error occurred while saving the data");
             }
-            return CreatedAtAction(nameof(GetAuctionById), new { id = newAuctionLot.AuctionLotId }, newAuctionLot);
+            return CreatedAtAction(nameof(GetAuctionLotById), new { id = newAuctionLot.AuctionLotId }, newAuctionLot);
         }
+
         [HttpPost("listAuctionLot")]
         public async Task<ActionResult> CreateListAuctionLot([FromBody] List<CreateAuctionLotDto> listAuctionLotDto)
         {
-            System.Console.WriteLine("1");
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
             var auctionLots = listAuctionLotDto.Select(dto => dto.ToAuctionLotFromCreateAuctionLotDto()).ToList();
-            System.Console.WriteLine("2");
+
             foreach (var auctionLot in auctionLots)
             {
                 await _unitOfWork.Lots.UpdateLotStatusAsync(auctionLot.AuctionLotId, new Dto.Lot.UpdateLotStatusDto
@@ -86,26 +86,19 @@ namespace AuctionService.Controller
                     LotStatusName = "In auction"
                 });
             }
-            System.Console.WriteLine("3");
             await _unitOfWork.AuctionLots.CreateListAsync(auctionLots);
-            foreach (var auctionLot in auctionLots)
-            {
-                //
-                // System.Console.WriteLine(auctionLot.AuctionLotStatusId);
-            }
             if (!await _unitOfWork.SaveChangesAsync())
             {
                 return BadRequest("An error occurred while saving the data");
             }
-            System.Console.WriteLine("4");
-            // return CreatedAtAction(nameof(GetAuctionById), new { id = auctionLots.First().AuctionLotId }, auctionLots);
-            return Ok(auctionLots);
+            return CreatedAtAction(nameof(GetAuctionLotById), new { id = auctionLots.First().AuctionLotId }, auctionLots);
         }
 
         [HttpPut]
         [Route("{id:int}")]
         public async Task<ActionResult> UpdateAuctionLot([FromRoute] int id, [FromBody] UpdateAuctionLotDto auctionLotDto)
         {
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -151,7 +144,7 @@ namespace AuctionService.Controller
         // call from auction service to end auction lot
         [HttpPut]
         [Route("endAuctionLot/{auctionLotId:int}")]
-        public async Task<ActionResult> EndAuctionLot([FromRoute] int auctionLotId, [FromBody] DateTime endTime)
+        public async Task<ActionResult> EndAuctionLot([FromRoute] int auctionLotId, [FromBody] EndAuctionLotDto endAuctionLotDto)
         {
             if (!ModelState.IsValid)
             {
@@ -162,7 +155,7 @@ namespace AuctionService.Controller
             {
                 return NotFound();
             }
-            await _auctionLotService.EndAuctionLot(auctionLot.AuctionLotId, endTime);
+            await _auctionLotService.EndAuctionLot(auctionLot.AuctionLotId, endAuctionLotDto.EndTime);
             return Ok(auctionLot.ToAuctionLotDtoFromAuctionLot());
         }
 

@@ -45,6 +45,8 @@ builder.Services.AddHangfire(config =>
 builder.Services.AddHangfireServer();
 
 
+builder.Services.AddScoped<IAuctionStatusRepository, AuctionStatusRepository>();
+builder.Services.AddScoped<IAuctionLotStatusRepository, AuctionLotStatusRepository>();
 // Đăng ký MemoryCache
 builder.Services.AddMemoryCache();
 builder.Services.AddCors(options =>

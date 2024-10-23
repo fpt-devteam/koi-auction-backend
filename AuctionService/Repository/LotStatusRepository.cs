@@ -40,7 +40,12 @@ namespace AuctionService.Repository
 
         public async Task<LotStatus?> GetLotStatusByIdAsync(int id)
         {
-            return await _context.LotStatuses.FirstOrDefaultAsync(l => l.LotStatusId == id);
+            var status = await _context.LotStatuses.FirstOrDefaultAsync(l => l.LotStatusId == id);
+            if (status == null)
+            {
+                throw new ArgumentException("status not existed");
+            }
+            return status;
         }
 
         public async Task<LotStatus> UpdateLotStatusAsync(int id, UpdateStatusDto lotStatusDto)
