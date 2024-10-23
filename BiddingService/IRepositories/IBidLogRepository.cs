@@ -11,7 +11,7 @@ namespace BiddingService.IRepositories
     {
         Task<List<BidLog>> GetAllAsync();
         Task<BidLog> GetByIdAsync(int id);
-        //Task<BidLog> CreateAsync(BidLog bidLog);
+        Task<BidLog> CreateAsync(BidLog bidLog);
     }
 
 }
