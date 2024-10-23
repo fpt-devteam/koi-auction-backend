@@ -3,7 +3,6 @@ using AuctionService.Models;
 using AuctionService.Dto.AuctionLot;
 using AuctionService.Dto.LotStatus;
 using AuctionService.IRepository;
-using AuctionService.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace AuctionService.Repository
@@ -39,9 +38,14 @@ namespace AuctionService.Repository
             return await _context.LotStatuses.ToListAsync();
         }
 
-        public async Task<LotStatus> GetLotStatusByIdAsync(int id)
+        public async Task<LotStatus?> GetLotStatusByIdAsync(int id)
         {
-            return await _context.LotStatuses.FirstOrDefaultAsync(l => l.LotStatusId == id);
+            var status = await _context.LotStatuses.FirstOrDefaultAsync(l => l.LotStatusId == id);
+            if (status == null)
+            {
+                throw new ArgumentException("status not existed");
+            }
+            return status;
         }
 
         public async Task<LotStatus> UpdateLotStatusAsync(int id, UpdateStatusDto lotStatusDto)

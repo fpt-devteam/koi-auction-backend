@@ -28,7 +28,7 @@ namespace AuctionService.Repository
 
         public async Task<AuctionLot> DeleteAsync(int id)
         {
-            var auctionLot = await _context.AuctionLots.
+            var auctionLot = await _context.AuctionLots.Include(a => a.AuctionLotStatus).
                                 Include(a => a.AuctionLotNavigation)
                                     .ThenInclude(f => f.KoiFish).ThenInclude(m => m!.KoiMedia)
                                 .Include(a => a.AuctionLotNavigation)
@@ -51,7 +51,8 @@ namespace AuctionService.Repository
                                 .Include(a => a.AuctionLotNavigation)
                                     .ThenInclude(l => l.AuctionMethod)
                                 .Include(a => a.AuctionLotNavigation)
-                                    .ThenInclude(s => s.LotStatus)
+                                    .ThenInclude(s => s.LotStatus).
+                                Include(a => a.AuctionLotStatus)
                                     .ToListAsync();
 
             if (auctionLots == null)
@@ -64,7 +65,7 @@ namespace AuctionService.Repository
 
         public async Task<List<AuctionLot>> GetAllAsync(AuctionLotQueryObject query)
         {
-            var auctionLots = await _context.AuctionLots.
+            var auctionLots = await _context.AuctionLots.Include(a => a.AuctionLotStatus).
             Include(a => a.AuctionLotNavigation)
                 .ThenInclude(f => f.KoiFish).ThenInclude(m => m!.KoiMedia)
             .Include(a => a.AuctionLotNavigation)
@@ -82,7 +83,7 @@ namespace AuctionService.Repository
 
         public async Task<AuctionLot> GetAuctionLotById(int id)
         {
-            var auctionLot = await _context.AuctionLots.
+            var auctionLot = await _context.AuctionLots.Include(a => a.AuctionLotStatus).
             Include(a => a.AuctionLotNavigation)
                 .ThenInclude(f => f.KoiFish).ThenInclude(m => m!.KoiMedia)
             .Include(a => a.AuctionLotNavigation)
@@ -107,9 +108,42 @@ namespace AuctionService.Repository
             auctionLot.AuctionId = updateAuctionLotDto.AuctionId;
             auctionLot.StartTime = updateAuctionLotDto.StartTime;
             auctionLot.EndTime = updateAuctionLotDto.EndTime;
+            auctionLot.AuctionLotStatusId = updateAuctionLotDto.AuctionLotStatusId;
 
             return auctionLot;
         }
 
+        public async Task<AuctionLot?> UpdateStatusAsync(int id, int statusId)
+        {
+            var auctionLot = await _context.AuctionLots.FirstOrDefaultAsync(a => a.AuctionLotId == id);
+            if (auctionLot == null)
+                return null;
+            auctionLot.AuctionLotStatusId = statusId;
+            return auctionLot;
+        }
+
+        public async Task<AuctionLot?> UpdateStartTimeAsync(int id, DateTime startTime)
+        {
+            var auctionLot = await _context.AuctionLots.FirstOrDefaultAsync(a => a.AuctionLotId == id);
+            if (auctionLot == null)
+                return null;
+            auctionLot.StartTime = startTime;
+            return auctionLot;
+        }
+
+        public async Task<AuctionLot?> GetAuctionLotByOrderInAuction(int auctionId, int orderInAuction)
+        {
+            var auctionLot = await _context.AuctionLots.FirstOrDefaultAsync(a => a.AuctionId == auctionId && a.OrderInAuction == orderInAuction);
+            return auctionLot;
+        }
+
+        public async Task<AuctionLot?> UpdateEndTimeAsync(int id, DateTime endTime)
+        {
+            var auctionLot = await _context.AuctionLots.FirstOrDefaultAsync(a => a.AuctionLotId == id);
+            if (auctionLot == null)
+                return null;
+            auctionLot.EndTime = endTime;
+            return auctionLot;
+        }
     }
 }

@@ -1,22 +1,57 @@
 openapi: 3.0.0
 info:
-  title: User and Breeder Management API
+  title: User Management API
+  description: API for managing user profiles, authentication, and breeder profiles.
   version: 1.0.0
-  description: API for managing users and breeders in the system.
+servers:
+  - url: http://localhost:3000
+    description: Local server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
 paths:
   /profile:
     get:
-      summary: Get the current user profile
+      summary: Get user profile
+      tags:
+        - User
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: User profile retrieved successfully.
-        '401':
-          description: Unauthorized access.
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  UserId:
+                    type: integer
+                  Username:
+                    type: string
+                  FirstName:
+                    type: string
+                  LastName:
+                    type: string
+                  Phone:
+                    type: string
+                  Email:
+                    type: string
+                  Balance:
+                    type: number
+        '500':
+          description: Internal server error
+
   /register:
     post:
       summary: Register a new user
+      tags:
+        - User
       requestBody:
         required: true
         content:
@@ -38,12 +73,17 @@ paths:
                   type: string
       responses:
         '201':
-          description: User created successfully.
+          description: User registered successfully
         '400':
-          description: User already exists.
+          description: Bad request (Username/Email/Phone already exists)
+        '500':
+          description: Internal server error
+
   /login:
     post:
-      summary: Login user
+      summary: Login a user
+      tags:
+        - User
       requestBody:
         required: true
         content:
@@ -57,20 +97,79 @@ paths:
                   type: string
       responses:
         '200':
-          description: Login successful.
+          description: Login successful
         '401':
-          description: Invalid credentials or user is not active.
+          description: Unauthorized (Incorrect credentials)
+        '500':
+          description: Internal server error
+
   /logout:
     post:
-      summary: Logout user
+      summary: Logout a user
+      tags:
+        - User
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: Logout successful.
+          description: Logout successful
+
+  /forgot-password:
+    post:
+      summary: Forgot password
+      tags:
+        - User
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+      responses:
+        '200':
+          description: Password reset link sent
+        '404':
+          description: User not found
+        '500':
+          description: Internal server error
+
+  /reset-password/{token}:
+    patch:
+      summary: Reset password
+      tags:
+        - User
+      parameters:
+        - in: path
+          name: token
+          schema:
+            type: string
+          required: true
+          description: Reset token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                password:
+                  type: string
+      responses:
+        '201':
+          description: Password reset successfully
+        '401':
+          description: Invalid or expired token
+        '500':
+          description: Internal server error
+
   /update-password:
     patch:
       summary: Update user password
+      tags:
+        - User
       security:
         - bearerAuth: []
       requestBody:
@@ -84,10 +183,15 @@ paths:
                   type: string
       responses:
         '201':
-          description: Password updated successfully.
+          description: Password updated successfully
+        '500':
+          description: Internal server error
+
   /update-profile:
     patch:
       summary: Update user profile
+      tags:
+        - User
       security:
         - bearerAuth: []
       requestBody:
@@ -109,33 +213,41 @@ paths:
                   type: string
       responses:
         '201':
-          description: User profile updated successfully.
+          description: User updated successfully
+        '500':
+          description: Internal server error
+
   /delete:
     delete:
-      summary: Deactivate user account
+      summary: Delete user account
+      tags:
+        - User
       security:
         - bearerAuth: []
       responses:
         '201':
-          description: User deactivated successfully.
-  /breeder/profile:
-    get:
-      summary: Get the breeder profile of the current user
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: Breeder profile retrieved successfully.
+          description: User deleted successfully
+        '500':
+          description: Internal server error
+
   /manage/profile:
     get:
-      summary: Get all user profiles
+      summary: Get all profiles
+      tags:
+        - Admin
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: List of all user profiles.
+          description: Profiles retrieved successfully
+        '404':
+          description: Users not found
+        '500':
+          description: Internal server error
     post:
-      summary: Create a new user profile (admin only)
+      summary: Create a user profile (Admin only)
+      tags:
+        - Admin
       security:
         - bearerAuth: []
       requestBody:
@@ -157,29 +269,46 @@ paths:
                   type: string
                 email:
                   type: string
-                userRoleId:
-                  type: integer
       responses:
         '201':
-          description: User profile created successfully.
+          description: User profile created successfully
+        '400':
+          description: Bad request (Username/Email/Phone already exists)
+        '500':
+          description: Internal server error
+
   /manage/profile/{id}:
     get:
-      summary: Get a user profile by ID
+      summary: Get profile by ID
+      tags:
+        - Admin
       security:
         - bearerAuth: []
       parameters:
-        - name: id
-          in: path
+        - in: path
+          name: id
           required: true
           schema:
             type: integer
       responses:
         '200':
-          description: User profile retrieved successfully.
+          description: User profile retrieved successfully
+        '404':
+          description: User not found
+        '500':
+          description: Internal server error
     patch:
-      summary: Update a user profile by ID
+      summary: Update user profile by ID
+      tags:
+        - Admin
       security:
         - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
       requestBody:
         required: true
         content:
@@ -197,50 +326,72 @@ paths:
                   type: string
                 email:
                   type: string
-                userRoleId:
-                  type: integer
       responses:
         '201':
-          description: User profile updated successfully.
+          description: User profile updated successfully
+        '500':
+          description: Internal server error
     delete:
-      summary: Delete a user profile by ID
+      summary: Delete user profile by ID
+      tags:
+        - Admin
       security:
         - bearerAuth: []
       parameters:
-        - name: id
-          in: path
+        - in: path
+          name: id
           required: true
           schema:
             type: integer
       responses:
         '200':
-          description: User profile deleted successfully.
+          description: User profile deleted successfully
+        '500':
+          description: Internal server error
+
   /manage/breeder/profile:
     get:
       summary: Get all breeder profiles
-      security:
-        - bearerAuth: []
+      tags:
+        - Admin
       responses:
         '200':
-          description: List of all breeder profiles.
+          description: Breeder profiles retrieved successfully
+        '404':
+          description: Breeder profiles not found
+        '500':
+          description: Internal server error
+
   /manage/breeder/profile/{id}:
     get:
-      summary: Get a breeder profile by ID
-      security:
-        - bearerAuth: []
+      summary: Get breeder profile by ID
+      tags:
+        - Admin
       parameters:
-        - name: id
-          in: path
+        - in: path
+          name: id
           required: true
           schema:
             type: integer
       responses:
         '200':
-          description: Breeder profile retrieved successfully.
+          description: Breeder profile retrieved successfully
+        '404':
+          description: Breeder profile not found
+        '500':
+          description: Internal server error
     patch:
-      summary: Update a breeder profile by ID
+      summary: Update breeder profile by ID
+      tags:
+        - Admin
       security:
         - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
       requestBody:
         required: true
         content:
@@ -256,24 +407,23 @@ paths:
                   type: string
       responses:
         '201':
-          description: Breeder profile updated successfully.
+          description: Breeder profile updated successfully
+        '500':
+          description: Internal server error
     delete:
-      summary: Delete a breeder profile by ID
+      summary: Delete breeder profile by ID
+      tags:
+        - Admin
       security:
         - bearerAuth: []
       parameters:
-        - name: id
-          in: path
+        - in: path
+          name: id
           required: true
           schema:
             type: integer
       responses:
         '200':
-          description: Breeder profile deleted successfully.
-
-components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+          description: Breeder profile deleted successfully
+        '500':
+          description: Internal server error

@@ -1,5 +1,4 @@
 using AuctionService.Models;
-using AuctionService.Models;
 
 namespace AuctionService.Helper
 {

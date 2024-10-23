@@ -20,6 +20,8 @@ public partial class AuctionManagementDbContext : DbContext
 
     public virtual DbSet<AuctionLot> AuctionLots { get; set; }
 
+    public virtual DbSet<AuctionLotStatus> AuctionLotStatuses { get; set; }
+
     public virtual DbSet<AuctionMethod> AuctionMethods { get; set; }
 
     public virtual DbSet<AuctionStatus> AuctionStatuses { get; set; }
@@ -32,9 +34,19 @@ public partial class AuctionManagementDbContext : DbContext
 
     public virtual DbSet<LotStatus> LotStatuses { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=tcp:koiauction.database.windows.net,1433;Initial Catalog=KoiAuctionDB;Persist Security Info=False;User ID=fpt-devteam;Password=sa123456!;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
+    private string GetConnectionString()
+    {
+        IConfiguration config = new ConfigurationBuilder()
+             .SetBasePath(Directory.GetCurrentDirectory())
+                    .AddJsonFile("appsettings.json", true, true)
+                    .Build();
+        var strConn = config["ConnectionStrings:DefaultConnectionStringDB"];
+
+        return strConn!;
+    }
+
+    // protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    //     => optionsBuilder.UseSqlServer("Server=tcp:koiauction.database.windows.net,1433;Initial Catalog=KoiAuctionDB;Persist Security Info=False;User ID=fpt-devteam;Password=sa123456!;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -70,6 +82,7 @@ public partial class AuctionManagementDbContext : DbContext
             entity.ToTable("AuctionLot", tb => tb.HasTrigger("trg_AuctionLot_Update"));
 
             entity.Property(e => e.AuctionLotId).ValueGeneratedNever();
+            entity.Property(e => e.AuctionLotStatusId).HasDefaultValue(1);
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -88,6 +101,26 @@ public partial class AuctionManagementDbContext : DbContext
                 .HasForeignKey<AuctionLot>(d => d.AuctionLotId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_AuctionLot_Lot");
+
+            entity.HasOne(d => d.AuctionLotStatus).WithMany(p => p.AuctionLots)
+                .HasForeignKey(d => d.AuctionLotStatusId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_AuctionLot_AuctionLotStatus");
+        });
+
+        modelBuilder.Entity<AuctionLotStatus>(entity =>
+        {
+            entity.HasKey(e => e.AuctionLotStatusId).HasName("PK__AuctionL__07A5E3C3499D6785");
+
+            entity.ToTable("AuctionLotStatus", tb => tb.HasTrigger("trg_AuctionLotStatus_Update"));
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.StatusName).HasMaxLength(100);
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
         });
 
         modelBuilder.Entity<AuctionMethod>(entity =>

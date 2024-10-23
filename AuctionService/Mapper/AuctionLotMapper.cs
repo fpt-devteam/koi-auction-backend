@@ -21,7 +21,8 @@ namespace AuctionService.Mapper
                 StepPercent = auctionLot.StepPercent,
                 EndTime = auctionLot.EndTime,
                 StartTime = auctionLot.StartTime,
-                LotDto = auctionLot.AuctionLotNavigation.ToLotDtoFromLot()
+                LotDto = auctionLot.AuctionLotNavigation.ToLotDtoFromLot(),
+                AuctionLotStatusDto = auctionLot.AuctionLotStatus.ToAuctionLotStatusDtoFromAuctionLotStatus()
             };
         }
 
@@ -40,6 +41,7 @@ namespace AuctionService.Mapper
                 StepPercent = auctionLot.StepPercent,
                 EndTime = auctionLot.EndTime,
                 StartTime = auctionLot.StartTime,
+                AuctionLotStatusDto = auctionLot.AuctionLotStatus.ToAuctionLotStatusDtoFromAuctionLotStatus()
             };
         }
 
@@ -52,6 +54,24 @@ namespace AuctionService.Mapper
                 StepPercent = auctionLotDto.StepPercent,
                 AuctionLotId = auctionLotDto.AuctionLotId,
                 AuctionId = auctionLotDto.AuctionId
+            };
+        }
+
+        // To patch auction lot dto from auction lot
+        public static PatchAuctionLotDto ToPatchAuctionLotDtoFromAuctionLot(this AuctionLot auctionLot)
+        {
+            if (auctionLot == null)
+            {
+                return null!;
+            }
+
+            return new PatchAuctionLotDto
+            {
+                AuctionId = auctionLot.AuctionId,
+                Duration = auctionLot.Duration,
+                OrderInAuction = auctionLot.OrderInAuction,
+                StepPercent = auctionLot.StepPercent,
+                AuctionLotId = auctionLot.AuctionLotId
             };
         }
     }
