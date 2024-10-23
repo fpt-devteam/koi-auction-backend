@@ -1,67 +1,90 @@
 using System.Collections.Concurrent;
+using BiddingService.Dto.AuctionLot;
 using BiddingService.Dto.BidLog;
 using BiddingService.IRepositories;
+using BiddingService.IServices;
+using BiddingService.Mappers;
+using Microsoft.Extensions.Caching.Memory;
 
 
 namespace BiddingService.Services
 {
     public class PlaceBidService
     {
-        private static ConcurrentQueue<CreateBidLogDto> _bidQueue = new();
-        private readonly IUnitOfWork _unitOfWork;
-        private decimal _highestBid = 0;
-        public PlaceBidService(IUnitOfWork unitOfWork)
+        private ConcurrentQueue<CreateBidLogDto> _bidQueue;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
+
+        private int _standardPrice;
+        private int _stepPrice;
+        // private readonly ICacheService _cacheService;
+        private readonly ConcurrentDictionary<int, int> _userBalance;
+        private AuctionLotDto? _auctionLotDto;
+        private const int AUCTION_LOT_ONGOING_STATUS = 2;
+        public PlaceBidService(IServiceScopeFactory serviceScopeFactory)
         {
-            _unitOfWork = unitOfWork;
+            _serviceScopeFactory = serviceScopeFactory;
+            // _cacheService = cacheService;
+            _userBalance = new ConcurrentDictionary<int, int>();
+            _bidQueue = new ConcurrentQueue<CreateBidLogDto>();
+        }
+        public void SetUp(AuctionLotDto auctionLotDto)
+        {
+            if (auctionLotDto == null)
+                throw new ArgumentNullException(nameof(auctionLotDto));
+
+            _auctionLotDto = auctionLotDto;
+            _standardPrice = _auctionLotDto.StartPrice;
+
+            if (_auctionLotDto.StepPercent > 0)
+            {
+                _stepPrice = CalculateStepPrice(_auctionLotDto.StartPrice, _auctionLotDto.StepPercent);
+            }
+            System.Console.WriteLine($"Setup dto {auctionLotDto.StartPrice} and standard: {_standardPrice} and step price: {_stepPrice}");
         }
 
-        //     private static ConcurrentQueue<CreateBidLogDto> _bidQueue = new();
-        //     private decimal _highestBid = 0;
-        //     private readonly IBidLogService _bidLogService;
+        private int CalculateStepPrice(int startPrice, int stepPercent)
+        {
+            return (startPrice * stepPercent) / 100;
+        }
 
-        //     public PlaceBidService(IBidLogService bidLogService)
-        //     {
-        //         _bidLogService = bidLogService;
-        //     }
+        public async Task AddBidLog(CreateBidLogDto bid)
+        {
 
-        //Xử lý hàng đợi để lưu bid vào cơ sở dữ liệu
-        // private async Task ProcessQueue()
-        // {
-        //     while (_bidQueue.TryDequeue(out var bid))
-        //     {
-        //         System.Console.WriteLine($"bid = {bid.BidAmount}");
-        //         await _unitOfWork.BidLog.CreateAsync(bid.ToBidLogFromCreateBidLogDto());
-        //         if (!await _unitOfWork.SaveChangesAsync())
-        //         {
-        //             throw new Exception("An error occurred while saving the data");
-        //         }
-        //     }
-        // }
-
-        private void ProcessQueue()
+            // Cập nhật _highestBid nếu bid mới lớn hơn
+            _standardPrice = bid.BidAmount + _stepPrice; // Cập nhật giá trị cao nhất
+            _bidQueue.Enqueue(bid);// Thêm bid hợp lệ vào hàng đợi
+            await Task.Run(() => ProcessQueue());
+            //await ProcessQueue();
+        }
+        private async Task ProcessQueue()
         {
             while (_bidQueue.TryDequeue(out var bid))
             {
                 System.Console.WriteLine($"bid = {bid.BidAmount}");
-                // await _unitOfWork.BidLog.CreateAsync(bid.ToBidLogFromCreateBidLogDto());
-                // if (!await _unitOfWork.SaveChangesAsync())
-                // {
-                //     throw new Exception("An error occurred while saving the data");
-                // }
+                using (var scope = _serviceScopeFactory.CreateScope())
+                {
+                    var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+                    await unitOfWork.BidLog.CreateAsync(bid.ToBidLogFromCreateBidLogDto());
+                    if (!await unitOfWork.SaveChangesAsync())
+                    {
+                        throw new Exception("An error occurred while saving the data");
+                    }
+                }
             }
         }
-        public void AddBidLog(CreateBidLogDto bid)
-        {
-            // Cập nhật _highestBid nếu bid mới lớn hơn
-            _highestBid = bid.BidAmount; // Cập nhật giá trị cao nhất
-            _bidQueue.Enqueue(bid);// Thêm bid hợp lệ vào hàng đợi
-            // Task.Run(() => ProcessQueue());
-            ProcessQueue();
-        }
+
         public bool ValidateBid(CreateBidLogDto bid)
         {
-            // Kiểm tra tính hợp lệ của bid
-            return bid.BidAmount > _highestBid;
+            System.Console.WriteLine($"stepprice = {_stepPrice} standard price = {_standardPrice} and bid amount {bid.BidAmount}");
+            //kiểm tra AuctionLotStaus
+            if (_auctionLotDto?.AuctionLotStatusId == AUCTION_LOT_ONGOING_STATUS
+                    //&& _cacheService.GetBalance(bid.BidderId) <= bid.BidAmount
+                    && bid.BidAmount >= _standardPrice)
+            {
+                return true;
+            }
+            return false;
         }
 
         // // Ví dụ về phương thức kiểm tra tính hợp lệ

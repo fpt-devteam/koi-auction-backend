@@ -41,7 +41,7 @@ namespace AuctionService.Mapper
                 StepPercent = auctionLot.StepPercent,
                 EndTime = auctionLot.EndTime,
                 StartTime = auctionLot.StartTime,
-                AuctionLotStatusDto = auctionLot.AuctionLotStatus.ToAuctionLotStatusDtoFromAuctionLotStatus()
+                AuctionLotStatusId = auctionLot.AuctionLotStatusId
             };
         }
 
