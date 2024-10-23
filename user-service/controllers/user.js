@@ -297,7 +297,6 @@ const manageCreateProfile = async (req, res) => {
          Email: email,
          Active: true,
          UserRoleId: userRoleId || 1,
-         Balance: 0,
          CreatedAt: new Date(),
          UpdatedAt: new Date(),
       }).then((user) => {

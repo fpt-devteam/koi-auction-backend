@@ -13,8 +13,7 @@ const User = sequelize.define('User', {
       allowNull: false
    },
    Password: {
-      type: DataTypes.STRING,
-      allowNull: false
+      type: DataTypes.STRING
    },
    Phone: {
       type: DataTypes.STRING,
@@ -35,10 +34,6 @@ const User = sequelize.define('User', {
          key: 'RoleId'
       }
    },
-   Balance: {
-      type: DataTypes.INTEGER,
-      allowNull: false
-   },
    FirstName: {
       type: DataTypes.STRING,
       allowNull: false
@@ -46,6 +41,9 @@ const User = sequelize.define('User', {
    LastName: {
       type: DataTypes.STRING,
       allowNull: false
+   },
+   GoogleId: {
+      type: DataTypes.STRING
    },
    CreatedAt: {
       type: DataTypes.DATE,
