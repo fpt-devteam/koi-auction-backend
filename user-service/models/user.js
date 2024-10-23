@@ -12,8 +12,7 @@ const User = sequelize.define('User', {
       allowNull: false
    },
    Password: {
-      type: DataTypes.STRING,
-      allowNull: false
+      type: DataTypes.STRING
    },
    Phone: {
       type: DataTypes.STRING,
@@ -31,10 +30,6 @@ const User = sequelize.define('User', {
       type: DataTypes.INTEGER,
       allowNull: false
    },
-   Balance: {
-      type: DataTypes.INTEGER,
-      allowNull: false
-   },
    FirstName: {
       type: DataTypes.STRING,
       allowNull: false
@@ -42,6 +37,9 @@ const User = sequelize.define('User', {
    LastName: {
       type: DataTypes.STRING,
       allowNull: false
+   },
+   GoogleId: {
+      type: DataTypes.STRING
    },
    CreatedAt: {
       type: DataTypes.DATE,
@@ -56,7 +54,7 @@ const User = sequelize.define('User', {
    timestamps: false
 });
 
-User.sync({ force: false  }).then(() => {
+User.sync({ alter: true  }).then(() => {
    console.log('User table created');
 }).catch(err => {
    console.log(err);

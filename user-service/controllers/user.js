@@ -6,14 +6,21 @@ const { sign, verify } = require("jsonwebtoken");
 const sendEmail = require("../utils/sendEmail");
 
 const profile = async (req, res) => {
-   const user = await User
-      .findOne({ where: { UserId: req.user.userId } })
-      .catch(
-         (err) => {
-            console.log(err);
-         }
-      );
-   res.status(200).json(user);
+   try {
+      const user = await User.findOne({ where: { UserId: req.user.userId } });
+      res.status(200).json({
+         UserId: user.UserId,
+         Username: user.Username,
+         FirstName: user.FirstName,
+         LastName: user.LastName,
+         Phone: user.Phone,
+         Email: user.Email,
+         UserRoleId: user.UserRoleId,
+      });
+   } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Internal server error" });
+   }
 };
 
 const login = async (req, res) => {
@@ -66,34 +73,31 @@ const register = async (req, res) => {
          where: {
             [Op.or]: [{ Username: username }, { Email: email }, { Phone: phone }],
          },
-      })
-      .catch(
-         (err) => {
-            console.log(err);
-         }
-      );
-   switch (existUser) {
-      case existUser?.Username === username:
-         return res.status(400).json({ message: "Username already exists" });
-      case existUser?.Email === email:
-         return res.status(400).json({ message: "Email already exists" });
-      case existUser?.Phone === phone:
-         return res.status(400).json({ message: "Phone already exists" });
-   }
-   const hashedPassword = await argon2.hash(password, 10);
-   await User.create({
-      Username: username,
-      Password: hashedPassword,
-      FirstName: firstname,
-      LastName: lastname,
-      Phone: phone,
-      Email: email,
-      Active: true,
-      UserRoleId: 1,
-      Balance: 0,
-      CreatedAt: new Date(),
-      UpdatedAt: new Date(),
-   }).catch((err) => {
+      });
+
+      if (!username || !password || !firstname || !lastname || !phone || !email) {
+         return res.status(400).json({ message: "All fields are required" });
+      }
+
+      if (existUser?.Username == username) return res.status(400).json({ message: "Username already exists" });
+      if (existUser?.Email == email) return res.status(400).json({ message: "Email already exists" });
+      if (existUser?.Phone == phone) return res.status(400).json({ message: "Phone already exists" });
+
+      const hashedPassword = await argon2.hash(password, 10);
+      await User.create({
+         Username: username,
+         Password: hashedPassword,
+         FirstName: firstname,
+         LastName: lastname,
+         Phone: phone,
+         Email: email,
+         Active: true,
+         UserRoleId: 1,
+         CreatedAt: new Date(),
+         UpdatedAt: new Date(),
+      });
+      res.status(201).json({ message: "User Created" });
+   } catch (err) {
       console.log(err);
    });
    res.status(201).json({ message: "User Created" });
@@ -287,7 +291,6 @@ const manageCreateProfile = async (req, res) => {
          Email: email,
          Active: true,
          UserRoleId: userRoleId || 1,
-         Balance: 0,
          CreatedAt: new Date(),
          UpdatedAt: new Date(),
       })
@@ -364,9 +367,49 @@ const manageUpdateBreederProfile = async (req, res) => {
 };
 
 const manageDeleteBreederProfile = async (req, res) => {
-   await BreederDetail.destroy({ where: { UserId: req.params.id } });
-   res.status(200).json({ message: "Breeder Profile Deleted" });
+   try {
+      await User.update(
+         { Active: false },
+         { where: { UserId: req.params.id } }
+      );
+      res.status(200).json({ message: "Breeder Profile Deleted" });
+   } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Internal server error" });
+   }
 };
+
+const manageGetBreederProfile = async (req, res) => {
+   const { id } = req.params;
+   if (!id) {
+      return res.status(400).json({ message: "Breeder ID is required" });
+   }
+   try {
+      User.hasOne(BreederDetail, { foreignKey: "BreederId" });
+      BreederDetail.belongsTo(User, { foreignKey: "BreederId" });
+      const breeder = await User.findOne({
+         where: { UserId: id },
+         include: [{ model: BreederDetail }],
+      });
+      if (!breeder) {
+         return res.status(404).json({ message: "Breeder Profile not found" });
+      }
+
+      res.status(200).json({
+         UserId: breeder.UserId,
+         Username: breeder.Username,
+         FirstName: breeder.FirstName,
+         LastName: breeder.LastName,
+         Phone: breeder.Phone,
+         Email: breeder.Email,
+         UserRoleId: breeder.UserRoleId,
+         Breeder: breeder.BreederDetail
+      });
+   } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Internal server error" });
+   }
+}
 
 module.exports = {
    profile,
