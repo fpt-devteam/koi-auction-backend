@@ -56,5 +56,23 @@ namespace AuctionService.Mapper
                 AuctionId = auctionLotDto.AuctionId
             };
         }
+
+        // To patch auction lot dto from auction lot
+        public static PatchAuctionLotDto ToPatchAuctionLotDtoFromAuctionLot(this AuctionLot auctionLot)
+        {
+            if (auctionLot == null)
+            {
+                return null!;
+            }
+
+            return new PatchAuctionLotDto
+            {
+                AuctionId = auctionLot.AuctionId,
+                Duration = auctionLot.Duration,
+                OrderInAuction = auctionLot.OrderInAuction,
+                StepPercent = auctionLot.StepPercent,
+                AuctionLotId = auctionLot.AuctionLotId
+            };
+        }
     }
 }

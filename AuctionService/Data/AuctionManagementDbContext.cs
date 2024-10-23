@@ -45,9 +45,8 @@ public partial class AuctionManagementDbContext : DbContext
         return strConn!;
     }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer(GetConnectionString());
-
+    // protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    //     => optionsBuilder.UseSqlServer("Server=tcp:koiauction.database.windows.net,1433;Initial Catalog=KoiAuctionDB;Persist Security Info=False;User ID=fpt-devteam;Password=sa123456!;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

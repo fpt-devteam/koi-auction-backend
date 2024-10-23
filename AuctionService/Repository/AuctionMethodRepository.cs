@@ -2,7 +2,6 @@ using AuctionService.Data;
 using AuctionService.Models;
 using AuctionService.Dto;
 using AuctionService.IRepository;
-using AuctionService.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace AuctionService.Repository

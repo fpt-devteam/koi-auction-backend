@@ -1,6 +1,5 @@
 using AuctionService.Models;
 using AuctionService.Dto.Auction;
-using AuctionService.Models;
 
 namespace AuctionService.Mapper
 {
@@ -20,13 +19,14 @@ namespace AuctionService.Mapper
             };
         }
 
-        public static Auction ToAuctionFromCreateAuctionDto(this CreateAuctionDto createAuction)
+        public static Auction ToAuctionFromCreateAuctionDto(this CreateAuctionDto createAuction, int staffId)
         {
             return new Auction
             {
-                StaffId = createAuction.StaffId,
+                // StaffId = createAuction.StaffId,
+                StaffId = staffId,
                 StartTime = createAuction.StartTime,
-                EndTime = createAuction.EndTime,
+                // EndTime = createAuction.EndTime,
             };
         }
     }
