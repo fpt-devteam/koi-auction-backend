@@ -310,11 +310,32 @@ const deleteAccount = async (req, res) => {
 
 const getAllProfiles = async (req, res) => {
    try {
-      const users = await User.findAll();
+      User.hasOne(BreederDetail, { foreignKey: "BreederId" });
+      BreederDetail.belongsTo(User, { foreignKey: "BreederId" });
+      
+      const users = await User.findAll({
+         include: [{ model: BreederDetail }],
+      });
+
       if (!users) {
          return res.status(404).json({ message: "Users not found" });
       }
-      res.status(200).json(users);
+      const result = users.map((user) => {
+         return {
+            UserId: user.UserId,
+            Username: user.Username,
+            FirstName: user.FirstName,
+            LastName: user.LastName,
+            Phone: user.Phone,
+            Email: user.Email,
+            Active: user.Active,
+            UserRoleId: user.UserRoleId,
+            FarmName: user.BreederDetail?.FarmName,
+            Certificate: user.BreederDetail?.Certificate,
+            About: user.BreederDetail?.About,
+         };
+      });
+      res.status(200).json(result);
    } catch (err) {
       console.log(err);
       res.status(500).json({ message: "Internal server error" });
@@ -327,7 +348,16 @@ const getProfileById = async (req, res) => {
       if (!user) {
          return res.status(404).json({ message: "User not found" });
       }
-      res.status(200).json(user);
+      res.status(200).json({
+         UserId: user.UserId,
+         Username: user.Username,
+         FirstName: user.FirstName,
+         LastName: user.LastName,
+         Phone: user.Phone,
+         Email: user.Email,
+         Active: user.Active,
+         UserRoleId: user.UserRoleId
+      });
    } catch (err) {
       console.log(err);
       res.status(500).json({ message: "Internal server error" });
@@ -380,7 +410,7 @@ const manageCreateProfile = async (req, res) => {
          LastName: LastName,
          Phone: Phone,
          Email: Email,
-         Active: Active || true,
+         Active: Active,
          UserRoleId: UserRoleId || 1,
          CreatedAt: new Date(),
          UpdatedAt: new Date(),
@@ -391,7 +421,7 @@ const manageCreateProfile = async (req, res) => {
       if (UserRoleId == 2) {
          const { FarmName, Certificate, About } = req.body;
 
-         if (!FarmName || !Certificate) {
+         if (!FarmName || !Certificate || !About) {
             return res.status(400).json({ message: "All fields are required" });
          }
 
@@ -483,7 +513,7 @@ const manageUpdateProfile = async (req, res) => {
             LastName: LastName,
             Phone: Phone,
             Email: Email,
-            Active: Active || true,
+            Active: Active,
             UpdatedAt: new Date(),
          },
          { where: { UserId: req.params.id } }
