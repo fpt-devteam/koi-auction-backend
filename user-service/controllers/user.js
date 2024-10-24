@@ -29,7 +29,7 @@ const googleAuth = async (req, res) => {
    try {
       const { token } = req.body;
       const existUser = await User.findOne({ where: { GoogleId: token } });
-      
+
       if (existUser) {
          const accessToken = sign(
             { UserId: existUser.UserId, UserRoleId: existUser.UserRoleId },
@@ -139,15 +139,22 @@ const login = async (req, res) => {
 const register = async (req, res) => {
    try {
       const { Username, Password, FirstName, LastName, Phone, Email } = req.body;
+
+      if (!Username || !Password || !FirstName || !LastName || !Phone || !Email) {
+         return res.status(400).json({ message: "All fields are required" });
+      }
+
+      const pattern = /(84|0[3|5|7|8|9])+([0-9]{8})\b/g;
+      if (!Phone?.match(pattern)) {
+         return res.status(400).json({ message: "Phone number is not valid" });
+      }
+
       const existUser = await User.findOne({
          where: {
             [Op.or]: [{ Username: Username }, { Email: Email }, { Phone: Phone }],
          },
       });
 
-      if (!Username || !Password || !FirstName || !LastName || !Phone || !Email) {
-         return res.status(400).json({ message: "All fields are required" });
-      }
 
       if (existUser?.Username == Username) return res.status(400).json({ message: "Username already exists" });
       if (existUser?.Email == Email) return res.status(400).json({ message: "Email already exists" });
@@ -176,6 +183,25 @@ const register = async (req, res) => {
 const updateProfile = async (req, res) => {
    try {
       const { Username, FirstName, LastName, Phone, Email } = req.body;
+
+      const pattern = /(84|0[3|5|7|8|9])+([0-9]{8})\b/g;
+      if (!!Phone && !Phone.match(pattern)) {
+         return res.status(400).json({ message: "Phone number is not valid" });
+      }
+
+      const existUser = await User.findOne({
+         where: {
+            [Op.or]: [{ Username: Username || "" }, { Email: Email || "" }, { Phone: Phone || "" }],
+            UserId: { [Op.ne]: req.user.UserId }
+         },
+      });
+
+      if (existUser) {
+         if (existUser.Username == Username) return res.status(400).json({ message: "Username already exists" });
+         if (existUser.Email == Email) return res.status(400).json({ message: "Email already exists" });
+         if (existUser.Phone == Phone) return res.status(400).json({ message: "Phone already exists" });
+      }
+
       await User.update(
          {
             Username: Username,
@@ -325,6 +351,16 @@ const manageCreateProfile = async (req, res) => {
    try {
       const { Username, Password, FirstName, LastName, Phone, Email, UserRoleId, Active } =
          req.body;
+
+      if (!Username || !Password || !FirstName || !LastName || !Phone || !Email) {
+         return res.status(400).json({ message: "All fields are required" });
+      }
+
+      const pattern = /(84|0[3|5|7|8|9])+([0-9]{8})\b/g;
+      if (!Phone?.match(pattern)) {
+         return res.status(400).json({ message: "Phone number is not valid" });
+      }
+
       const existUser = await User.findOne({
          where: {
             [Op.or]: [{ Username: Username }, { Email: Email }, { Phone: Phone }],
@@ -419,6 +455,27 @@ const manageUpdateProfile = async (req, res) => {
    try {
       const { Username, FirstName, LastName, Phone, Email, FarmName, Certificate, About, Active } = req.body;
 
+      console.log(Phone);
+
+      const pattern = /(84|0[3|5|7|8|9])+([0-9]{8})\b/g;
+
+      if (!!Phone && !Phone?.match(pattern)) {
+         return res.status(400).json({ message: "Phone number is not valid" });
+      }
+
+      const existUser = await User.findOne({
+         where: {
+            [Op.or]: [{ Username: Username || "" }, { Email: Email || "" }, { Phone: Phone || "" }],
+            UserId: { [Op.ne]: req.params.id }
+         },
+      });
+
+      if (existUser) {
+         if (existUser.Username == Username) return res.status(400).json({ message: "Username already exists" });
+         if (existUser.Email == Email) return res.status(400).json({ message: "Email already exists" });
+         if (existUser.Phone == Phone) return res.status(400).json({ message: "Phone already exists" });
+      }
+
       await User.update(
          {
             Username: Username,
@@ -440,7 +497,7 @@ const manageUpdateProfile = async (req, res) => {
          },
          { where: { BreederId: req.params.id } }
       );
-      res.status(201).json({ message: "Breeder Profile Updated" });
+      res.status(201).json({ message: "Profile Updated" });
    } catch (err) {
       console.log(err);
       res.status(500).json({ message: "Internal server error" });
