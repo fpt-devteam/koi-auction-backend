@@ -62,8 +62,8 @@ const authentification = (req, res, next) => {
             return next();
          }
          console.log("Decoded", decoded);
-         req.headers.uid = decoded.userId;
-         req.headers.uri = decoded.userRoleId;
+         req.headers.uid = decoded.UserId;
+         req.headers.uri = decoded.UserRoleId;
          next();
       });
    } catch (error) {
