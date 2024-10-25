@@ -17,10 +17,10 @@ namespace BiddingService.Repositories
         {
             _context = context;
         }
-        public async Task<BidLog> CreateAsync(BidLog bigLog)
+        public async Task<BidLog> CreateAsync(BidLog bidLog)
         {
-            await _context.AddAsync(bigLog);
-            return bigLog;
+            await _context.AddAsync(bidLog);
+            return bidLog;
         }
 
         public async Task<List<BidLog>> GetAllAsync()

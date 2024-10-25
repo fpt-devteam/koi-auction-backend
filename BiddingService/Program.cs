@@ -15,8 +15,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
-builder.Services.AddSingleton<IDictionary<string, UserConnectionDto>>(new Dictionary<string, UserConnectionDto>());
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<IDictionary<string, UserConnectionDto>>(_ => new Dictionary<string, UserConnectionDto>());
 // Cấu hình CORS cho phép bất kỳ domain nào
 
 builder.Services.AddCors(options =>
@@ -40,9 +40,16 @@ builder.Services.AddDbContext<BiddingDbContext>(option =>
 });
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IBidLogRepository, BidLogRepository>();
-
+builder.Services.AddScoped<ICacheService, MemoryCacheService>();
 builder.Services.AddScoped<IBidLogService, BidLogService>();
-builder.Services.AddScoped<PlaceBidService>();
+builder.Services.AddScoped<AuctionLotBidService>();
+builder.Services.AddSingleton<AuctionLotService>();
+
+//add swagger
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new() { Title = "BiddingService", Version = "v1" });
+});
 
 var app = builder.Build();
 
@@ -52,7 +59,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-app.MapHub<PlaceBidHub>("/hub");
+app.MapHub<AuctionLotHub>("/hub");
 app.UseHttpsRedirection();
 app.MapControllers();
 app.UseCors();

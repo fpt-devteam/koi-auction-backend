@@ -11,7 +11,7 @@ namespace BiddingService.Dto.BidLog
 
         public int AuctionLotId { get; set; }
 
-        public int BidAmount { get; set; }
+        public decimal BidAmount { get; set; }
 
     }
 }
