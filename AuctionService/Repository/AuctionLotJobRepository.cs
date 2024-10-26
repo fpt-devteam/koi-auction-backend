@@ -32,7 +32,9 @@ namespace AuctionService.Repository
         {
             var auctionLotJob = await _context.AuctionLotJobs.FirstOrDefaultAsync(a => a.AuctionLotId == auctionLotId);
             if (auctionLotJob == null)
-                return null;
+            {
+                return await CreateAsync(new AuctionLotJob { AuctionLotId = auctionLotId, HangfireJobId = hangfireJobId });
+            }
             auctionLotJob.HangfireJobId = hangfireJobId;
             return auctionLotJob;
         }

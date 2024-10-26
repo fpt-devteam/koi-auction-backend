@@ -34,8 +34,9 @@ namespace AuctionService.Services
             await _unitOfWork.Auctions.UpdateStatusAsync(auctionId, AUCTION_STATUS_ONGOING);
             // Get auction lot has order in auction = 1
             var auctionLot = await _unitOfWork.AuctionLots.GetAuctionLotByOrderInAuction(auctionId, FIRST_AUCTION_LOT_ORDER);
+
             if (auctionLot != null)
-                await _auctionLotService.StartAuctionLot(auctionLot.AuctionLotId, startTime, auctionLot.Duration);
+                await _auctionLotService.ScheduleAuctionLot(auctionLot.AuctionLotId, startTime);
 
             if (!await _unitOfWork.SaveChangesAsync())
             {

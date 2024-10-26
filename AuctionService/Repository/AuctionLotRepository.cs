@@ -66,13 +66,13 @@ namespace AuctionService.Repository
         public async Task<List<AuctionLot>> GetAllAsync(AuctionLotQueryObject query)
         {
             var auctionLots = await _context.AuctionLots.Include(a => a.AuctionLotStatus).
-            Include(a => a.AuctionLotNavigation)
-                .ThenInclude(f => f.KoiFish).ThenInclude(m => m!.KoiMedia)
-            .Include(a => a.AuctionLotNavigation)
-                .ThenInclude(l => l.AuctionMethod)
-            .Include(a => a.AuctionLotNavigation)
-                .ThenInclude(s => s.LotStatus)
-            .ToListAsync();
+                                        Include(a => a.AuctionLotNavigation)
+                                            .ThenInclude(f => f.KoiFish).ThenInclude(m => m!.KoiMedia)
+                                        .Include(a => a.AuctionLotNavigation)
+                                            .ThenInclude(l => l.AuctionMethod)
+                                        .Include(a => a.AuctionLotNavigation)
+                                            .ThenInclude(s => s.LotStatus)
+                                        .ToListAsync();
 
             if (query.AuctionId.HasValue)
             {
@@ -115,7 +115,7 @@ namespace AuctionService.Repository
 
         public async Task<AuctionLot?> UpdateStatusAsync(int id, int statusId)
         {
-            var auctionLot = await _context.AuctionLots.FirstOrDefaultAsync(a => a.AuctionLotId == id);
+            var auctionLot = await GetAuctionLotById(id);
             if (auctionLot == null)
                 return null;
             auctionLot.AuctionLotStatusId = statusId;
