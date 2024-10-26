@@ -4,10 +4,11 @@ const argon2 = require("argon2");
 const { Op } = require("sequelize");
 const { sign, verify } = require("jsonwebtoken");
 const sendEmail = require("../utils/sendEmail");
+const passport = require("../utils/passport");
 
 const profile = async (req, res) => {
    try {
-      const user = await User.findOne({ where: { UserId: req.user.userId } });
+      const user = await User.findOne({ where: { UserId: req.user.UserId } });
       res.status(200).json({
          UserId: user.UserId,
          Username: user.Username,
@@ -15,7 +16,7 @@ const profile = async (req, res) => {
          LastName: user.LastName,
          Phone: user.Phone,
          Email: user.Email,
-         Balance: user.Balance,
+         Active: user.Active,
          UserRoleId: user.UserRoleId,
       });
    } catch (err) {
@@ -24,10 +25,83 @@ const profile = async (req, res) => {
    }
 };
 
+const googleAuth = async (req, res) => {
+   try {
+      const { token } = req.body;
+      const existUser = await User.findOne({ where: { GoogleId: token } });
+      
+      if (existUser) {
+         const accessToken = sign(
+            { UserId: existUser.UserId, UserRoleId: existUser.UserRoleId },
+            process.env.JWT_SECRET
+         );
+         const signInExpire = 1000 * 60 * 60 * 24;
+         res.cookie("access-token", accessToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "none",
+            maxAge: signInExpire,
+         });
+         return res.status(200).json({ message: "Login successful", user: existUser });
+      }
+
+      const profile = await new Promise((resolve, reject) => {
+         passport.authenticate("google", (err, user) => {
+            if (err) reject(err);
+            console.log(user);
+            resolve(user);
+         })(req, res);
+      });
+
+      if (!profile) {
+         return res.status(401).json({ message: "Google authentication failed" });
+      }
+
+      const { id, name, Email } = profile;
+      const existUserByEmail = await User.findOne({ where: { Email: Email } });
+
+      if (existUserByEmail) {
+         return res.status(409).json({ message: "Email already exists" });
+      }
+
+      const existUserById = await User.findOne({ where: { GoogleId: id } });
+
+      if (existUserById) {
+         const accessToken = sign(
+            { UserId: existUserById.UserId, UserRoleId: existUserById.UserRoleId },
+            process.env.JWT_SECRET
+         );
+         const signInExpire = 1000 * 60 * 60 * 24;
+         res.cookie("access-token", accessToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "none",
+            maxAge: signInExpire,
+         });
+         return res.status(200).json({ message: "Login successful", user: existUserById });
+      }
+
+      await User.create({
+         Username: name,
+         Email: Email,
+         GoogleId: id,
+         Active: true,
+         UserRoleId: 1,
+         CreatedAt: new Date(),
+         UpdatedAt: new Date(),
+      });
+
+      res.status(201).json({ message: "User Created" });
+   } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Internal server error" });
+   }
+}
+
 const login = async (req, res) => {
    try {
       const reqBody = req.body;
-      const user = await User.findOne({ where: { Username: reqBody.username } });
+      const user = await User.findOne({ where: { Username: reqBody.Username } });
 
       if (!user) {
          return res.status(401).json({ message: "Username or Password is incorrect" });
@@ -37,14 +111,14 @@ const login = async (req, res) => {
          return res.status(401).json({ message: "User is not available" });
       }
 
-      const match = await argon2.verify(user.Password, reqBody.password);
+      const match = await argon2.verify(user.Password, reqBody.Password);
 
       if (match) {
          const accessToken = sign(
-            { userId: user.UserId, userRoleId: user.UserRoleId },
+            { UserId: user.UserId, UserRoleId: user.UserRoleId },
             process.env.JWT_SECRET
          );
-         const signInExpire = reqBody["remember-me"]
+         const signInExpire = reqBody.RememberMe
             ? 1000 * 60 * 60 * 24 * 30
             : 1000 * 60 * 60 * 24;
          res.cookie("access-token", accessToken, {
@@ -64,32 +138,31 @@ const login = async (req, res) => {
 
 const register = async (req, res) => {
    try {
-      const { username, password, firstname, lastname, phone, email } = req.body;
+      const { Username, Password, FirstName, LastName, Phone, Email } = req.body;
       const existUser = await User.findOne({
          where: {
-            [Op.or]: [{ Username: username }, { Email: email }, { Phone: phone }],
+            [Op.or]: [{ Username: Username }, { Email: Email }, { Phone: Phone }],
          },
       });
 
-      if (!username || !password || !firstname || !lastname || !phone || !email) {
+      if (!Username || !Password || !FirstName || !LastName || !Phone || !Email) {
          return res.status(400).json({ message: "All fields are required" });
       }
 
-      if (existUser?.Username == username) return res.status(400).json({ message: "Username already exists" });
-      if (existUser?.Email == email) return res.status(400).json({ message: "Email already exists" });
-      if (existUser?.Phone == phone) return res.status(400).json({ message: "Phone already exists" });
+      if (existUser?.Username == Username) return res.status(400).json({ message: "Username already exists" });
+      if (existUser?.Email == Email) return res.status(400).json({ message: "Email already exists" });
+      if (existUser?.Phone == Phone) return res.status(400).json({ message: "Phone already exists" });
 
-      const hashedPassword = await argon2.hash(password, 10);
+      const hashedPassword = await argon2.hash(Password, 10);
       await User.create({
-         Username: username,
+         Username: Username,
          Password: hashedPassword,
-         FirstName: firstname,
-         LastName: lastname,
-         Phone: phone,
-         Email: email,
+         FirstName: FirstName,
+         LastName: LastName,
+         Phone: Phone,
+         Email: Email,
          Active: true,
          UserRoleId: 1,
-         Balance: 0,
          CreatedAt: new Date(),
          UpdatedAt: new Date(),
       });
@@ -102,18 +175,18 @@ const register = async (req, res) => {
 
 const updateProfile = async (req, res) => {
    try {
-      const { username, firstname, lastname, phone, email } = req.body;
+      const { Username, FirstName, LastName, Phone, Email } = req.body;
       await User.update(
          {
-            Username: username,
-            FirstName: firstname,
-            LastName: lastname,
-            Phone: phone,
-            Email: email,
+            Username: Username,
+            FirstName: FirstName,
+            LastName: LastName,
+            Phone: Phone,
+            Email: Email,
             CreatedAt: new Date(),
             UpdatedAt: new Date(),
          },
-         { where: { UserId: req.user.userId } }
+         { where: { UserId: req.user.UserId } }
       );
       res.status(201).json({ message: "User Updated" });
    } catch (err) {
@@ -124,14 +197,14 @@ const updateProfile = async (req, res) => {
 
 const updatePassword = async (req, res) => {
    try {
-      const { password } = req.body;
-      if (!password) {
+      const { Password } = req.body;
+      if (!Password) {
          return res.status(400).json({ message: "Password is required" });
       }
-      const hashedPassword = await argon2.hash(password, 10);
+      const hashedPassword = await argon2.hash(Password, 10);
       await User.update(
          { Password: hashedPassword },
-         { where: { UserId: req.user.userId } }
+         { where: { UserId: req.user.UserId } }
       );
       res.status(201).json({ message: "Password Updated" });
    } catch (err) {
@@ -142,20 +215,20 @@ const updatePassword = async (req, res) => {
 
 const forgotPassword = async (req, res) => {
    try {
-      const { email } = req.body;
-      const user = await User.findOne({ where: { Email: email } });
+      const { Email } = req.body;
+      const user = await User.findOne({ where: { Email: Email } });
 
       if (!user) {
          return res.status(404).json({ message: "User not found" });
       }
-      const token = sign({ userId: user.UserId }, process.env.JWT_SECRET, {
+      const token = sign({ UserId: user.UserId }, process.env.JWT_SECRET, {
          expiresIn: "15m",
       });
-      const resetLink = `http://localhost:3000/reset-password/${token}`;
+      const resetLink = `http://localhost:3000/reset-Password/${token}`;
       const subject = "Password Reset Link";
-      const text = `Click on the link to reset your password: ${resetLink}`;
-      await sendEmail(email, subject, text);
-      res.status(200).json({ message: "Password reset link sent to your email" });
+      const text = `Click on the link to reset your Password: ${resetLink}`;
+      await sendEmail(Email, subject, text);
+      res.status(200).json({ message: "Password reset link sent to your Email" });
    } catch (err) {
       console.log(err);
       res.status(500).json({ message: "Internal server error" });
@@ -164,20 +237,20 @@ const forgotPassword = async (req, res) => {
 
 const resetPassword = async (req, res) => {
    try {
-      const { password } = req.body;
+      const { Password } = req.body;
       const token = req.params.token;
 
       verify(token, process.env.JWT_SECRET, async (err, decoded) => {
          if (err) {
             return res.status(401).json({ message: "Invalid or expired token" });
          }
-         const user = await User.findByPk(decoded.userId);
+         const user = await User.findByPk(decoded.UserId);
 
          if (!user) {
             return res.status(404).json({ message: "User not found" });
          }
 
-         const hashedPassword = await argon2.hash(password, 10);
+         const hashedPassword = await argon2.hash(Password, 10);
 
          await User.update(
             { Password: hashedPassword },
@@ -200,7 +273,7 @@ const deleteAccount = async (req, res) => {
    try {
       await User.update(
          { Active: false },
-         { where: { UserId: req.user.userId } }
+         { where: { UserId: req.user.UserId } }
       );
       res.status(201).json({ message: "User Deleted" });
    } catch (err) {
@@ -248,73 +321,49 @@ const manageDeleteProfile = async (req, res) => {
    }
 };
 
-const manageUpdateProfile = async (req, res) => {
-   try {
-      const { username, firstname, lastname, phone, email, roleId, active } = req.body;
-      await User.update(
-         {
-            Username: username,
-            FirstName: firstname,
-            LastName: lastname,
-            Phone: phone,
-            Email: email,
-            UserRoleId: roleId,
-            Active: active || true,
-            CreatedAt: new Date(),
-            UpdatedAt: new Date(),
-         },
-         { where: { UserId: req.params.id } }
-      );
-      res.status(201).json({ message: "User Updated" });
-   } catch (err) {
-      console.log(err);
-      res.status(500).json({ message: "Internal server error" });
-   }
-};
-
 const manageCreateProfile = async (req, res) => {
    try {
-      const { username, password, firstname, lastname, phone, email, userRoleId } =
+      const { Username, Password, FirstName, LastName, Phone, Email, UserRoleId, Active } =
          req.body;
       const existUser = await User.findOne({
          where: {
-            [Op.or]: [{ Username: username }, { Email: email }, { Phone: phone }],
+            [Op.or]: [{ Username: Username }, { Email: Email }, { Phone: Phone }],
          },
       });
 
-      if (existUser?.Username == username) return res.status(400).json({ message: "Username already exists" });
-      if (existUser?.Email == email) return res.status(400).json({ message: "Email already exists" });
-      if (existUser?.Phone == phone) return res.status(400).json({ message: "Phone already exists" });
+      if (existUser?.Username == Username) return res.status(400).json({ message: "Username already exists" });
+      if (existUser?.Email == Email) return res.status(400).json({ message: "Email already exists" });
+      if (existUser?.Phone == Phone) return res.status(400).json({ message: "Phone already exists" });
 
-      const hashedPassword = await argon2.hash(password, 10);
-      let userId = null;
+      const hashedPassword = await argon2.hash(Password, 10);
+      let UserId = null;
       await User.create({
-         Username: username,
+         Username: Username,
          Password: hashedPassword,
-         FirstName: firstname,
-         LastName: lastname,
-         Phone: phone,
-         Email: email,
-         Active: true,
-         UserRoleId: userRoleId || 1,
+         FirstName: FirstName,
+         LastName: LastName,
+         Phone: Phone,
+         Email: Email,
+         Active: Active || true,
+         UserRoleId: UserRoleId || 1,
          CreatedAt: new Date(),
          UpdatedAt: new Date(),
       }).then((user) => {
-         userId = user.UserId;
+         UserId = user.UserId;
       });
 
-      if (userRoleId == 2) {
-         const { farmName, certificate, about } = req.body;
+      if (UserRoleId == 2) {
+         const { FarmName, Certificate, About } = req.body;
 
-         if (!farmName || !certificate) {
+         if (!FarmName || !Certificate) {
             return res.status(400).json({ message: "All fields are required" });
          }
 
          await BreederDetail.create({
-            BreederId: userId,
-            FarmName: farmName,
-            Certificate: certificate,
-            About: about,
+            BreederId: UserId,
+            FarmName: FarmName,
+            Certificate: Certificate,
+            About: About,
          });
 
          console.log("Breeder Profile Created");
@@ -329,7 +378,7 @@ const manageCreateProfile = async (req, res) => {
 
 const getBreederProfile = async (req, res) => {
    try {
-      const breeder = await BreederDetail.findByPk(req.user.userId);
+      const breeder = await BreederDetail.findByPk(req.user.UserId);
       if (!breeder) {
          return res.status(404).json({ message: "Breeder Profile not found" });
       }
@@ -366,16 +415,30 @@ const getBreederProfileById = async (req, res) => {
    }
 };
 
-const manageUpdateBreederProfile = async (req, res) => {
+const manageUpdateProfile = async (req, res) => {
    try {
-      const { farmName, location, contact } = req.body;
-      await BreederDetail.update(
+      const { Username, FirstName, LastName, Phone, Email, FarmName, Certificate, About, Active } = req.body;
+
+      await User.update(
          {
-            FarmName: farmName,
-            Location: location,
-            Contact: contact,
+            Username: Username,
+            FirstName: FirstName,
+            LastName: LastName,
+            Phone: Phone,
+            Email: Email,
+            Active: Active || true,
+            UpdatedAt: new Date(),
          },
          { where: { UserId: req.params.id } }
+      );
+
+      await BreederDetail.update(
+         {
+            FarmName: FarmName,
+            Certificate: Certificate,
+            About: About,
+         },
+         { where: { BreederId: req.params.id } }
       );
       res.status(201).json({ message: "Breeder Profile Updated" });
    } catch (err) {
@@ -397,32 +460,34 @@ const manageDeleteBreederProfile = async (req, res) => {
    }
 };
 
-const manageGetBreederProfile = async (req, res) => {
+const manageGetDetailProfile = async (req, res) => {
    const { id } = req.params;
    if (!id) {
-      return res.status(400).json({ message: "Breeder ID is required" });
+      return res.status(400).json({ message: "ID is required" });
    }
    try {
       User.hasOne(BreederDetail, { foreignKey: "BreederId" });
       BreederDetail.belongsTo(User, { foreignKey: "BreederId" });
-      const breeder = await User.findOne({
+      const user = await User.findOne({
          where: { UserId: id },
          include: [{ model: BreederDetail }],
       });
-      if (!breeder) {
-         return res.status(404).json({ message: "Breeder Profile not found" });
+      if (!user) {
+         return res.status(404).json({ message: "Profile not found" });
       }
 
       res.status(200).json({
-         UserId: breeder.UserId,
-         Username: breeder.Username,
-         FirstName: breeder.FirstName,
-         LastName: breeder.LastName,
-         Phone: breeder.Phone,
-         Email: breeder.Email,
-         Balance: breeder.Balance,
-         UserRoleId: breeder.UserRoleId,
-         Breeder: breeder.BreederDetail,
+         UserId: user.UserId,
+         Username: user.Username,
+         FirstName: user.FirstName,
+         LastName: user.LastName,
+         Phone: user.Phone,
+         Email: user.Email,
+         Active: user.Active,
+         UserRoleId: user.UserRoleId,
+         FarmName: user.BreederDetail?.FarmName,
+         Certificate: user.BreederDetail?.Certificate,
+         About: user.BreederDetail?.About,
       });
    } catch (err) {
       console.log(err);
@@ -432,6 +497,7 @@ const manageGetBreederProfile = async (req, res) => {
 
 module.exports = {
    profile,
+   googleAuth,
    login,
    register,
    updateProfile,
@@ -442,13 +508,12 @@ module.exports = {
    logout,
    getAllProfiles,
    getProfileById,
-   manageGetBreederProfile,
+   manageGetDetailProfile,
    manageDeleteProfile,
    manageUpdateProfile,
    manageCreateProfile,
    getBreederProfile,
    getAllBreederProfiles,
    getBreederProfileById,
-   manageUpdateBreederProfile,
    manageDeleteBreederProfile,
 };
