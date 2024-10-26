@@ -17,6 +17,8 @@ router.patch("/update-password", authenticate, controller.updatePassword);
 router.patch("/update-profile", authenticate, controller.updateProfile);
 router.delete("/delete", authenticate, controller.deleteAccount);
 
+router.post("/auth/google", controller.googleAuth);
+
 router.get("/breeder/profile", authenticate, breederRole, controller.getBreederProfile);
 
 router.get("/manage/profile", authenticate, highRole, controller.getAllProfiles);
@@ -24,11 +26,10 @@ router.post("/manage/profile", authenticate, adminOnly, controller.manageCreateP
 router.get("/manage/profile/:id", authenticate, highRole, controller.getProfileById);
 router.patch("/manage/profile/:id", authenticate, highRole, controller.manageUpdateProfile);
 router.delete("/manage/profile/:id", authenticate, highRole, controller.manageDeleteProfile);
+router.get("/manage/detail-profile/:id", authenticate, highRole, controller.manageGetDetailProfile);
 
 router.get("/manage/breeder/profile", controller.getAllBreederProfiles);
 router.get("/manage/breeder/profile/:id", controller.getBreederProfileById);
-router.get("/manage/breeder/detail-profile/:id", authenticate, highRole, controller.manageGetBreederProfile);
-router.patch("/manage/breeder/profile/:id", authenticate, highRole, controller.manageUpdateBreederProfile);
 router.delete("/manage/breeder/profile/:id", authenticate, highRole, controller.manageDeleteBreederProfile);
 
 module.exports = router;
