@@ -5,38 +5,6 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace BiddingService.Services
 {
-    // public class AuctionLotManagerService
-    // {á
-    //     private readonly IServiceScopeFactory _serviceScopeFactory;
-    //     private IServiceScope? _scope; // Add this field to store the scope
-
-    //     public AuctionLotManagerService(IServiceScopeFactory serviceScopeFactory)
-    //     {
-    //         _serviceScopeFactory = serviceScopeFactory;
-    //     }
-
-    //     public PlaceBidService StartAuctionLot(AuctionLotBidDto AuctionLotBidDto)
-    //     {
-    //         // Create a new scope and store it in the field
-    //         _scope = _serviceScopeFactory.CreateScope();
-
-    //         // Retrieve and set up the PlaceBidService
-    //         var placeBidService = _scope.ServiceProvider.GetRequiredService<PlaceBidService>();
-    //         placeBidService.SetUp(AuctionLotBidDto);
-
-    //         return placeBidService;
-    //     }
-
-    //     public void EndAuction()
-    //     {
-    //         // Dispose of the scope to end the auction
-    //         _scope?.Dispose();
-    //     }
-    // }
-
-    //
-    //
-    //
 
     public class BidManagementService
     {
