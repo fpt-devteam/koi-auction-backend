@@ -56,5 +56,24 @@ namespace AuctionService.Mapper
                 AuctionId = auctionLotDto.AuctionId
             };
         }
+
+        public static AuctionLotBidDto ToAuctionLotBidDtoFromAuctionLot(this AuctionLot auctionLot)
+        {
+            if (auctionLot == null)
+            {
+                return null!;
+            }
+
+            System.Console.WriteLine($"auction lot id: {auctionLot.AuctionLotId}");
+            return new AuctionLotBidDto
+            {
+                AuctionLotId = auctionLot.AuctionLotId,
+                AuctionMethodId = auctionLot.AuctionLotNavigation.AuctionMethodId,
+                StartPrice = auctionLot.AuctionLotNavigation.StartingPrice,
+                StepPercent = auctionLot.StepPercent,
+                EndTime = auctionLot.EndTime,
+                StartTime = auctionLot.StartTime
+            };
+        }
     }
 }

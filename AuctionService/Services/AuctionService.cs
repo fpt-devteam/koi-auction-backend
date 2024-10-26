@@ -36,7 +36,7 @@ namespace AuctionService.Services
             var auctionLot = await _unitOfWork.AuctionLots.GetAuctionLotByOrderInAuction(auctionId, FIRST_AUCTION_LOT_ORDER);
 
             if (auctionLot != null)
-                await _auctionLotService.ScheduleAuctionLot(auctionLot.AuctionLotId, startTime, auctionLot.Duration);
+                await _auctionLotService.ScheduleAuctionLot(auctionLot.AuctionLotId, startTime);
 
             if (!await _unitOfWork.SaveChangesAsync())
             {

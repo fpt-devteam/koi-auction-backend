@@ -9,7 +9,7 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace BiddingService.Services
 {
-    public class AuctionLotBidService
+    public class BidService
     {
         private readonly ConcurrentQueue<CreateBidLogDto> _bidQueue;
         private readonly ConcurrentDictionary<int, int> _userBalance;
@@ -17,22 +17,22 @@ namespace BiddingService.Services
         private decimal _standardPrice;
         private decimal _stepPrice;
 
-        private AuctionLotDto? _auctionLotDto;
-        public AuctionLotDto? AuctionLotDto
+        private AuctionLotBidDto? _AuctionLotBidDto;
+        public AuctionLotBidDto? AuctionLotBidDto
         {
-            get => _auctionLotDto;
+            get => _AuctionLotBidDto;
             set
             {
                 if (value == null)
                     throw new ArgumentNullException(nameof(value));
 
-                _auctionLotDto = value;
-                _standardPrice = _auctionLotDto.StartPrice;
-                _stepPrice = CalculateStepPrice(_auctionLotDto.StartPrice, _auctionLotDto.StepPercent);
+                _AuctionLotBidDto = value;
+                _standardPrice = _AuctionLotBidDto.StartPrice;
+                _stepPrice = CalculateStepPrice(_AuctionLotBidDto.StartPrice, _AuctionLotBidDto.StepPercent);
             }
         }
 
-        public AuctionLotBidService(IServiceScopeFactory serviceScopeFactory)
+        public BidService(IServiceScopeFactory serviceScopeFactory)
         {
             _serviceScopeFactory = serviceScopeFactory;
             _userBalance = new ConcurrentDictionary<int, int>();
@@ -51,7 +51,7 @@ namespace BiddingService.Services
         public bool IsBidValid(CreateBidLogDto bid)
         {
             //kiểm tra AuctionLotStaus
-            if (_auctionLotDto != null && _auctionLotDto.AuctionLotId == bid.AuctionLotId
+            if (_AuctionLotBidDto != null && _AuctionLotBidDto.AuctionLotId == bid.AuctionLotId
                     //&& _cacheService.GetBalance(bid.BidderId) <= bid.BidAmount
                     && bid.BidAmount >= _standardPrice)
             {

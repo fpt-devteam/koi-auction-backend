@@ -42,8 +42,8 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IBidLogRepository, BidLogRepository>();
 builder.Services.AddScoped<ICacheService, MemoryCacheService>();
 builder.Services.AddScoped<IBidLogService, BidLogService>();
-builder.Services.AddScoped<AuctionLotBidService>();
-builder.Services.AddSingleton<AuctionLotService>();
+builder.Services.AddScoped<BidService>();
+builder.Services.AddSingleton<BidManagementService>();
 
 //add swagger
 builder.Services.AddSwaggerGen(c =>
@@ -59,7 +59,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-app.MapHub<AuctionLotHub>("/hub");
+app.MapHub<BidHub>("/hub");
 app.UseHttpsRedirection();
 app.MapControllers();
 app.UseCors();
