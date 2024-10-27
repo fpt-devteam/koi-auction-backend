@@ -30,14 +30,5 @@ namespace BiddingService.Mappers
                 BidAmount = createBidLogDto.BidAmount
             };
         }
-
-        public static HighestBidLog ToHighestBidLogFromCreateBidLogDto(this CreateBidLogDto createBidLogDto)
-        {
-            return new HighestBidLog
-            {
-                BidderId = createBidLogDto.BidderId,
-                BidAmount = createBidLogDto.BidAmount
-            };
-        }
     }
 }
