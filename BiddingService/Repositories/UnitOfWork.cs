@@ -16,11 +16,8 @@ namespace BiddingService.Repositories
         {
             _context = context;
             BidLog = new BidLogRepository(_context);
-            SoldLot = new SoldLotRepository(_context);
         }
         public IBidLogRepository BidLog { get; private set; }
-
-        public ISoldLotRepository SoldLot { get; private set; }
 
         public async Task<bool> SaveChangesAsync()
         {
