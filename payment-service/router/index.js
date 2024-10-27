@@ -14,7 +14,6 @@ router.post('/reload-wallet', authenticate, controller.reloadWallet);
 router.get('/internal/get-wallet-balance', authenticate, verifyRole(['Internal Service']), controller.getAllWalletBalance);
 router.get('/internal/get-wallet-balance/:UserId', authenticate, verifyRole(['Internal Service']), controller.getWalletBalanceByUserId);
 router.get('/internal/get-transaction-history', authenticate, verifyRole(['Internal Service']), controller.getAllTransactionHistory);
-router.get('/internal/get-transaction-history/:WalletId', authenticate, verifyRole(['Internal Service']), controller.getTransactionHistoryByWalletId);
 router.get('/internal/get-transaction-history/:UserId', authenticate, verifyRole(['Internal Service']), controller.getTransactionHistoryByUserId);
 
 

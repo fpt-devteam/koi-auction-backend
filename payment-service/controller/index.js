@@ -29,7 +29,7 @@ const deposit = async (req, res) => {
       app_time: Date.now(),
       item: JSON.stringify(items),
       embed_data: JSON.stringify(embed_data),
-      Amount: Amount,
+      amount: Amount,
       description: "Thanh toán hóa đơn",
       bank_code: "zalopayapp",
       callback_url: "https://0e47-2405-4802-a339-ffb0-ac95-2c83-34ec-e544.ngrok-free.app/payment-service/callback",
@@ -37,7 +37,7 @@ const deposit = async (req, res) => {
 
    console.log(`app_trans_id = ${app_trans_id}`);
 
-   const data = config.app_id + "|" + order.app_trans_id + "|" + order.app_user + "|" + order.Amount + "|" + order.app_time + "|" + order.embed_data + "|" + order.item;
+   const data = config.app_id + "|" + order.app_trans_id + "|" + order.app_user + "|" + order.amount + "|" + order.app_time + "|" + order.embed_data + "|" + order.item;
    order.mac = CryptoJS.HmacSHA256(data, config.key1).toString();
 
    const response = await axios.post(config.endpoint, null, { params: order });
@@ -52,7 +52,7 @@ const deposit = async (req, res) => {
          StatusId: 1,
          TransTypeId: 3,
          AppTransId: app_trans_id,
-         BalanceAfter: wallet.Balance + Amount,
+         BalanceAfter: wallet.Balance + amount,
          Note: "Thanh toán hóa đơn",
          CreatedAt: Date.now(),
       });
@@ -152,7 +152,7 @@ const reloadWallet = async (req, res) => {
          StatusId: 1,
       }
    });
-   
+
    let balance = Number(wallet.Balance);
 
    for (const trans of transaction) {
@@ -185,20 +185,33 @@ const getWalletBalance = async (req, res) => {
 const getTransactionHistory = async (req, res) => {
    const { UserId } = req.user;
 
-   const wallet = await Wallet.findOne({ where: { UserId: UserId } });
+   try {
+      const wallet = await Wallet.findOne({ where: { UserId: UserId } });
 
-   const transaction = await Transaction.findAll({
-      where: {
-         WalletId: wallet.WalletId
-      }
-   });
+      const transaction = await Transaction.findAll({
+         where: {
+            WalletId: wallet.WalletId
+         }
+      });
 
-   res.status(200).json(transaction);
+      res.status(200).json(transaction);
+   } catch (err) {
+      console.log(err);
+      return res.status(500).json({ message: "Internal Server Error" });
+   }
 }
 
 const payment = async (req, res) => {
    const { Amount } = req.body;
    const { UserId } = req.user;
+
+   if (!Amount) {
+      return res.status(400).json({ message: "Amount is required" });
+   }
+
+   if (Amount <= 0) {
+      return res.status(400).json({ message: "Amount must be greater than 0" });
+   }
 
    const wallet = await Wallet.findOne({ where: { UserId: UserId } });
 
@@ -244,16 +257,22 @@ const getAllWalletBalance = async (req, res) => {
 }
 
 const getWalletBalanceByUserId = async (req, res) => {
-   const { WalletId } = req.params;
+   const { UserId } = req.params;
 
-   const wallet = await Wallet.findOne({ where: { WalletId: WalletId } });
+   try {
+      const wallet = await Wallet.findOne({ where: { UserId: UserId } });
 
-   res.status(200).json({
-      UserId: wallet.UserId,
-      WalletId: wallet.WalletId,
-      Balance: wallet.Balance,
-      Currency: wallet.Currency,
-   });
+      res.status(200).json({
+         UserId: wallet.UserId,
+         WalletId: wallet.WalletId,
+         Balance: wallet.Balance,
+         Currency: wallet.Currency,
+      });
+
+   } catch (err) {
+      console.log(err);
+      return res.status(500).json({ message: "Internal Server Error" });
+   }
 }
 
 const getAllTransactionHistory = async (req, res) => {
@@ -262,29 +281,24 @@ const getAllTransactionHistory = async (req, res) => {
    res.status(200).json(transactions);
 }
 
-const getTransactionHistoryByWalletId = async (req, res) => {
-   const { WalletId } = req.params;
-
-   let transaction = await Transaction.findAll({
-      where: {
-         WalletId: WalletId
-      }
-   });
-   res.status(200).json(transaction);
-}
-
 const getTransactionHistoryByUserId = async (req, res) => {
    const { UserId } = req.params;
 
-   const wallet = await Wallet.findOne({ where: { UserId: UserId } });
+   try {
 
-   let transaction = await Transaction.findAll({
-      where: {
-         WalletId: wallet.WalletId
-      }
-   });
+      const wallet = await Wallet.findOne({ where: { UserId: UserId } });
 
-   res.status(200).json(transaction);
+      let transaction = await Transaction.findAll({
+         where: {
+            WalletId: wallet.WalletId
+         }
+      });
+
+      res.status(200).json(transaction);
+   } catch (err) {
+      console.log(err);
+      return res.status(500).json({ message: "Internal Server Error" });
+   }
 }
 
 module.exports = {
@@ -296,7 +310,6 @@ module.exports = {
    getTransactionHistory,
    getAllWalletBalance,
    getWalletBalanceByUserId,
-   getTransactionHistoryByWalletId,
    getTransactionHistoryByUserId,
    getAllTransactionHistory,
 };
