@@ -8,7 +8,7 @@ const Transaction = require('../models/transaction');
 const Wallet = require('../models/wallet');
 
 const deposit = async (req, res) => {
-   const { amount } = req.body;
+   const { Amount } = req.body;
    const { UserId } = req.user;
 
    const config = {
@@ -29,7 +29,7 @@ const deposit = async (req, res) => {
       app_time: Date.now(),
       item: JSON.stringify(items),
       embed_data: JSON.stringify(embed_data),
-      amount: amount,
+      Amount: Amount,
       description: "Thanh toán hóa đơn",
       bank_code: "zalopayapp",
       callback_url: "https://0e47-2405-4802-a339-ffb0-ac95-2c83-34ec-e544.ngrok-free.app/payment-service/callback",
@@ -37,7 +37,7 @@ const deposit = async (req, res) => {
 
    console.log(`app_trans_id = ${app_trans_id}`);
 
-   const data = config.app_id + "|" + order.app_trans_id + "|" + order.app_user + "|" + order.amount + "|" + order.app_time + "|" + order.embed_data + "|" + order.item;
+   const data = config.app_id + "|" + order.app_trans_id + "|" + order.app_user + "|" + order.Amount + "|" + order.app_time + "|" + order.embed_data + "|" + order.item;
    order.mac = CryptoJS.HmacSHA256(data, config.key1).toString();
 
    const response = await axios.post(config.endpoint, null, { params: order });
@@ -47,12 +47,12 @@ const deposit = async (req, res) => {
    try {
       await Transaction.create({
          UserId: UserId,
-         Amount: amount,
+         Amount: Amount,
          WalletId: wallet.WalletId,
          StatusId: 1,
          TransTypeId: 3,
          AppTransId: app_trans_id,
-         BalanceAfter: wallet.Balance + amount,
+         BalanceAfter: wallet.Balance + Amount,
          Note: "Thanh toán hóa đơn",
          CreatedAt: Date.now(),
       });
@@ -197,29 +197,29 @@ const getTransactionHistory = async (req, res) => {
 }
 
 const payment = async (req, res) => {
-   const { amount } = req.body;
+   const { Amount } = req.body;
    const { UserId } = req.user;
 
    const wallet = await Wallet.findOne({ where: { UserId: UserId } });
 
-   if (wallet.Balance < amount) {
+   if (wallet.Balance < Amount) {
       return res.status(400).json({ message: "Not enough money" });
    }
 
    try {
       await Transaction.create({
          UserId: UserId,
-         Amount: amount,
+         Amount: Amount,
          WalletId: wallet.WalletId,
          StatusId: 2,
          TransTypeId: 2,
-         BalanceAfter: wallet.Balance - amount,
+         BalanceAfter: wallet.Balance - Amount,
          Note: "Thanh toán hóa đơn",
          CreatedAt: Date.now(),
       });
 
       await Wallet.update(
-         { Balance: wallet.Balance - amount },
+         { Balance: wallet.Balance - Amount },
          { where: { WalletId: wallet.WalletId } }
       );
    } catch (err) {
