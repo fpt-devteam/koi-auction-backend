@@ -60,7 +60,7 @@ const deposit = async (req, res) => {
       console.log(err);
    }
 
-   res.json(response.data);
+   res.status(200).json(response.data);
 };
 
 const callback = async (req, res) => {
@@ -118,7 +118,7 @@ const callback = async (req, res) => {
    }
 
    // thông báo kết quả cho ZaloPay server
-   res.json(result);
+   res.status(200).json(result);
 };
 
 const checkOrderStatus = async (orderId) => {
@@ -171,7 +171,7 @@ const reloadWallet = async (req, res) => {
       { where: { WalletId: wallet.WalletId } }
    );
 
-   res.json({ message: "Update wallet successfully" });
+   res.status(200).json({ message: "Update wallet successfully" });
 }
 
 const getWalletBalance = async (req, res) => {
@@ -179,7 +179,7 @@ const getWalletBalance = async (req, res) => {
 
    const wallet = await Wallet.findOne({ where: { UserId: UserId } });
 
-   res.json({ balance: wallet.Balance });
+   res.status(200).json({ balance: wallet.Balance });
 };
 
 const getTransactionHistory = async (req, res) => {
@@ -193,7 +193,7 @@ const getTransactionHistory = async (req, res) => {
       }
    });
 
-   res.json(transaction);
+   res.status(200).json(transaction);
 }
 
 const payment = async (req, res) => {
@@ -203,7 +203,7 @@ const payment = async (req, res) => {
    const wallet = await Wallet.findOne({ where: { UserId: UserId } });
 
    if (wallet.Balance < amount) {
-      return res.json({ message: "Not enough money" });
+      return res.status(400).json({ message: "Not enough money" });
    }
 
    try {
@@ -226,8 +226,66 @@ const payment = async (req, res) => {
       console.log(err);
    }
 
-   res.json({ message: "Payment successfully" });
+   res.status(200).json({ message: "Payment successfully" });
 };
+
+const getAllWalletBalance = async (req, res) => {
+   let wallets = await Wallet.findAll();
+   wallets.map(wallet => {
+      {
+         wallet.UserId;
+         wallet.WalletId;
+         wallet.Balance;
+         wallet.Currency;
+      }
+   })
+
+   res.status(200).json(wallets);
+}
+
+const getWalletBalanceByUserId = async (req, res) => {
+   const { WalletId } = req.params;
+
+   const wallet = await Wallet.findOne({ where: { WalletId: WalletId } });
+
+   res.status(200).json({
+      UserId: wallet.UserId,
+      WalletId: wallet.WalletId,
+      Balance: wallet.Balance,
+      Currency: wallet.Currency,
+   });
+}
+
+const getAllTransactionHistory = async (req, res) => {
+   let transactions = await Transaction.findAll();
+
+   res.status(200).json(transactions);
+}
+
+const getTransactionHistoryByWalletId = async (req, res) => {
+   const { WalletId } = req.params;
+
+   let transaction = await Transaction.findAll({
+      where: {
+         WalletId: WalletId
+      }
+   });
+   res.status(200).json(transaction);
+}
+
+const getTransactionHistoryByUserId = async (req, res) => {
+   const { UserId } = req.params;
+
+   const wallet = await Wallet.findOne({ where: { UserId: UserId } });
+
+   let transaction = await Transaction.findAll({
+      where: {
+         WalletId: wallet.WalletId
+      }
+   });
+
+   res.status(200).json(transaction);
+}
 
 module.exports = {
    deposit,
@@ -235,5 +293,10 @@ module.exports = {
    callback,
    reloadWallet,
    getWalletBalance,
-   getTransactionHistory
+   getTransactionHistory,
+   getAllWalletBalance,
+   getWalletBalanceByUserId,
+   getTransactionHistoryByWalletId,
+   getTransactionHistoryByUserId,
+   getAllTransactionHistory,
 };
