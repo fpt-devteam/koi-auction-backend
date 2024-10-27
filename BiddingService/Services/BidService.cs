@@ -1,93 +1,308 @@
+// using System.Collections.Concurrent;
+// using BiddingService.Dto.AuctionLot;
+// using BiddingService.Dto.BidLog;
+// using BiddingService.HandleMethod;
+// using BiddingService.IRepositories;
+// using BiddingService.IServices;
+// using BiddingService.Mappers;
+
+
+
+// namespace BiddingService.Services
+// {
+//     public class BidService
+//     {
+//         // public readonly ConcurrentQueue<CreateBidLogDto> _bidQueue;
+//         // public readonly ConcurrentDictionary<int, decimal> _userBalance;
+//         // private readonly WalletService _walletService;
+//         //private readonly IServiceScopeFactory _serviceScopeFactory;
+//         // private readonly Dictionary<BidMethodType, Func<IBidStrategy>> _strategyFactory;
+//         // private decimal _standardPrice;
+//         // private decimal _stepPrice;
+//         // protected AuctionLotBidDto? _auctionLotBidDto;
+
+//         public readonly ConcurrentQueue<CreateBidLogDto> _bidQueue;
+//         // private ConcurrentDictionary<int, decimal> _userBalance;
+//         // private readonly WalletService _walletService;
+//         // public WalletService? WalletService { get; set; }
+//         // private readonly IServiceScopeFactory _serviceScopeFactory;
+//         // private readonly Dictionary<BidMethodType, Func<IBidStrategy>> _strategyFactory;
+//         // private decimal _standardPrice = 0;
+//         // private decimal _stepPrice = 0;
+//         // private AuctionLotBidDto? _auctionLotBidDto;
+//         // public decimal StandardPrice { get; set; }
+//         // public decimal StepPrice { get; set; }
+//         // public ConcurrentDictionary<int, decimal> UserBalance { get => _userBalance; set { _userBalance = new(); } }
+
+//         //private IBidStrategy _bidStrategy;
+//         private IBidStrategy _currentStrategy;
+
+//         // public AuctionLotBidDto? AuctionLotBidDto
+//         // {
+//         //     get => _auctionLotBidDto;
+//         //     set
+//         //     {
+//         //         if (value == null)
+//         //             throw new ArgumentNullException(nameof(value));
+
+//         //         _auctionLotBidDto = value;
+//         //         _standardPrice = _auctionLotBidDto.StartPrice;
+//         //     }
+//         // }
+
+
+//         public BidService(IBidStrategy currentStrategy)
+//         {
+//             // _serviceScopeFactory = serviceScopeFactory;
+//             // _userBalance = new ConcurrentDictionary<int, decimal>();
+//             _bidQueue = new ConcurrentQueue<CreateBidLogDto>();
+//             _currentStrategy = currentStrategy;
+//         }
+
+//         public void StrategySetUp()
+//         {
+//             // _bidStrategy = new ABidStrategyService(_auctionLotBidDto);
+
+
+//         }
+
+//         // Thêm phương thức này để lấy chiến lược dựa trên BidMethodType
+//         // public void SetStrategy(BidMethodType bidMethodType)
+//         // {
+//         //     if (_strategies.TryGetValue(bidMethodType, out var strategy))
+//         //     {
+//         //         _currentStrategy = strategy;
+//         //     }
+//         //     else
+//         //     {
+//         //         throw new ArgumentException("Invalid bid method type");
+//         //     }
+//         // }
+
+//         public async Task<bool> IsBidValid(CreateBidLogDto bid, AuctionLotBidDto auctionLotBidDto)
+//         {
+//             if (_currentStrategy == null)
+//                 throw new InvalidOperationException("Strategy has not been set");
+
+//             return await _currentStrategy.IsBidValid(bid, auctionLotBidDto);
+//         }
+
+//         public CreateBidLogDto? GetWinner()
+//         {
+//             if (_currentStrategy == null)
+//                 throw new InvalidOperationException("Strategy has not been set");
+
+//             return _currentStrategy.GetWinner();
+//         }
+//         public void AddBidLog(CreateBidLogDto bid)
+//         {
+//             // Cập nhật _highestBid nếu bid mới lớn hơn
+//             // Cập nhật giá trị cao nhất
+//             _bidQueue.Enqueue(bid);// Thêm bid hợp lệ vào hàng đợi
+//             // await Task.Run(() => ProcessQueue());
+//             //await ProcessQueue();
+//         }
+
+//         // public async Task<bool> IsBidValid(CreateBidLogDto bid)
+//         // {
+//         //     //kiểm tra AuctionLotStaus
+//         //     if (_auctionLotBidDto != null && _auctionLotBidDto.AuctionLotId == bid.AuctionLotId
+//         //             //&& _cacheService.GetBalance(bid.BidderId) <= bid.BidAmount
+//         //             && bid.BidAmount >= _standardPrice)
+//         //     {
+//         //         if (!_userBalance.TryGetValue(bid.BidderId, out var balance))
+//         //         {
+//         //             var wallet = await _walletService.GetBalanceByIdAsync(bid.BidderId);
+//         //             balance = wallet!.Balance;
+//         //             // Thêm balance vào Dictionary _userBalance
+//         //             _userBalance[bid.BidderId] = balance;
+//         //         }
+//         //         if (bid.BidAmount <= _userBalance[bid.BidderId])
+//         //         {
+//         //             _standardPrice = bid.BidAmount + _stepPrice;
+//         //             return true;
+//         //         }
+
+//         //     }
+//         //     return false;
+//         // }
+//         // private decimal CalculateStepPrice(decimal startPrice, int stepPercent)
+//         // {
+//         //     return startPrice * stepPercent / 100;
+//         // }
+
+//         // public async Task ProcessQueue()
+//         // {
+//         //     while (_bidQueue.TryDequeue(out var bid))
+//         //     {
+//         //         System.Console.WriteLine($"bid = {bid.BidAmount}");
+//         //         using (var scope = _serviceScopeFactory.CreateScope())
+//         //         {
+//         //             var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+//         //             await unitOfWork.BidLog.CreateAsync(bid.ToBidLogFromCreateBidLogDto());
+//         //             if (!await unitOfWork.SaveChangesAsync())
+//         //             {
+//         //                 throw new Exception("An error occurred while saving the data");
+//         //             }
+//         //         }
+//         //     }
+//         // }
+//     }
+// }
+
+
 using System.Collections.Concurrent;
 using BiddingService.Dto.AuctionLot;
 using BiddingService.Dto.BidLog;
+using BiddingService.HandleMethod;
 using BiddingService.IRepositories;
 using BiddingService.IServices;
 using BiddingService.Mappers;
-using Microsoft.Extensions.Caching.Memory;
-
 
 namespace BiddingService.Services
 {
+    public enum BidMethodType
+    {
+        FixedPrice = 1,
+        SealedBid = 2,
+        AscendingBid = 3,
+        DescendingBid = 4
+    }
     public class BidService
     {
-        private readonly ConcurrentQueue<CreateBidLogDto> _bidQueue;
-        public readonly ConcurrentDictionary<int, decimal> _userBalance;
-        private readonly WalletService _walletService;
-        private readonly IServiceScopeFactory _serviceScopeFactory;
-        private decimal _standardPrice;
-        private decimal _stepPrice;
-        private AuctionLotDto? _auctionLotDto;
-        public AuctionLotDto? AuctionLotDto
+        private readonly ConcurrentQueue<CreateBidLogDto> _bidQueue; //add bid log
+        private IBidStrategy? _currentStrategy; // chonj phuong thuc
+        private AuctionLotBidDto? _auctionLotBidDto; // dto
+        public AuctionLotBidDto? AuctionLotBidDto
         {
-            get => _auctionLotDto;
+            get => _auctionLotBidDto;
             set
             {
                 if (value == null)
                     throw new ArgumentNullException(nameof(value));
 
-                _auctionLotDto = value;
-                _standardPrice = _auctionLotDto.StartPrice;
-                _stepPrice = CalculateStepPrice(_auctionLotDto.StartPrice, _auctionLotDto.StepPercent);
+                _auctionLotBidDto = value;
             }
         }
 
-        public AuctionLotBidService(IServiceScopeFactory serviceScopeFactory, WalletService walletService)
+        private ConcurrentDictionary<int, decimal> _userBalance; // balance
+        private readonly WalletService? _walletService; // call wallet neu ch co balance
+                                                        // public WalletService? WalletService { get; set; }
+        private readonly IServiceScopeFactory _serviceScopeFactory;
+
+        public BidService(IServiceScopeFactory serviceScopeFactory)
         {
-            _serviceScopeFactory = serviceScopeFactory;
-            _userBalance = new ConcurrentDictionary<int, decimal>();
             _bidQueue = new ConcurrentQueue<CreateBidLogDto>();
-            _walletService = walletService;
+            _userBalance = new ConcurrentDictionary<int, decimal>();
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json")
+                .Build();
+
+            var httpClient = new HttpClient();
+            _walletService = new WalletService(httpClient, configuration);
+            _serviceScopeFactory = serviceScopeFactory;
+            // _bids = new();
         }
 
-        public async Task AddBidLog(CreateBidLogDto bid)
+        // Phương thức xác định chiến lược đấu giá dựa trên loại đấu giá của AuctionLot
+        // private IBidStrategy GetBidStrategy(IServiceScope scope, int auctionLotMethodId)
+        // {
+        //     // Lấy chiến lược từ scope để đảm bảo mọi dịch vụ phụ thuộc được khởi tạo đúng
+        //     switch (auctionLotMethodId)
+        //     {
+        //         case (int)BidMethodType.FixedPrice:
+        //             return scope.ServiceProvider.GetRequiredService<FixedPriceBidStrategy>();
+        //         // case (int)BidMethodType.SingleBid:
+        //         //     return scope.ServiceProvider.GetRequiredService<SealedBidStrategy>();
+        //         default:
+        //             throw new NotSupportedException($"Auction Method {auctionLotMethodId} invalid.");
+        //     }
+        // }
+
+        // Thiết lập chiến lược đấu giá, cho phép BidManagementService cấu hình lại nếu cần
+        public void SetStrategy(int auctionLotMethodId)
         {
-            // Cập nhật _highestBid nếu bid mới lớn hơn
-            _standardPrice = bid.BidAmount + _stepPrice; // Cập nhật giá trị cao nhất
-            _bidQueue.Enqueue(bid);// Thêm bid hợp lệ vào hàng đợi
-            await Task.Run(() => ProcessQueue());
-            //await ProcessQueue();
+            System.Console.WriteLine($"set strategy {auctionLotMethodId}");
+            // Lấy chiến lược từ scope để đảm bảo mọi dịch vụ phụ thuộc được khởi tạo đúng
+            switch (auctionLotMethodId)
+            {
+                case (int)BidMethodType.FixedPrice:
+                    System.Console.WriteLine("Khoi tao current stratefy o day");
+                    _currentStrategy = new FixedPriceBidStrategy();
+                    break;
+                case (int)BidMethodType.SealedBid:
+                    System.Console.WriteLine("Khoi tao current stratefy o day");
+                    _currentStrategy = new SealedBidStrategy();
+                    break;
+                case (int)BidMethodType.AscendingBid:
+                    System.Console.WriteLine("Khoi tao current stratefy o day");
+                    _currentStrategy = new AscendingBidStrategy();
+                    break;
+                // Thêm các case khác ở đây nếu có
+                default:
+                    throw new ArgumentException("Invalid auctionLotMethodId");
+            }
         }
 
+        // Kiểm tra tính hợp lệ của bid với chiến lược hiện tại
         public async Task<bool> IsBidValid(CreateBidLogDto bid)
         {
-            //kiểm tra AuctionLotStaus
-            if (_auctionLotDto != null && _auctionLotDto.AuctionLotId == bid.AuctionLotId
-                    //&& _cacheService.GetBalance(bid.BidderId) <= bid.BidAmount
-                    && bid.BidAmount >= _standardPrice)
+            if (_currentStrategy == null)
+                throw new InvalidOperationException("Strategy has not been set");
+            if (!_userBalance.TryGetValue(bid.BidderId, out var balance))
             {
-                if (!_userBalance.TryGetValue(bid.BidderId, out var balance))
-                {
-                    var wallet = await _walletService.GetBalanceByIdAsync(bid.BidderId);
-                    balance = wallet!.Balance;
-                    // Thêm balance vào Dictionary _userBalance
-                    _userBalance[bid.BidderId] = balance;
-                }
-                if (bid.BidAmount <= _userBalance[bid.BidderId])
-                    return true;
+                var wallet = await _walletService!.GetBalanceByIdAsync(bid.BidderId);
+                balance = wallet!.Balance;
+                // Thêm balance vào Dictionary _userBalance
+                _userBalance[bid.BidderId] = balance;
             }
-            return false;
-        }
-        private decimal CalculateStepPrice(decimal startPrice, int stepPercent)
-        {
-            return startPrice * stepPercent / 100;
+
+            if (!_currentStrategy.IsBidValid(bid, _auctionLotBidDto, _userBalance[bid.BidderId]))
+            {
+                return false;
+            }
+            // await AddBidLog(bid);
+            return true;
         }
 
-        private async Task ProcessQueue()
+        // Xác định người chiến thắng theo chiến lược hiện tại
+        public HighestBidLog? GetWinner()
+        {
+            if (_currentStrategy == null)
+                throw new InvalidOperationException("Strategy has not been set");
+
+            return _currentStrategy.GetWinner();
+        }
+
+        // Thêm một bid hợp lệ vào hàng đợi
+        public async Task AddBidLog(CreateBidLogDto bid)
+        {
+            _bidQueue.Enqueue(bid);
+            await Task.Run(() => ProcessQueue());
+        }
+
+        // Phương thức xử lý hàng đợi bid, lưu vào cơ sở dữ liệu hoặc xử lý logic khác
+        public async Task ProcessQueue()
         {
             while (_bidQueue.TryDequeue(out var bid))
             {
-                System.Console.WriteLine($"bid = {bid.BidAmount}");
+                Console.WriteLine($"Processing bid with amount: {bid.BidAmount}");
+
+                // Tạo scope để quản lý các dịch vụ scoped
                 using (var scope = _serviceScopeFactory.CreateScope())
                 {
                     var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
+                    // Lưu bid vào cơ sở dữ liệu
                     await unitOfWork.BidLog.CreateAsync(bid.ToBidLogFromCreateBidLogDto());
                     if (!await unitOfWork.SaveChangesAsync())
                     {
-                        throw new Exception("An error occurred while saving the data");
+                        throw new Exception("An error occurred while saving the bid log.");
                     }
                 }
+
             }
         }
     }

@@ -42,6 +42,7 @@ namespace BiddingService.Services
         // Phương thức lấy số dư ví và lưu vào cache nếu chưa có
         public async Task<WalletDto?> GetBalanceByIdAsync(int id)
         {
+            System.Console.WriteLine("call api wallet");
             if (_walletCache.TryGetValue(id, out var wallet))
             {
                 return wallet;
@@ -61,6 +62,7 @@ namespace BiddingService.Services
             var response = await _httpClient.GetAsync($"https://67035c76bd7c8c1ccd412a4e.mockapi.io/api/wallet/{id}");
             if (response.IsSuccessStatusCode)
             {
+
                 var content = await response.Content.ReadAsStringAsync();
                 wallet = JsonSerializer.Deserialize<WalletDto>(content);
                 _walletCache[id] = wallet!; // Lưu vào cache tạm thời
