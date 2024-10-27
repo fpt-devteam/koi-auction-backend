@@ -3,8 +3,8 @@ using AuctionService.Helper;
 using AuctionService.IRepository;
 using AuctionService.IServices;
 using AuctionService.Mapper;
+using AuctionService.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.VisualBasic;
 
 namespace AuctionService.Controller
 {
@@ -13,13 +13,13 @@ namespace AuctionService.Controller
     public class AuctionController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly BreederDetailController _breederDetailController;
+        // private readonly BreederDetailService _breederService;
         private readonly IAuctionService _auctionService;
 
-        public AuctionController(IUnitOfWork unitOfWork, BreederDetailController breederDetailController, IAuctionService auctionService)
+        public AuctionController(IUnitOfWork unitOfWork, IAuctionService auctionService)
         {
             _unitOfWork = unitOfWork;
-            _breederDetailController = breederDetailController;
+            // _breederService = breederService;
             _auctionService = auctionService;
         }
 
