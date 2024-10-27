@@ -4,6 +4,7 @@ using AuctionService.IRepository;
 using AuctionService.IServices;
 using AuctionService.Mapper;
 using AuctionService.Models;
+using AuctionService.Services;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,14 +15,13 @@ namespace AuctionService.Controller
     public class AuctionLotController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly BreederDetailController _breederDetailController;
-
+        private readonly BreederDetailService _breederService;
         private readonly IAuctionLotService _auctionLotService;
-        public AuctionLotController(IUnitOfWork unitOfWork, BreederDetailController breederDetailController, IAuctionLotService auctionLotService)
+        public AuctionLotController(IUnitOfWork unitOfWork, BreederDetailService breederService, IAuctionLotService auctionLotService)
         {
             _unitOfWork = unitOfWork;
-            _breederDetailController = breederDetailController;
             _auctionLotService = auctionLotService;
+            _breederService = breederService;
         }
 
         [HttpGet]
@@ -31,7 +31,7 @@ namespace AuctionService.Controller
             var tasks = auctionLots.Select(async auctionLot =>
             {
                 var auctionLotDto = auctionLot.ToAuctionLotDtoFromAuctionLot();
-                auctionLotDto!.LotDto!.BreederDetailDto = await _breederDetailController.GetBreederByIdAsync(auctionLotDto.LotDto.BreederId);
+                auctionLotDto!.LotDto!.BreederDetailDto = await _breederService.GetBreederByIdAsync(auctionLotDto.LotDto.BreederId);
                 return auctionLotDto;
             }).ToList();
 
@@ -49,7 +49,7 @@ namespace AuctionService.Controller
             if (auctionLot == null)
                 return NotFound();
             var auctionLotDto = auctionLot.ToAuctionLotDtoFromAuctionLot();
-            auctionLotDto!.LotDto!.BreederDetailDto = await _breederDetailController.GetBreederByIdAsync(auctionLotDto.LotDto.BreederId);
+            auctionLotDto!.LotDto!.BreederDetailDto = await _breederService.GetBreederByIdAsync(auctionLotDto.LotDto.BreederId);
             return Ok(auctionLotDto);
         }
 
