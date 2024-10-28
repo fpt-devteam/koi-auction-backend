@@ -1,9 +1,9 @@
-using BiddingService.Data;
-using BiddingService.IRepositories;
-using BiddingService.Models;
+using AuctionService.Data;
+using AuctionService.IRepositories;
+using AuctionService.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace BiddingService.Repositories
+namespace AuctionService.Repositories
 {
     public class SoldLotRepository : ISoldLotRepository
     {

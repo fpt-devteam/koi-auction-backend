@@ -1,12 +1,12 @@
-using BiddingService.Data;
-using BiddingService.Dto.BidLog;
-using BiddingService.Dto.UserConnection;
-using BiddingService.HandleMethod;
-using BiddingService.Hubs;
-using BiddingService.IRepositories;
-using BiddingService.IServices;
-using BiddingService.Repositories;
-using BiddingService.Services;
+using AuctionService.Data;
+using AuctionService.Dto.BidLog;
+using AuctionService.Dto.UserConnection;
+using AuctionService.HandleMethod;
+using AuctionService.Hubs;
+using AuctionService.IRepositories;
+using AuctionService.IServices;
+using AuctionService.Repositories;
+using AuctionService.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);

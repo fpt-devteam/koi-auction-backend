@@ -1,10 +1,10 @@
-using BiddingService.Dto.AuctionLot;
-using BiddingService.Dto.BidLog;
-using BiddingService.IServices;
-using BiddingService.Mappers;
-using BiddingService.Services;
+using AuctionService.Dto.AuctionLot;
+using AuctionService.Dto.BidLog;
+using AuctionService.IServices;
+using AuctionService.Mappers;
+using AuctionService.Services;
 
-namespace BiddingService.HandleMethod
+namespace AuctionService.HandleMethod
 {
     public class SealedBidStrategy : ABidStrategyService
     {

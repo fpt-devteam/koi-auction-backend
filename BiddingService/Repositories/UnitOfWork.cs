@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using BiddingService.Data;
-using BiddingService.IRepositories;
+using AuctionService.Data;
+using AuctionService.IRepositories;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
-namespace BiddingService.Repositories
+namespace AuctionService.Repositories
 {
     public class UnitOfWork : IUnitOfWork
     {

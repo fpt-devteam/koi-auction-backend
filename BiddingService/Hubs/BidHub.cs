@@ -1,12 +1,12 @@
-using BiddingService.Dto.AuctionLot;
-using BiddingService.Dto.BidLog;
-using BiddingService.Dto.UserConnection;
-using BiddingService.IServices;
-using BiddingService.Mappers;
-using BiddingService.Services;
+using AuctionService.Dto.AuctionLot;
+using AuctionService.Dto.BidLog;
+using AuctionService.Dto.UserConnection;
+using AuctionService.IServices;
+using AuctionService.Mappers;
+using AuctionService.Services;
 using Microsoft.AspNetCore.SignalR;
 
-namespace BiddingService.Hubs
+namespace AuctionService.Hubs
 {
     public class BidHub : Hub
     {

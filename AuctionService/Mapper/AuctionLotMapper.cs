@@ -70,9 +70,7 @@ namespace AuctionService.Mapper
                 AuctionLotId = auctionLot.AuctionLotId,
                 AuctionMethodId = auctionLot.AuctionLotNavigation.AuctionMethodId,
                 StartPrice = auctionLot.AuctionLotNavigation.StartingPrice,
-                StepPercent = auctionLot.StepPercent,
-                EndTime = auctionLot.EndTime,
-                StartTime = auctionLot.StartTime
+                StepPercent = auctionLot.StepPercent
             };
         }
     }

@@ -1,10 +1,10 @@
-using BiddingService.Dto.AuctionLot;
-using BiddingService.Dto.BidLog;
-using BiddingService.Dto.SoldLot;
-using BiddingService.Models;
-using BiddingService.Services;
+using AuctionService.Dto.AuctionLot;
+using AuctionService.Dto.BidLog;
+using AuctionService.Dto.SoldLot;
+using AuctionService.Models;
+using AuctionService.Services;
 
-namespace BiddingService.IServices
+namespace AuctionService.IServices
 {
     public abstract class ABidStrategyService : IBidStrategy
     {

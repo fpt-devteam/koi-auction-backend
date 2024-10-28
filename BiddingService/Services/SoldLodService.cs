@@ -1,11 +1,11 @@
-using BiddingService.Dto.BidLog;
-using BiddingService.Dto.SoldLot;
-using BiddingService.IRepositories;
-using BiddingService.IServices;
-using BiddingService.Mappers;
-using BiddingService.Models;
+using AuctionService.Dto.BidLog;
+using AuctionService.Dto.SoldLot;
+using AuctionService.IRepositories;
+using AuctionService.IServices;
+using AuctionService.Mappers;
+using AuctionService.Models;
 
-namespace BiddingService.Services
+namespace AuctionService.Services
 {
     public class SoldLotService : ISoldLotService
     {

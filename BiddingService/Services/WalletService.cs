@@ -1,9 +1,9 @@
 using System.Text;
 using System.Text.Json;
-using BiddingService.Dto.Wallet;
+using AuctionService.Dto.Wallet;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 
-namespace BiddingService.Services
+namespace AuctionService.Services
 {
     public class WalletService
     {

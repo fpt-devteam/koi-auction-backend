@@ -2,15 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using BiddingService.Helper;
-using BiddingService.IRepositories;
-using BiddingService.IServices;
-using BiddingService.Mappers;
-using BiddingService.Models;
+using AuctionService.Helper;
+using AuctionService.IRepositories;
+using AuctionService.IServices;
+using AuctionService.Mappers;
+using AuctionService.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
-namespace BiddingService.Services
+namespace AuctionService.Services
 {
     public class BidLogService : IBidLogService
     {

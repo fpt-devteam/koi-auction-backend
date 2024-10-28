@@ -26,7 +26,7 @@ namespace AuctionService.Mapper
         {
             return new LotStatus
             {
-                LotStatusName = lotStatusDto.LotStatusName
+                LotStatusName = lotStatusDto.LotStatusName!
             };
         }
     }

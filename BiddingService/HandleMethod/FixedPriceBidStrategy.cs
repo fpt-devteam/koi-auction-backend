@@ -1,13 +1,13 @@
 using System.Collections.Concurrent;
-using BiddingService.Dto.AuctionLot;
-using BiddingService.Dto.BidLog;
-using BiddingService.Dto.SoldLot;
-using BiddingService.IServices;
-using BiddingService.Mappers;
-using BiddingService.Models;
-using BiddingService.Services;
+using AuctionService.Dto.AuctionLot;
+using AuctionService.Dto.BidLog;
+using AuctionService.Dto.SoldLot;
+using AuctionService.IServices;
+using AuctionService.Mappers;
+using AuctionService.Models;
+using AuctionService.Services;
 
-namespace BiddingService.HandleMethod
+namespace AuctionService.HandleMethod
 {
     public class FixedPriceBidStrategy : ABidStrategyService
     {

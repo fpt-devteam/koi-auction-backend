@@ -2,14 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using BiddingService.Data;
-using BiddingService.Dto.BidLog;
-using BiddingService.Helper;
-using BiddingService.IRepositories;
-using BiddingService.Models;
+using AuctionService.Data;
+using AuctionService.Dto.BidLog;
+using AuctionService.Helper;
+using AuctionService.IRepositories;
+using AuctionService.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace BiddingService.Repositories
+namespace AuctionService.Repositories
 {
     public class BidLogRepository : IBidLogRepository
     {

@@ -27,9 +27,11 @@ public partial class AuctionLot
 
     public virtual Auction Auction { get; set; } = null!;
 
-    public virtual ICollection<AuctionLotJob> AuctionLotJobs { get; set; } = new List<AuctionLotJob>();
-
     public virtual Lot AuctionLotNavigation { get; set; } = null!;
 
     public virtual AuctionLotStatus AuctionLotStatus { get; set; } = null!;
+
+    public virtual ICollection<BidLog> BidLogs { get; set; } = new List<BidLog>();
+
+    public virtual SoldLot? SoldLot { get; set; }
 }

@@ -153,14 +153,14 @@
 
 
 using System.Collections.Concurrent;
-using BiddingService.Dto.AuctionLot;
-using BiddingService.Dto.BidLog;
-using BiddingService.HandleMethod;
-using BiddingService.IRepositories;
-using BiddingService.IServices;
-using BiddingService.Mappers;
+using AuctionService.Dto.AuctionLot;
+using AuctionService.Dto.BidLog;
+using AuctionService.HandleMethod;
+using AuctionService.IRepositories;
+using AuctionService.IServices;
+using AuctionService.Mappers;
 
-namespace BiddingService.Services
+namespace AuctionService.Services
 {
     public enum BidMethodType
     {

@@ -1,7 +1,7 @@
-using BiddingService.Dto.SoldLot;
-using BiddingService.Models;
+using AuctionService.Dto.SoldLot;
+using AuctionService.Models;
 
-namespace BiddingService.Mappers
+namespace AuctionService.Mappers
 {
     public static class SoldLotMapper
     {

@@ -1,6 +1,6 @@
-using BiddingService.Models;
+using AuctionService.Models;
 
-namespace BiddingService.IRepositories
+namespace AuctionService.IRepositories
 {
     public interface ISoldLotRepository
     {

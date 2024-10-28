@@ -8,9 +8,17 @@ using AuctionService.Data;
 using AuctionService.IServices;
 using AuctionService.Services;
 using Hangfire;
+using AuctionService.HandleMethod;
+using AuctionService.Dto.UserConnection;
+using AuctionService.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Services.AddHttpClient<WalletService>();
+// Đăng ký các cấu hình từ appsettings.json
+builder.Services.Configure<BiddingServiceOptionDtos>(
+    builder.Configuration.GetSection("BiddingService"));
+builder.Services.AddSingleton<IDictionary<string, UserConnectionDto>>(_ => new Dictionary<string, UserConnectionDto>());
+builder.Services.AddSignalR();
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddControllers();
@@ -25,6 +33,10 @@ builder.Services.AddDbContext<AuctionManagementDbContext>(option =>
 {
     option.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnectionStringDB"));
 });
+builder.Services.AddScoped<IBidStrategy, FixedPriceBidStrategy>();
+builder.Services.AddScoped<IBidStrategy, SealedBidStrategy>();
+builder.Services.AddScoped<IBidStrategy, AscendingBidStrategy>();
+builder.Services.AddScoped<IBidStrategy, DescendingBidStrategy>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ILotRepository, LotRepository>();
@@ -33,6 +45,14 @@ builder.Services.AddScoped<IAuctionMethodRepository, AuctionMethodRepository>();
 builder.Services.AddScoped<ILotStatusRepository, LotStatusRepository>();
 builder.Services.AddScoped<IAuctionRepository, AuctionRepository>();
 builder.Services.AddScoped<IAuctionLotRepository, AuctionLotRepository>();
+builder.Services.AddScoped<IBidLogRepository, BidLogRepository>();
+builder.Services.AddScoped<ISoldLotRepository, SoldLotRepository>();
+
+builder.Services.AddScoped<ISoldLotService, SoldLotService>();
+builder.Services.AddScoped<BidLogService>();
+builder.Services.AddScoped<BidService>();
+builder.Services.AddScoped<WalletService>();
+builder.Services.AddSingleton<BidManagementService>();
 builder.Services.AddScoped<IAuctionService, AuctionService.Services.AuctionService>();
 builder.Services.AddScoped<IAuctionLotService, AuctionLotService>();
 builder.Services.AddScoped<BreederDetailService>();
@@ -76,6 +96,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.MapHub<BidHub>("/hub");
 app.UseHttpsRedirection();
 app.MapControllers();
 // app.UseHangfireDashboard("/hangfire");

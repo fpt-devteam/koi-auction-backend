@@ -17,7 +17,7 @@ public partial class Lot
 
     public DateTime UpdatedAt { get; set; }
 
-    public int? AuctionMethodId { get; set; }
+    public int AuctionMethodId { get; set; }
 
     public string Sku { get; set; } = null!;
 

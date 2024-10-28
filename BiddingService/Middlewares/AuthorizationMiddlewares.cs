@@ -1,5 +1,5 @@
 
-namespace BiddingService.Middlewares
+namespace AuctionService.Middlewares
 {
     public class AuthorizationMiddleware
     {

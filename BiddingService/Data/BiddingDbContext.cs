@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using BiddingService.Models;
+using AuctionService.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace BiddingService.Data;
+namespace AuctionService.Data;
 
 public partial class BiddingDbContext : DbContext
 {

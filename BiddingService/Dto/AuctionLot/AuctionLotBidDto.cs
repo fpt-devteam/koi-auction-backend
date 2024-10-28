@@ -1,5 +1,5 @@
 
-namespace BiddingService.Dto.AuctionLot
+namespace AuctionService.Dto.AuctionLot
 {
     public class AuctionLotBidDto
     {

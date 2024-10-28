@@ -28,6 +28,8 @@ public partial class AuctionManagementDbContext : DbContext
 
     public virtual DbSet<AuctionStatus> AuctionStatuses { get; set; }
 
+    public virtual DbSet<BidLog> BidLogs { get; set; }
+
     public virtual DbSet<KoiFish> KoiFishes { get; set; }
 
     public virtual DbSet<KoiMedia> KoiMedia { get; set; }
@@ -36,10 +38,21 @@ public partial class AuctionManagementDbContext : DbContext
 
     public virtual DbSet<LotStatus> LotStatuses { get; set; }
 
-    //     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    // #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-    //         => optionsBuilder.UseSqlServer("Server=tcp:fpt-koi.database.windows.net,1433;Initial Catalog=KoiAuctionDB;Persist Security Info=False;User ID=fptdevteam;Password=12345Fpt;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
+    public virtual DbSet<SoldLot> SoldLots { get; set; }
 
+    private string GetConnectionString()
+    {
+        IConfiguration config = new ConfigurationBuilder()
+             .SetBasePath(Directory.GetCurrentDirectory())
+                    .AddJsonFile("appsettings.json", true, true)
+                    .Build();
+        var strConn = config["ConnectionStrings:DefaultConnectionStringDB"];
+
+        return strConn!;
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        => optionsBuilder.UseSqlServer(GetConnectionString());
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Auction>(entity =>
@@ -108,11 +121,6 @@ public partial class AuctionManagementDbContext : DbContext
             entity.ToTable("AuctionLotJob");
 
             entity.Property(e => e.HangfireJobId).HasMaxLength(100);
-
-            entity.HasOne(d => d.AuctionLot).WithMany(p => p.AuctionLotJobs)
-                .HasForeignKey(d => d.AuctionLotId)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("FK_AuctionLotJob_AuctionLot");
         });
 
         modelBuilder.Entity<AuctionLotStatus>(entity =>
@@ -159,6 +167,23 @@ public partial class AuctionManagementDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<BidLog>(entity =>
+        {
+            entity.HasKey(e => e.BidLogId).HasName("PK__BidLog__A459EE9E98F7C7D3");
+
+            entity.ToTable("BidLog");
+
+            entity.Property(e => e.BidAmount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.BidTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.AuctionLot).WithMany(p => p.BidLogs)
+                .HasForeignKey(d => d.AuctionLotId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_BidLog_AuctionLot");
         });
 
         modelBuilder.Entity<KoiFish>(entity =>
@@ -241,6 +266,27 @@ public partial class AuctionManagementDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<SoldLot>(entity =>
+        {
+            entity.HasKey(e => e.SoldLotId).HasName("PK__SoldLot__A006956D9629DC74");
+
+            entity.ToTable("SoldLot");
+
+            entity.Property(e => e.SoldLotId).ValueGeneratedNever();
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.FinalPrice).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.SoldLotNavigation).WithOne(p => p.SoldLot)
+                .HasForeignKey<SoldLot>(d => d.SoldLotId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_SoldLot_AuctionLot");
         });
 
         OnModelCreatingPartial(modelBuilder);
