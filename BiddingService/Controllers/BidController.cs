@@ -19,33 +19,7 @@ namespace BiddingService.Controllers
             _bidManagementService = bidManagementService;
         }
 
-        [HttpPost("start-auction-lot")]
-        public async Task<IActionResult> StartAuctionLot([FromBody] AuctionLotBidDto auctionLotBidDto)
-        {
-            try
-            {
-                await _bidManagementService.StartAuctionLot(auctionLotBidDto);
-                return Ok(new { Message = "Start successfully", Data = auctionLotBidDto });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Internal server error: " + ex.Message);
-            }
-        }
 
-        [HttpPost("end-auction-lot")]
-        public async Task<IActionResult> EndAuctionLot()
-        {
-            try
-            {
-                await _bidManagementService.EndAuctionLot();
-                return Ok(new { Message = "End successfully" });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Internal server error: " + ex.Message);
-            }
-        }
 
     }
 }

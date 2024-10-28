@@ -12,6 +12,7 @@ using AuctionService.Helper;
 using AuctionService.IRepository;
 using AuctionService.Mapper;
 using AuctionService.Models;
+using AuctionService.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -22,11 +23,13 @@ namespace AuctionService.Controller
     public class LotController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly BreederDetailController _breederDetailController;
-        public LotController(IUnitOfWork unitOfWork, BreederDetailController breederDetailController)
+        // private readonly BreederDetailController _breederDetailController;
+
+        private readonly BreederDetailService _breederService;
+        public LotController(IUnitOfWork unitOfWork, BreederDetailService service)
         {
             _unitOfWork = unitOfWork;
-            _breederDetailController = breederDetailController;
+            _breederService = service;
         }
 
         [HttpGet]
@@ -38,7 +41,7 @@ namespace AuctionService.Controller
             // Tạo LotDto và gán thông tin người dùng
             var tasks = lots.Select(async lot =>
             {
-                var breeder = await _breederDetailController.GetBreederByIdAsync(lot.BreederId);
+                var breeder = await _breederService.GetBreederByIdAsync(lot.BreederId);
                 var lotDto = lot.ToLotDtoFromLot();
                 lotDto.BreederDetailDto = breeder;
                 return lotDto;
@@ -62,7 +65,7 @@ namespace AuctionService.Controller
             var lot = await _unitOfWork.Lots.GetLotByIdAsync(id);
 
             var lotDto = lot.ToLotDtoFromLot();
-            lotDto.BreederDetailDto = await _breederDetailController.GetBreederByIdAsync(lot.BreederId);
+            lotDto.BreederDetailDto = await _breederService.GetBreederByIdAsync(lot.BreederId);
 
             return Ok(lotDto);
         }
