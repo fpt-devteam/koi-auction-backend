@@ -47,71 +47,47 @@ namespace AuctionService.Hubs
         //         await Clients.All.SendAsync("ReceiveMessage", userConnection);
         //     }
         private readonly BidManagementService _bidManagementService;
-        private readonly BidService _bidService;
-        // Khai báo chiến lược như một biến instance
         private readonly IDictionary<string, UserConnectionDto> _connections; // <connectionId, (uid, auctionLotId)>
-        public BidHub(IDictionary<string, UserConnectionDto> connections, BidManagementService auctionLotManagerService, BidService bidService, IBidStrategy bidStrategy)
+        public BidHub(IDictionary<string, UserConnectionDto> connections, BidManagementService auctionLotManagerService)
         {
             _connections = connections;
             _bidManagementService = auctionLotManagerService;
-            _bidService = bidService;
         }
-        public async Task PlaceBid(CreateBidLogDto bid)
-        {
-            System.Console.WriteLine("Place Bid");
-            try
-            {
-                if (await _bidManagementService!.BidService!.IsBidValid(bid))
-                {
-                    await Clients.Group(bid.AuctionLotId.ToString()).SendAsync("ReceivePlaceBid", bid);
-                    await _bidManagementService.BidService.AddBidLog(bid);
-                }
-                else
-                {
-                    await Clients.Caller.SendAsync("ReceivePlaceBidErrorMessage", "Place Bid not valid");
-                }
-
-            }
-            catch (Exception ex)
-            {
-                System.Console.WriteLine(ex.ToString());
-            }
-
-
-        }
-        public async Task EndAuctionLot()
-        {
-            try
-            {
-                _bidManagementService.EndAuctionLot();
-                await Clients.Caller.SendAsync("ReceiveEndAuctionLot", "End auction lot");
-            }
-            catch
-            {
-                await Clients.Caller.SendAsync("ReceiveEndAuctionLotErrorMessage", "There is no ongoing auction lot");
-
-            }
-
-        }
-
-        public void StartAuctionLot(AuctionLotBidDto auctionLotBidDto)
-        {
-            try
-            {
-                int auctionLotId = auctionLotBidDto.AuctionLotId;
-                _bidManagementService.StartAuctionLot(auctionLotBidDto);
-
-                // Gửi message đến tất cả client trong group
-                Clients.Caller.SendAsync("ReceiveStartAuctionLot", auctionLotBidDto);
-                Clients.Group(auctionLotId.ToString()).SendAsync("ReceiveStartAuctionLot", auctionLotBidDto);
-            }
-            catch (Exception e)
-            {
-                Clients.Caller.SendAsync("ReceiveStartAuctionLotErrorMessage", "There is an ongoing auction lot");
-                Clients.Caller.SendAsync("ReceiveExceptionMessage", e.Message);
-            }
-        }
-
+        // public void StartAuctionLot(AuctionLotDto auctionLotDto)
+        // {
+        //     try
+        //     {
+        //         int auctionLotId = auctionLotDto.AuctionLotId;
+        //         if (_bidManagementService.StartAuctionLot(auctionLotDto))
+        //         {
+        //             // Gửi message đến tất cả client trong group
+        //             Clients.Caller.SendAsync("ReceiveStartAuctionLot", auctionLotDto);
+        //             Clients.Group(auctionLotId.ToString()).SendAsync("ReceiveStartAuctionLot", auctionLotDto);
+        //         }
+        //         else
+        //         {
+        //             // Gửi message đến client gửi request
+        //             Clients.Caller.SendAsync("ReceiveStartAuctionLotErrorMessage", "There is an ongoing auction lot");
+        //         }
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         Clients.Caller.SendAsync("ReceiveExceptionMessage", e.Message);
+        //     }
+        // }
+        // public void EndAuctionLot()
+        // {
+        //     AuctionLotDto? auctionLotDto = _bidManagementService.EndAuctionLot();
+        //     if (auctionLotDto != null)
+        //     {
+        //         Clients.Caller.SendAsync("ReceiveEndAuctionLot", auctionLotDto);
+        //         Clients.Group(auctionLotDto.AuctionLotId.ToString()).SendAsync("ReceiveEndAuctionLot", auctionLotDto);
+        //     }
+        //     else
+        //     {
+        //         Clients.Caller.SendAsync("ReceiveEndAuctionLotErrorMessage", "There is no ongoing auction lot");
+        //     }
+        // }
         public async Task JoinAuctionLot(UserConnectionDto userConnection)
         {
             try

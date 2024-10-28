@@ -10,7 +10,7 @@ namespace AuctionService.IRepositories
 {
     public interface IBidLogRepository
     {
-        Task<List<BidLog>> GetAllAsync(BidLogQueryObject queryObject);
+        Task<List<BidLog>> GetAllAsync();
         Task<BidLog> GetByIdAsync(int id);
         Task<BidLog> CreateAsync(BidLog bidLog);
     }

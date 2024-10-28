@@ -9,7 +9,7 @@ namespace AuctionService.IServices
 {
     public interface IBidLogService
     {
-        Task<List<BidLog>> GetAllBidLog(BidLogQueryObject queryObject);
+        Task<List<BidLog>> GetAllBidLog();
         Task<BidLog> GetBidLogById(int id);
         //Task<BidLog> CreateBidLog(BidLog bidLog);
 

@@ -10,72 +10,51 @@ namespace AuctionService.Services
 {
     public class BidManagementService
     {
+        private IServiceScopeFactory _serviceScopeFactory;
+
         private IServiceScope? _serviceScope;
-        private readonly IServiceScopeFactory _serviceScopeFactory;
+
+        private readonly IHubContext<BidHub> _bidHub;
+
         private BidService? _bidService;
-        public BidService? BidService => _bidService;
+
+        public BidService? BidService
+        {
+            get => _bidService;
+        }
 
         public BidManagementService(IServiceScopeFactory serviceScopeFactory, IHubContext<BidHub> bidHub)
         {
             _serviceScopeFactory = serviceScopeFactory;
+            _bidHub = bidHub;
         }
 
-
-
         // Bắt đầu phiên đấu giá và khởi tạo PlaceBidService trong scope riêng
-        public void StartAuctionLot(AuctionLotBidDto auctionLotBidDto)
+        public async Task StartAuctionLot(AuctionLotBidDto AuctionLotBidDto)
         {
             if (_serviceScope != null)
             {
-                throw new Exception("There is an ongoing auction lot");
-            }
-            // Tạo scope mới cho phiên đấu giá
-            _serviceScope = _serviceScopeFactory.CreateScope();
-            _bidService = _serviceScope!.ServiceProvider.GetRequiredService<BidService>();
-            _bidService.AuctionLotBidDto = auctionLotBidDto;
-            // await _bidHub.Clients.Group(auctionLotBidDto.AuctionLotId.ToString()).SendAsync("ReceiveStartAuctionLot", auctionLotBidDto);
-            //             System.Console.WriteLine($"StartAuctionLot {AuctionLotBidDto.AuctionLotId}");
+                throw new Exception("There was an ONGOING auction lot");
 
-            // Khởi tạo strategy đấu giá dựa trên auction lot method
-            // var bidStrategy = GetBidStrategy(_serviceScope, auctionLotBidDto.AuctionMethodId);
-            _bidService!.SetStrategy(auctionLotBidDto.AuctionMethodId); // Giả sử BidService có phương thức SetStrategy để cài đặt chiến lược
-            // await _bidHub.Clients.Group(auctionLotBidDto.AuctionLotId.ToString()).SendAsync("ReceiveStartAuctionLot", auctionLotBidDto);
-            Console.WriteLine($"StartAuctionLot {auctionLotBidDto.AuctionLotId}");
+            }
+            _serviceScope = _serviceScopeFactory.CreateScope();
+            _bidService = _serviceScope.ServiceProvider.GetRequiredService<BidService>();
+            _bidService.AuctionLotBidDto = AuctionLotBidDto;
+            await _bidHub.Clients.Group(AuctionLotBidDto.AuctionLotId.ToString()).SendAsync("ReceiveStartAuctionLot", AuctionLotBidDto);
+            System.Console.WriteLine($"StartAuctionLot {AuctionLotBidDto.AuctionLotId}");
         }
 
-        // public async Task<bool> IsBidValid(CreateBidLogDto createBidLogDto)
-        // {
-        //     if (_bidService == null)
-        //     {
-        //         throw new InvalidOperationException("Auction is not started or has ended.");
-        //     }
-        //     return await _bidService.IsBidValid(createBidLogDto, _auctionLotBid);
-        // }
-
-        // public CreateBidLogDto? GetWinner()
-        // {
-        //     return _bidService?.GetWinner();
-        // }
-
-        // // Kết thúc và dispose phiên đấu giá
-        public void EndAuctionLot()
+        // Kết thúc và dispose phiên đấu giá
+        public async Task EndAuctionLot()
         {
             if (_serviceScope == null)
             {
-                throw new Exception("There is no ongoing auction lot.");
+                throw new Exception("There is NO ongoing auction lot");
             }
-            System.Console.WriteLine("end");
-            // await _bidHub.Clients.Group(auctionLotBidDto!.AuctionLotId.ToString()).SendAsync("ReceiveEndAuctionLot", auctionLotBidDto);
-            var winner = _bidService!.GetWinner();
-            System.Console.WriteLine($"winner = {winner!.BidderId}");
-            // Dispose và reset các giá trị
-            System.Console.WriteLine("end1");
+            AuctionLotBidDto? AuctionLotBidDto = _bidService?.AuctionLotBidDto;
+            await _bidHub.Clients.Group(AuctionLotBidDto!.AuctionLotId.ToString()).SendAsync("ReceiveEndAuctionLot", AuctionLotBidDto);
             _serviceScope.Dispose();
-            System.Console.WriteLine("end2");
             _serviceScope = null;
-            System.Console.WriteLine("end3");
-            _bidService = null;
-            System.Console.WriteLine("End auction lot");
         }
 
         public bool IsAuctionLotOngoing(int auctionLotId)
@@ -86,5 +65,6 @@ namespace AuctionService.Services
             }
             return _bidService.AuctionLotBidDto.AuctionLotId == auctionLotId;
         }
+
     }
 }

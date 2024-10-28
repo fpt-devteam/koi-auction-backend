@@ -7,5 +7,7 @@ namespace AuctionService.Dto.AuctionLot
         public int AuctionMethodId { get; set; }
         public int StepPercent { get; set; }
         public decimal StartPrice { get; set; }
+        public DateTime? EndTime { get; set; }
+        public DateTime? StartTime { get; set; }
     }
 }

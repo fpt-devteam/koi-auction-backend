@@ -41,6 +41,10 @@ const services = [
     route: "/bidding-service",
     target: "localhost:3003/api",
   },
+  {
+    route: "/payment-service",
+    target: "localhost:3004/api",
+  },
 ];
 
 const limiter = rateLimit({

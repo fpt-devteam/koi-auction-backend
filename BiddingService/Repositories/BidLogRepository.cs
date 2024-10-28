@@ -24,13 +24,9 @@ namespace AuctionService.Repositories
             return bidLog;
         }
 
-        public async Task<List<BidLog>> GetAllAsync(BidLogQueryObject query)
+        public async Task<List<BidLog>> GetAllAsync()
         {
             var bids = await _context.BidLogs.ToListAsync();
-            if (query.AuctionLotId.HasValue)
-            {
-                bids = bids.Where(b => b.AuctionLotId == query.AuctionLotId.Value).ToList();
-            }
             return bids;
         }
 
