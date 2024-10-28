@@ -64,15 +64,12 @@ namespace AuctionService.Mapper
                 return null!;
             }
 
-            System.Console.WriteLine($"auction lot id: {auctionLot.AuctionLotId}");
             return new AuctionLotBidDto
             {
                 AuctionLotId = auctionLot.AuctionLotId,
                 AuctionMethodId = auctionLot.AuctionLotNavigation.AuctionMethodId,
                 StartPrice = auctionLot.AuctionLotNavigation.StartingPrice,
                 StepPercent = auctionLot.StepPercent,
-                EndTime = auctionLot.EndTime,
-                StartTime = auctionLot.StartTime
             };
         }
     }

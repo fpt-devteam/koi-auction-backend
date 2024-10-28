@@ -107,15 +107,16 @@ namespace AuctionService.Repository
 
         public async Task<Auction?> UpdateStatusAsync(int id, int auctionStatusId)
         {
-            var auction = await _context.Auctions.Include(a => a.AuctionLots)
-                                                .ThenInclude(l => l.AuctionLotNavigation)
-                                                    .ThenInclude(k => k.KoiFish)
-                                            .Include(a => a.AuctionLots)
-                                                .ThenInclude(a => a.AuctionLotNavigation)
-                                                    .ThenInclude(l => l.AuctionMethod)
-                                            .Include(a => a.AuctionLots)
-                                                .ThenInclude(a => a.AuctionLotNavigation)
-                                                    .ThenInclude(s => s.LotStatus).FirstOrDefaultAsync(a => a.AuctionId == id);
+            // var auction = await _context.Auctions.Include(a => a.AuctionLots)
+            //                                     .ThenInclude(l => l.AuctionLotNavigation)
+            //                                         .ThenInclude(k => k.KoiFish)
+            //                                 .Include(a => a.AuctionLots)
+            //                                     .ThenInclude(a => a.AuctionLotNavigation)
+            //                                         .ThenInclude(l => l.AuctionMethod)
+            //                                 .Include(a => a.AuctionLots)
+            //                                     .ThenInclude(a => a.AuctionLotNavigation)
+            //                                         .ThenInclude(s => s.LotStatus).FirstOrDefaultAsync(a => a.AuctionId == id);
+            var auction = await _context.Auctions.FirstOrDefaultAsync(a => a.AuctionId == id);
             if (auction == null)
                 return null;
 
@@ -126,15 +127,16 @@ namespace AuctionService.Repository
 
         public async Task<Auction?> UpdateEndTimeAsync(int id, DateTime endTime)
         {
-            var auction = await _context.Auctions.Include(a => a.AuctionLots)
-                                                .ThenInclude(l => l.AuctionLotNavigation)
-                                                    .ThenInclude(k => k.KoiFish)
-                                            .Include(a => a.AuctionLots)
-                                                .ThenInclude(a => a.AuctionLotNavigation)
-                                                    .ThenInclude(l => l.AuctionMethod)
-                                            .Include(a => a.AuctionLots)
-                                                .ThenInclude(a => a.AuctionLotNavigation)
-                                                    .ThenInclude(s => s.LotStatus).FirstOrDefaultAsync(a => a.AuctionId == id);
+            // var auction = await _context.Auctions.Include(a => a.AuctionLots)
+            //                                     .ThenInclude(l => l.AuctionLotNavigation)
+            //                                         .ThenInclude(k => k.KoiFish)
+            //                                 .Include(a => a.AuctionLots)
+            //                                     .ThenInclude(a => a.AuctionLotNavigation)
+            //                                         .ThenInclude(l => l.AuctionMethod)
+            //                                 .Include(a => a.AuctionLots)
+            //                                     .ThenInclude(a => a.AuctionLotNavigation)
+            //                                         .ThenInclude(s => s.LotStatus).FirstOrDefaultAsync(a => a.AuctionId == id);
+            var auction = await _context.Auctions.FirstOrDefaultAsync(a => a.AuctionId == id);
             if (auction == null)
                 return null;
             auction.EndTime = endTime;

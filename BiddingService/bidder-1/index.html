@@ -68,21 +68,18 @@
                 document
                     .getElementById("placeBidButton")
                     .addEventListener("click", function () {
+                        const bidAmount = document.getElementById("bidInput").value;
                         const auctionLotId = parseInt(
                             document.getElementById("auctionLotId").value,
                             10
                         );
-                        const bidAmount = parseInt(
-                            document.getElementById("bidInput").value,
-                            10
-                        );
-
+                        const createBidLogDto = {
+                            BidderId: parseInt(userId),
+                            AuctionLotId: parseInt(auctionLotId),
+                            BidAmount: parseFloat(parseFloat(bidAmount).toFixed(2)),
+                        };
                         connection
-                            .invoke("SendPlaceBid", auctionLotId, {
-                                bidderId: userId,
-                                auctionLotId: auctionLotId,
-                                bidAmount: bidAmount,
-                            })
+                            .invoke("PlaceBid", createBidLogDto)
                             .then(() => {
                                 // console.log(
                                 //     `In ${auctionLotId}, bidder ${bidderId}: ${bidAmount}VND`

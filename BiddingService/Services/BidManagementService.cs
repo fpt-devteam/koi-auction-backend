@@ -40,6 +40,8 @@ namespace BiddingService.Services
 
     public class BidManagementService
     {
+        const string RECEIVE_START_AUCTION_LOT = "ReceiveStartAuctionLot";
+        const string RECEIVE_END_AUCTION_LOT = "ReceiveEndAuctionLot";
         private IServiceScopeFactory _serviceScopeFactory;
 
         private IServiceScope? _serviceScope;
@@ -60,7 +62,7 @@ namespace BiddingService.Services
         }
 
         // Bắt đầu phiên đấu giá và khởi tạo PlaceBidService trong scope riêng
-        public async Task StartAuctionLot(AuctionLotBidDto AuctionLotBidDto)
+        public async Task StartAuctionLot(AuctionLotBidDto auctionLotBidDto)
         {
             if (_serviceScope != null)
             {
@@ -69,9 +71,9 @@ namespace BiddingService.Services
             }
             _serviceScope = _serviceScopeFactory.CreateScope();
             _bidService = _serviceScope.ServiceProvider.GetRequiredService<BidService>();
-            _bidService.AuctionLotBidDto = AuctionLotBidDto;
-            await _bidHub.Clients.Group(AuctionLotBidDto.AuctionLotId.ToString()).SendAsync("ReceiveStartAuctionLot", AuctionLotBidDto);
-            System.Console.WriteLine($"StartAuctionLot {AuctionLotBidDto.AuctionLotId}");
+            _bidService.AuctionLotBidDto = auctionLotBidDto;
+            await _bidHub.Clients.All.SendAsync(RECEIVE_START_AUCTION_LOT);
+            System.Console.WriteLine($"Start Auction Lot {auctionLotBidDto.AuctionLotId}");
         }
 
         // Kết thúc và dispose phiên đấu giá
@@ -81,10 +83,10 @@ namespace BiddingService.Services
             {
                 throw new Exception("There is NO ongoing auction lot");
             }
-            AuctionLotBidDto? AuctionLotBidDto = _bidService?.AuctionLotBidDto;
-            await _bidHub.Clients.Group(AuctionLotBidDto!.AuctionLotId.ToString()).SendAsync("ReceiveEndAuctionLot", AuctionLotBidDto);
+            await _bidHub.Clients.All.SendAsync(RECEIVE_END_AUCTION_LOT);
             _serviceScope.Dispose();
             _serviceScope = null;
+            System.Console.WriteLine($"End Auction Lot");
         }
 
         public bool IsAuctionLotOngoing(int auctionLotId)

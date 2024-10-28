@@ -76,8 +76,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
 app.MapControllers();
-// app.UseHangfireDashboard("/hangfire");
+app.UseHangfireDashboard("/hangfire");
 
 app.Run();

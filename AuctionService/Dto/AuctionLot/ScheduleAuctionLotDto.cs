@@ -5,8 +5,10 @@ using System.Threading.Tasks;
 
 namespace AuctionService.Dto.AuctionLot
 {
-    public class TestStartAuctionLotDto
+    public class ScheduleAuctionLotDto
     {
         public int AuctionLotId { get; set; }
+
+        public DateTime StartTime { get; set; }
     }
 }

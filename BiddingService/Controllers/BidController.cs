@@ -24,6 +24,7 @@ namespace BiddingService.Controllers
         {
             try
             {
+                System.Console.WriteLine("api start-auction-lot");
                 await _bidManagementService.StartAuctionLot(auctionLotBidDto);
                 return Ok(new { Message = "Start successfully", Data = auctionLotBidDto });
             }
@@ -33,7 +34,7 @@ namespace BiddingService.Controllers
             }
         }
 
-        [HttpPost("end-auction-lot")]
+        [HttpGet("end-auction-lot")]
         public async Task<IActionResult> EndAuctionLot()
         {
             try

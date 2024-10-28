@@ -108,11 +108,6 @@ public partial class AuctionManagementDbContext : DbContext
             entity.ToTable("AuctionLotJob");
 
             entity.Property(e => e.HangfireJobId).HasMaxLength(100);
-
-            entity.HasOne(d => d.AuctionLot).WithMany(p => p.AuctionLotJobs)
-                .HasForeignKey(d => d.AuctionLotId)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("FK_AuctionLotJob_AuctionLot");
         });
 
         modelBuilder.Entity<AuctionLotStatus>(entity =>

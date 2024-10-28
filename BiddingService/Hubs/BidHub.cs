@@ -8,42 +8,9 @@ namespace BiddingService.Hubs
 {
     public class BidHub : Hub
     {
-        //     public override Task OnDisconnectedAsync(Exception? exception)
-        //     {
-        //         if (_connections.TryGetValue(Context.ConnectionId, out UserConnectionDto? userConnection))
-        //         {
-        //             _connections.Remove(Context.ConnectionId);
-        //             Clients.Group(userConnection.AuctionLotId.ToString()).SendAsync("ReceiveMessage", $"{userConnection.UserId} has left");
-        //             SendUsersConnected(userConnection.AuctionLotId.ToString());
-        //         }
+        const string RECEIVE_EXCEPTION_MESSAGE = "ReceiveExceptionMessage";
+        const string RECEIVE_CURRENT_BID = "ReceiveCurrentBid";
 
-        //         return base.OnDisconnectedAsync(exception);
-        //     }
-
-        //     // public void SendAuctionLotDto(AuctionLotDto auctionLotDto)
-        //     // {
-        //     //     _placeBidService!.SetUp(auctionLotDto);
-        //     //     System.Console.WriteLine($"start price = {auctionLotDto.StartPrice}");
-        //     // }
-
-        //     public void UpdateUserBalanced(int userId, int balance)
-        //     {
-        //         // _cacheService.SetBalance(userId, balance, TimeSpan.FromDays(1));
-        //     }
-        //     public Task SendUsersConnected(string room)
-        //     {
-        //         var users = _connections.Values
-        //             .Where(c => c.AuctionLotId.ToString() == room)
-        //             .Select(c => c.UserId);
-
-        //         return Clients.Group(room).SendAsync("UsersInRoom", users);
-        //     }
-
-        //     // Phương thức để gửi message cho tất cả các client
-        //     public async Task BroadcastMessage(UserConnectionDto userConnection)
-        //     {
-        //         await Clients.All.SendAsync("ReceiveMessage", userConnection);
-        //     }
         private readonly BidManagementService _bidManagementService;
         private readonly IDictionary<string, UserConnectionDto> _connections; // <connectionId, (uid, auctionLotId)>
         public BidHub(IDictionary<string, UserConnectionDto> connections, BidManagementService auctionLotManagerService)
@@ -92,11 +59,12 @@ namespace BiddingService.Hubs
             {
                 await Groups.AddToGroupAsync(Context.ConnectionId, userConnection.AuctionLotId.ToString());
                 _connections[Context.ConnectionId] = userConnection;
+                await SendCurrentBid(userConnection.AuctionLotId);
                 Console.WriteLine($"User {(userConnection.UserId == null ? "Guest" : userConnection.UserId)} joined auction lot {userConnection.AuctionLotId}");
             }
             catch (Exception e)
             {
-                await Clients.Caller.SendAsync("ReceiveExceptionMessage", e.Message);
+                await Clients.Caller.SendAsync(RECEIVE_EXCEPTION_MESSAGE, e.Message);
             }
         }
         public override Task OnDisconnectedAsync(Exception? exception)
@@ -112,7 +80,33 @@ namespace BiddingService.Hubs
         {
             bool isExist = _bidManagementService.IsAuctionLotOngoing(auctionLotId);
             string mess = (isExist) ? $"Auction lot {auctionLotId} is ongoing" : $"Auction lot {auctionLotId} is NOT ongoing";
-            Clients.Caller.SendAsync("ReceiveIsAuctionLotOngoingMessage", mess);
+            Clients.Caller.SendAsync("ReceiveExceptionMessage", mess);
+        }
+        public async Task PlaceBid(CreateBidLogDto bid)
+        {
+            try
+            {
+                // await _bidManagementService.StartAuctionLot(new AuctionLotBidDto { AuctionLotId = bid.AuctionLotId });
+                // await _bidManagementService.PlaceBid(bid)
+                await Clients.All.SendAsync(RECEIVE_CURRENT_BID, bid.BidAmount);
+            }
+            catch (Exception e)
+            {
+                await Clients.Caller.SendAsync(RECEIVE_EXCEPTION_MESSAGE, e.Message);
+            }
+        }
+        private async Task SendCurrentBid(int auctionLotId)
+        {
+            try
+            {
+                // var currentBid = await _bidManagementService.GetCurrentBid(auctionLotId);
+                int currentBid = 100;
+                await Clients.Caller.SendAsync(RECEIVE_CURRENT_BID, null);
+            }
+            catch (Exception e)
+            {
+                await Clients.Caller.SendAsync(RECEIVE_EXCEPTION_MESSAGE, e.Message);
+            }
         }
     }
 }

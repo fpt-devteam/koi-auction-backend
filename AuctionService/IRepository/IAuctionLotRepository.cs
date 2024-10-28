@@ -8,19 +8,22 @@ namespace AuctionService.IRepository
     {
         Task<List<AuctionLot>> GetAllAsync(AuctionLotQueryObject query);
         Task<AuctionLot> GetAuctionLotById(int id);
+        Task<AuctionLot?> GetAuctionLotByOrderInAuction(int auctionId, int orderInAuction);
+
         Task<AuctionLot> CreateAsync(AuctionLot auctionLot);
         Task<List<AuctionLot>> CreateListAsync(List<AuctionLot> auctionLots);
-        AuctionLot Update(AuctionLot auctionLot, UpdateAuctionLotDto updateAuctionLotDto);
+
         Task<AuctionLot> DeleteAsync(int id);
         Task<List<AuctionLot>> DeleteListAsync(List<int> ids);
 
-        Task<AuctionLot?> UpdateStatusAsync(int id, int statusId);
 
-        Task<AuctionLot?> UpdateStartTimeAsync(int id, DateTime startTime);
+        AuctionLot Update(AuctionLot auctionLot, UpdateAuctionLotDto updateAuctionLotDto);
 
-        Task<AuctionLot?> UpdateEndTimeAsync(int id, DateTime endTime);
+        AuctionLot UpdateStatus(AuctionLot auctionLot, int statusId);
 
-        Task<AuctionLot?> GetAuctionLotByOrderInAuction(int auctionId, int orderInAuction);
+        AuctionLot UpdateStartTime(AuctionLot auctionLot, DateTime startTime);
+
+        AuctionLot UpdateEndTime(AuctionLot auctionLot, DateTime endTime);
 
     }
 }

@@ -113,21 +113,21 @@ namespace AuctionService.Repository
             return auctionLot;
         }
 
-        public async Task<AuctionLot?> UpdateStatusAsync(int id, int statusId)
+        public AuctionLot UpdateStatus(AuctionLot auctionLot, int statusId)
         {
-            var auctionLot = await GetAuctionLotById(id);
-            if (auctionLot == null)
-                return null;
             auctionLot.AuctionLotStatusId = statusId;
             return auctionLot;
         }
 
-        public async Task<AuctionLot?> UpdateStartTimeAsync(int id, DateTime startTime)
+        public AuctionLot UpdateStartTime(AuctionLot auctionLot, DateTime startTime)
         {
-            var auctionLot = await _context.AuctionLots.FirstOrDefaultAsync(a => a.AuctionLotId == id);
-            if (auctionLot == null)
-                return null;
             auctionLot.StartTime = startTime;
+            return auctionLot;
+        }
+
+        public AuctionLot UpdateEndTime(AuctionLot auctionLot, DateTime endTime)
+        {
+            auctionLot.EndTime = endTime;
             return auctionLot;
         }
 
@@ -137,13 +137,6 @@ namespace AuctionService.Repository
             return auctionLot;
         }
 
-        public async Task<AuctionLot?> UpdateEndTimeAsync(int id, DateTime endTime)
-        {
-            var auctionLot = await _context.AuctionLots.FirstOrDefaultAsync(a => a.AuctionLotId == id);
-            if (auctionLot == null)
-                return null;
-            auctionLot.EndTime = endTime;
-            return auctionLot;
-        }
+
     }
 }
