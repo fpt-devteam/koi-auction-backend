@@ -18,7 +18,9 @@ const deposit = async (req, res) => {
       endpoint: "https://sb-openapi.zalopay.vn/v2/create"
    };
 
-   const embed_data = {};
+   const embed_data = {
+      redirecturl: 'localhost:5173'
+   };
    const items = [{}];
    const transID = Math.floor(Math.random() * 1000000);
    const app_trans_id = `${moment().format('YYMMDD')}_${transID}`;
@@ -32,7 +34,7 @@ const deposit = async (req, res) => {
       amount: Amount,
       description: "Thanh toán hóa đơn",
       bank_code: "zalopayapp",
-      callback_url: "https://0e47-2405-4802-a339-ffb0-ac95-2c83-34ec-e544.ngrok-free.app/payment-service/callback",
+      callback_url: "https://b4e3-2401-d800-5aec-76ef-c58c-ff24-9016-45ef.ngrok-free.app/payment-service/callback",
    };
 
    console.log(`app_trans_id = ${app_trans_id}`);
@@ -52,7 +54,7 @@ const deposit = async (req, res) => {
          StatusId: 1,
          TransTypeId: 3,
          AppTransId: app_trans_id,
-         BalanceAfter: wallet.Balance + amount,
+         BalanceAfter: wallet.Balance + Amount,
          Note: "Thanh toán hóa đơn",
          CreatedAt: Date.now(),
       });
@@ -161,6 +163,11 @@ const reloadWallet = async (req, res) => {
          balance += trans.Amount;
          await Transaction.update(
             { StatusId: 2 },
+            { where: { AppTransId: trans.AppTransId } }
+         );
+      } else {
+         await Transaction.update(
+            { StatusId: 3 },
             { where: { AppTransId: trans.AppTransId } }
          );
       }
