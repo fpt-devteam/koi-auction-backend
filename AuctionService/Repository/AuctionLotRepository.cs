@@ -78,6 +78,19 @@ namespace AuctionService.Repository
             {
                 auctionLots = auctionLots.Where(l => l.AuctionId == query.AuctionId.Value).ToList();
             }
+            if (!string.IsNullOrWhiteSpace(query.SortBy))
+            {
+                switch (query.SortBy.ToLower())
+                {
+                    case "orderinauction":
+                        // Sắp xếp tăng dần OrderInAuction
+                        auctionLots = auctionLots.OrderBy(l => l.OrderInAuction).ToList();
+                        break;
+                    default:
+                        // Xử lý trường hợp không khớp với bất kỳ giá trị SortBy nào
+                        break;
+                }
+            }
             return auctionLots;
         }
 

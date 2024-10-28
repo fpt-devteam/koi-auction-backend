@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using BiddingService.Dto.BidLog;
+using BiddingService.Helper;
 using BiddingService.IServices;
 using BiddingService.Mappers;
 using BiddingService.Services;
@@ -26,11 +27,11 @@ namespace BiddingService.Controllers
             // _placeBidService = placeBidService;
         }
         [HttpGet]
-        public async Task<IActionResult> GetAllBidLog()
+        public async Task<IActionResult> GetAllBidLog([FromQuery] BidLogQueryObject queryObject)
         {
             try
             {
-                var bidLog = await _service.GetAllBidLog();
+                var bidLog = await _service.GetAllBidLog(queryObject);
                 if (bidLog == null)
                     return NotFound("No bid logs found.");
 

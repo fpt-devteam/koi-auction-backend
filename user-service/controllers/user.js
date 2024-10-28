@@ -1,4 +1,5 @@
 const User = require("../models/user");
+const Wallet = require("../models/wallet");
 const BreederDetail = require("../models/breeder");
 const argon2 = require("argon2");
 const { Op } = require("sequelize");
@@ -81,12 +82,23 @@ const googleAuth = async (req, res) => {
          return res.status(200).json({ message: "Login successful", user: existUserById });
       }
 
+      let userId;
+      
       await User.create({
          Username: name,
          Email: Email,
          GoogleId: id,
          Active: true,
          UserRoleId: 1,
+         CreatedAt: new Date(),
+         UpdatedAt: new Date(),
+      }).then((user) => {
+         userId = user.UserId;
+      });
+
+      await Wallet.create({
+         UserId: userId,
+         Balance: 0,
          CreatedAt: new Date(),
          UpdatedAt: new Date(),
       });
@@ -101,6 +113,10 @@ const googleAuth = async (req, res) => {
 const login = async (req, res) => {
    try {
       const reqBody = req.body;
+      if (!reqBody.Username || !reqBody.Password) {
+         return res.status(400).json({ message: "All fields are required" });
+      }
+
       const user = await User.findOne({ where: { Username: reqBody.Username } });
 
       if (!user) {
@@ -154,6 +170,8 @@ const register = async (req, res) => {
       if (existUser?.Phone == Phone) return res.status(400).json({ message: "Phone already exists" });
 
       const hashedPassword = await argon2.hash(Password, 10);
+
+      let userId;
       await User.create({
          Username: Username,
          Password: hashedPassword,
@@ -165,7 +183,17 @@ const register = async (req, res) => {
          UserRoleId: 1,
          CreatedAt: new Date(),
          UpdatedAt: new Date(),
+      }).then((user) => {
+         userId = user.UserId;
       });
+
+      await Wallet.create({
+         UserId: userId,
+         Balance: 0,
+         CreatedAt: new Date(),
+         UpdatedAt: new Date(),
+      });
+
       res.status(201).json({ message: "User Created" });
    } catch (err) {
       console.log(err);
@@ -350,6 +378,13 @@ const manageCreateProfile = async (req, res) => {
          UpdatedAt: new Date(),
       }).then((user) => {
          UserId = user.UserId;
+      });
+
+      await Wallet.create({
+         UserId: UserId,
+         Balance: 0,
+         CreatedAt: new Date(),
+         UpdatedAt: new Date(),
       });
 
       if (UserRoleId == 2) {

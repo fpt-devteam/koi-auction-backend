@@ -1,43 +1,13 @@
+using System.Collections.Concurrent;
 using BiddingService.Dto.AuctionLot;
 using BiddingService.Dto.BidLog;
+using BiddingService.HandleMethod;
 using BiddingService.Hubs;
+using BiddingService.IServices;
 using Microsoft.AspNetCore.SignalR;
 
 namespace BiddingService.Services
 {
-    // public class AuctionLotManagerService
-    // {á
-    //     private readonly IServiceScopeFactory _serviceScopeFactory;
-    //     private IServiceScope? _scope; // Add this field to store the scope
-
-    //     public AuctionLotManagerService(IServiceScopeFactory serviceScopeFactory)
-    //     {
-    //         _serviceScopeFactory = serviceScopeFactory;
-    //     }
-
-    //     public PlaceBidService StartAuctionLot(AuctionLotBidDto AuctionLotBidDto)
-    //     {
-    //         // Create a new scope and store it in the field
-    //         _scope = _serviceScopeFactory.CreateScope();
-
-    //         // Retrieve and set up the PlaceBidService
-    //         var placeBidService = _scope.ServiceProvider.GetRequiredService<PlaceBidService>();
-    //         placeBidService.SetUp(AuctionLotBidDto);
-
-    //         return placeBidService;
-    //     }
-
-    //     public void EndAuction()
-    //     {
-    //         // Dispose of the scope to end the auction
-    //         _scope?.Dispose();
-    //     }
-    // }
-
-    //
-    //
-    //
-
     public class BidManagementService
     {
         const string RECEIVE_START_AUCTION_LOT = "ReceiveStartAuctionLot";
@@ -45,30 +15,25 @@ namespace BiddingService.Services
         private IServiceScopeFactory _serviceScopeFactory;
 
         private IServiceScope? _serviceScope;
-
-        private readonly IHubContext<BidHub> _bidHub;
-
+        private readonly IServiceScopeFactory _serviceScopeFactory;
         private BidService? _bidService;
-
-        public BidService? BidService
-        {
-            get => _bidService;
-        }
+        public BidService? BidService => _bidService;
 
         public BidManagementService(IServiceScopeFactory serviceScopeFactory, IHubContext<BidHub> bidHub)
         {
             _serviceScopeFactory = serviceScopeFactory;
-            _bidHub = bidHub;
         }
+
+
 
         // Bắt đầu phiên đấu giá và khởi tạo PlaceBidService trong scope riêng
         public async Task StartAuctionLot(AuctionLotBidDto auctionLotBidDto)
         {
             if (_serviceScope != null)
             {
-                throw new Exception("There was an ONGOING auction lot");
-
+                throw new Exception("There is an ongoing auction lot");
             }
+            // Tạo scope mới cho phiên đấu giá
             _serviceScope = _serviceScopeFactory.CreateScope();
             _bidService = _serviceScope.ServiceProvider.GetRequiredService<BidService>();
             _bidService.AuctionLotBidDto = auctionLotBidDto;
@@ -81,10 +46,11 @@ namespace BiddingService.Services
         {
             if (_serviceScope == null)
             {
-                throw new Exception("There is NO ongoing auction lot");
+                throw new Exception("There is no ongoing auction lot.");
             }
             await _bidHub.Clients.All.SendAsync(RECEIVE_END_AUCTION_LOT);
             _serviceScope.Dispose();
+            System.Console.WriteLine("end2");
             _serviceScope = null;
             System.Console.WriteLine($"End Auction Lot");
         }
@@ -97,6 +63,5 @@ namespace BiddingService.Services
             }
             return _bidService.AuctionLotBidDto.AuctionLotId == auctionLotId;
         }
-
     }
 }

@@ -8,6 +8,7 @@ namespace BiddingService.IRepositories
     public interface IUnitOfWork
     {
         IBidLogRepository BidLog { get; }
+        ISoldLotRepository SoldLot { get; }
         Task<bool> SaveChangesAsync();
     }
 }

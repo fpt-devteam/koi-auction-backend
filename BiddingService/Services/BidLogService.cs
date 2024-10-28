@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BiddingService.Helper;
 using BiddingService.IRepositories;
 using BiddingService.IServices;
 using BiddingService.Mappers;
@@ -56,11 +57,11 @@ namespace BiddingService.Services
         //     }
         // }
 
-        public async Task<List<BidLog>> GetAllBidLog()
+        public async Task<List<BidLog>> GetAllBidLog(BidLogQueryObject queryObject)
         {
             try
             {
-                return await _unitOfWork.BidLog.GetAllAsync();
+                return await _unitOfWork.BidLog.GetAllAsync(queryObject);
             }
             catch (Exception ex)
             {
