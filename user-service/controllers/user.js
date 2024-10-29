@@ -27,67 +27,56 @@ const profile = async (req, res) => {
 };
 
 const googleAuth = async (req, res) => {
-   try {
-      const { token } = req.body;
-      const existUser = await User.findOne({ where: { GoogleId: token } });
-      
-      if (existUser) {
-         const accessToken = sign(
-            { UserId: existUser.UserId, UserRoleId: existUser.UserRoleId },
-            process.env.JWT_SECRET
-         );
-         const signInExpire = 1000 * 60 * 60 * 24;
-         res.cookie("access-token", accessToken, {
-            httpOnly: true,
-            secure: true,
-            sameSite: "none",
-            maxAge: signInExpire,
-         });
-         return res.status(200).json({ message: "Login successful", user: existUser });
-      }
+   const { Email, FirstName, LastName, GoogleId } = req.body;
+   const existUser = await User.findOne({ where: { GoogleId: GoogleId } });
 
-      const profile = await new Promise((resolve, reject) => {
-         passport.authenticate("google", (err, user) => {
-            if (err) reject(err);
-            console.log(user);
-            resolve(user);
-         })(req, res);
+   if (existUser) {
+      const accessToken = sign(
+         { UserId: existUser.UserId, UserRoleId: existUser.UserRoleId },
+         process.env.JWT_SECRET
+      );
+      const signInExpire = 1000 * 60 * 60 * 24;
+      res.cookie("access-token", accessToken, {
+         httpOnly: true,
+         secure: true,
+         sameSite: "none",
+         maxAge: signInExpire,
       });
+      return res.status(200).json({ message: "Login successful", user: existUser });
+   }
 
-      if (!profile) {
-         return res.status(401).json({ message: "Google authentication failed" });
-      }
+   const existUserByEmail = await User.findOne({ where: { Email: Email } });
 
-      const { id, name, Email } = profile;
-      const existUserByEmail = await User.findOne({ where: { Email: Email } });
+   if (existUserByEmail) {
+      return res.status(409).json({ message: "Email already exists" });
+   }
 
-      if (existUserByEmail) {
-         return res.status(409).json({ message: "Email already exists" });
-      }
+   const existUserByGoogleId = await User.findOne({ where: { GoogleId: GoogleId } });
 
-      const existUserById = await User.findOne({ where: { GoogleId: id } });
+   if (existUserByGoogleId) {
+      const accessToken = sign(
+         { UserId: existUserByGoogleId.UserId, UserRoleId: existUserByGoogleId.UserRoleId },
+         process.env.JWT_SECRET
+      );
+      const signInExpire = 1000 * 60 * 60 * 24;
+      res.cookie("access-token", accessToken, {
+         httpOnly: true,
+         secure: true,
+         sameSite: "none",
+         maxAge: signInExpire,
+      });
+      return res.status(200).json({ message: "Login successful", user: existUserByGoogleId });
+   }
 
-      if (existUserById) {
-         const accessToken = sign(
-            { UserId: existUserById.UserId, UserRoleId: existUserById.UserRoleId },
-            process.env.JWT_SECRET
-         );
-         const signInExpire = 1000 * 60 * 60 * 24;
-         res.cookie("access-token", accessToken, {
-            httpOnly: true,
-            secure: true,
-            sameSite: "none",
-            maxAge: signInExpire,
-         });
-         return res.status(200).json({ message: "Login successful", user: existUserById });
-      }
+   let userId;
 
-      let userId;
-      
+   try {
       await User.create({
-         Username: name,
+         Username: Email,
          Email: Email,
-         GoogleId: id,
+         FirstName: FirstName,
+         LastName: LastName,
+         GoogleId: GoogleId,
          Active: true,
          UserRoleId: 1,
          CreatedAt: new Date(),
@@ -103,7 +92,43 @@ const googleAuth = async (req, res) => {
          UpdatedAt: new Date(),
       });
 
-      res.status(201).json({ message: "User Created" });
+      const accessToken = sign(
+         { UserId: userId, UserRoleId: 1 },
+         process.env.JWT_SECRET
+      );
+
+      res.cookie("access-token", accessToken, {
+         httpOnly: true,
+         secure: true,
+         sameSite: "none",
+         maxAge: 30 * 24 * 60 * 60 * 1000,
+      });
+
+      res.status(200).json({ 
+         message: "Login successful", 
+         user: { UserId: userId, Username: Email, Email: Email, FirstName: FirstName, LastName: LastName, Active: true }
+      });
+   } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Internal server error" });
+   }
+}
+
+const googleSuccess = async (req, res) => {
+   try {
+      if (req.user) {
+         return res.status(200).json({ message: "Google authentication successful", user: req.user });
+      }
+      res.status(401).json({ message: "Google authentication failed" });
+   } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Internal server error" });
+   }
+}
+
+const googleFailure = async (req, res) => {
+   try {
+      res.status(401).json({ message: "Google authentication failed" });
    } catch (err) {
       console.log(err);
       res.status(500).json({ message: "Internal server error" });
@@ -534,6 +559,8 @@ module.exports = {
    profile,
    googleAuth,
    login,
+   googleSuccess,
+   googleFailure,
    register,
    updateProfile,
    updatePassword,
