@@ -148,6 +148,10 @@ const login = async (req, res) => {
          return res.status(401).json({ message: "Username or Password is incorrect" });
       }
 
+      if (user.GoogleId) {
+         return res.status(401).json({ message: "Please login with Google" });
+      }
+
       if (!user.Active) {
          return res.status(401).json({ message: "User is not available" });
       }
