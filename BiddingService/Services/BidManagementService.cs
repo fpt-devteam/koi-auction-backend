@@ -15,13 +15,16 @@ namespace BiddingService.Services
         private IServiceScopeFactory _serviceScopeFactory;
 
         private IServiceScope? _serviceScope;
-        private readonly IServiceScopeFactory _serviceScopeFactory;
+        // private readonly IServiceScopeFactory _serviceScopeFactory;
         private BidService? _bidService;
         public BidService? BidService => _bidService;
+
+        public IHubContext<BidHub> _bidHub { get; }
 
         public BidManagementService(IServiceScopeFactory serviceScopeFactory, IHubContext<BidHub> bidHub)
         {
             _serviceScopeFactory = serviceScopeFactory;
+            _bidHub = bidHub;
         }
 
 

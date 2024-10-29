@@ -23,29 +23,29 @@ namespace BiddingService.Hubs
             _bidManagementService = auctionLotManagerService;
             _bidService = bidService;
         }
-        public async Task PlaceBid(CreateBidLogDto bid)
-        {
-            System.Console.WriteLine("Place Bid");
-            try
-            {
-                if (await _bidManagementService!.BidService!.IsBidValid(bid))
-                {
-                    await Clients.Group(bid.AuctionLotId.ToString()).SendAsync("ReceivePlaceBid", bid);
-                    await _bidManagementService.BidService.AddBidLog(bid);
-                }
-                else
-                {
-                    await Clients.Caller.SendAsync("ReceivePlaceBidErrorMessage", "Place Bid not valid");
-                }
+        // public async Task PlaceBid(CreateBidLogDto bid)
+        // {
+        //     System.Console.WriteLine("Place Bid");
+        //     try
+        //     {
+        //         if (await _bidManagementService!.BidService!.IsBidValid(bid))
+        //         {
+        //             await Clients.Group(bid.AuctionLotId.ToString()).SendAsync("ReceivePlaceBid", bid);
+        //             await _bidManagementService.BidService.AddBidLog(bid);
+        //         }
+        //         else
+        //         {
+        //             await Clients.Caller.SendAsync("ReceivePlaceBidErrorMessage", "Place Bid not valid");
+        //         }
 
-            }
-            catch (Exception ex)
-            {
-                System.Console.WriteLine(ex.ToString());
-            }
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         System.Console.WriteLine(ex.ToString());
+        //     }
 
 
-        }
+        // }
         public async Task EndAuctionLot()
         {
             try
