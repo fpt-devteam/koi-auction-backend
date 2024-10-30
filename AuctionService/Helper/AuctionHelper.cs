@@ -26,5 +26,29 @@ namespace AuctionService.Helper
 
             return ValidationResult.Success;
         }
+
+        public static ValidationResult? IsValid(object value, ValidationContext validationContext)
+        {
+            if (value == null)
+            {
+                return new ValidationResult("The start time is required.");
+            }
+
+            if (!(value is DateTime))
+            {
+                return new ValidationResult("The start time must be in a valid date format.");
+            }
+
+            var startTime = (DateTime)value;
+
+            if (startTime <= DateTime.Now)
+            {
+                return new ValidationResult("The start time must be in the future.");
+            }
+
+            return ValidationResult.Success;
+        }
+
+
     }
 }

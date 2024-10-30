@@ -52,13 +52,15 @@ namespace AuctionService.Middlewares
             { "/api/auction-lots/{id}", new Dictionary<string, UserRole[]>
                 {
                     { HttpMethods.Put, new[] { UserRole.Staff,  UserRole.Admin } }, // PUT chỉ dành cho Staff
-                    { HttpMethods.Delete, new[] { UserRole.Staff,  UserRole.Admin } } // DELETE chỉ dành cho Staff
+                    { HttpMethods.Delete, new[] { UserRole.Staff,  UserRole.Admin } }, // DELETE chỉ dành cho Staff
+                    { HttpMethods.Patch, new[] { UserRole.Staff, UserRole.Admin } }
                 }
             },
             { "/api/auction-lots/listAuctionLot", new Dictionary<string, UserRole[]>
                 {
                     { HttpMethods.Put, new[] { UserRole.Staff,  UserRole.Admin } }, // PUT chỉ dành cho Staff
-                    { HttpMethods.Delete, new[] { UserRole.Staff,  UserRole.Admin } } // DELETE chỉ dành cho Staff
+                    { HttpMethods.Delete, new[] { UserRole.Staff,  UserRole.Admin }}, // DELETE chỉ dành cho Staff
+                    { HttpMethods.Post, new[] { UserRole.Staff, UserRole.Admin } }
                 }
             },
             { "/api/auction-methods", new Dictionary<string, UserRole[]>

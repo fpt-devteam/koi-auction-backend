@@ -59,37 +59,15 @@ namespace AuctionService.Services
 
         public async Task<List<BidLog>> GetAllBidLog(BidLogQueryObject queryObject)
         {
-            try
-            {
-                return await _unitOfWork.BidLog.GetAllAsync(queryObject);
-            }
-            catch (Exception ex)
-            {
-                // Xử lý lỗi khác
-                throw new Exception("An error occurred while retrieving all bid logs.", ex);
-            }
+            return await _unitOfWork.BidLog.GetAllAsync(queryObject);
         }
 
         public async Task<BidLog> GetBidLogById(int id)
         {
-            try
-            {
-                var bidLog = await _unitOfWork.BidLog.GetByIdAsync(id);
-                if (bidLog == null)
-                {
-                    throw new KeyNotFoundException($"No bid log found with ID: {id}");
-                }
-                return bidLog;
-            }
-            catch (KeyNotFoundException ex)
-            {
-                throw new KeyNotFoundException(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                // Xử lý lỗi khác
-                throw new Exception("An error occurred while retrieving the bid log by ID.", ex);
-            }
+
+            var bidLog = await _unitOfWork.BidLog.GetByIdAsync(id);
+            return bidLog;
+
         }
     }
 }

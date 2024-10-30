@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using AuctionService.Dto.Wallet;
@@ -48,18 +49,18 @@ namespace AuctionService.Services
                 return wallet;
             }
 
-            // var token = await GetTokenAsync();
-            // if (token == null)
-            // {
-            //     throw new Exception("Unable to retrieve token");
-            // }
-
-            // Thêm token vào header
-            //_httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var token = await GetTokenAsync();
+            if (token == null)
+            {
+                throw new Exception("Unable to retrieve token");
+            }
+            // thêm token vào cookie
+            _httpClient.DefaultRequestHeaders.Remove("Cookie");
+            _httpClient.DefaultRequestHeaders.Add("Cookie", $"access_token={token}");
 
             // Gọi PaymentService để lấy thông tin ví
-            //var response = await _httpClient.GetAsync($"http://localhost:3000/payment-service/internal/get-wallet-balance/{id}");
-            var response = await _httpClient.GetAsync($"https://67035c76bd7c8c1ccd412a4e.mockapi.io/api/wallet/{id}");
+            var response = await _httpClient.GetAsync($"http://localhost:3000/payment-service/internal/get-wallet-balance/{id}");
+            //var response = await _httpClient.GetAsync($"https://67035c76bd7c8c1ccd412a4e.mockapi.io/api/wallet/{id}");
             if (response.IsSuccessStatusCode)
             {
 

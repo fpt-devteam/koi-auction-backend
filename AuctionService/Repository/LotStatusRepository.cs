@@ -26,7 +26,7 @@ namespace AuctionService.Repository
             var lotStatus = await _context.LotStatuses.FirstOrDefaultAsync(l => l.LotStatusId == id);
             if (lotStatus == null)
             {
-                return null!;
+                throw new KeyNotFoundException($"Lot {id} was not found");
             }
             _context.Remove(lotStatus);
 
@@ -43,7 +43,7 @@ namespace AuctionService.Repository
             var status = await _context.LotStatuses.FirstOrDefaultAsync(l => l.LotStatusId == id);
             if (status == null)
             {
-                throw new ArgumentException("status not existed");
+                throw new KeyNotFoundException($"Lot {id} was not found");
             }
             return status;
         }
@@ -53,7 +53,7 @@ namespace AuctionService.Repository
             var lotStatus = await _context.LotStatuses.FirstOrDefaultAsync(l => l.LotStatusId == id);
             if (lotStatus == null)
             {
-                return null!;
+                throw new KeyNotFoundException($"Lot {id} was not found");
             }
             lotStatus.LotStatusName = lotStatusDto.LotStatusName!;
 

@@ -27,6 +27,8 @@ namespace AuctionService.Repository
         public async Task<List<BidLog>> GetAllAsync(BidLogQueryObject query)
         {
             var bids = await _context.BidLogs.ToListAsync();
+            if (bids.Count == 0)
+                throw new Exception("bids is empty");
             if (query.AuctionLotId.HasValue)
             {
                 bids = bids.Where(b => b.AuctionLotId == query.AuctionLotId.Value).ToList();

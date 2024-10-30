@@ -1,4 +1,5 @@
 
+using AuctionService.Dto.Lot;
 using AuctionService.IRepository;
 using AuctionService.IServices;
 using Hangfire;
@@ -45,7 +46,6 @@ namespace AuctionService.Services
 
             // Thông báo qua SignalR hoặc các phương thức khác
         }
-
 
     }
 }

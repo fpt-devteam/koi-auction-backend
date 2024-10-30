@@ -59,10 +59,7 @@ namespace AuctionService.Controller
             var auction = auctionDto.ToAuctionFromCreateAuctionDto(uid);
             auction.AuctionName = AuctionHelper.GenerateAuctionName(auction);
             await _unitOfWork.Auctions.CreateAsync(auction);
-            if (!await _unitOfWork.SaveChangesAsync())
-            {
-                return BadRequest("An error occurred while saving the data");
-            }
+            await _unitOfWork.SaveChangesAsync();
 
             // Schedule auction
             try
@@ -83,10 +80,7 @@ namespace AuctionService.Controller
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             var action = await _unitOfWork.Auctions.UpdateAsync(id, auctionDto);
-            if (!await _unitOfWork.SaveChangesAsync())
-            {
-                return BadRequest("An error occurred while saving the data");
-            }
+            await _unitOfWork.SaveChangesAsync();
             return Ok(action.ToAuctionDtoFromAuction());
         }
 
@@ -110,10 +104,7 @@ namespace AuctionService.Controller
                 }
             }
             await _unitOfWork.Auctions.DeleteAsync(id);
-            if (!await _unitOfWork.SaveChangesAsync())
-            {
-                return BadRequest("An error occurred while saving the data");
-            }
+            await _unitOfWork.SaveChangesAsync();
             return NoContent();
         }
     }

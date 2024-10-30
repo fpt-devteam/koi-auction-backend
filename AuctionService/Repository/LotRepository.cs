@@ -34,14 +34,13 @@ namespace AuctionService.Repository
 
         public async Task<Lot> DeleteLotAsync(int id)
         {
-            var lot = await _context.Lots.Include(l => l.KoiFish).Include(l => l.LotStatus).FirstOrDefaultAsync(l => l.LotId == id);
+            var lot = await _context.Lots.FirstOrDefaultAsync(l => l.LotId == id);
             if (lot == null)
-                return null!;
+                throw new KeyNotFoundException($" Lot {id} was not found");
             var status = await _context.LotStatuses
                                   .FirstOrDefaultAsync(ls => ls.LotStatusName == "Canceled");
+            if (status == null) throw new Exception("status not existed");
             lot.LotStatusId = status!.LotStatusId;
-            await _context.AuctionMethods.FindAsync(lot.AuctionMethodId);
-
             return lot;
         }
 
@@ -154,17 +153,15 @@ namespace AuctionService.Repository
                                             Include(l => l.LotStatus).
                                             Include(l => l.AuctionMethod).FirstOrDefaultAsync(l => l.LotId == id);
             if (lot == null)
-                return null!;
+                throw new KeyNotFoundException($" Lot {id} was not found");
             return lot;
         }
 
         public async Task<Lot> UpdateLotAsync(int id, UpdateLotDto updateLotDto)
         {
-            var lot = await _context.Lots.Include(l => l.KoiFish).
-                                            Include(l => l.LotStatus).
-                                            Include(l => l.AuctionMethod).FirstOrDefaultAsync(l => l.LotId == id);
+            var lot = await _context.Lots.FirstOrDefaultAsync(l => l.LotId == id);
             if (lot == null)
-                return null!;
+                throw new KeyNotFoundException($" Lot {id} was not found");
 
             var koiFish = lot.KoiFish;
             lot.StartingPrice = updateLotDto.StartingPrice;
@@ -176,12 +173,12 @@ namespace AuctionService.Repository
 
         public async Task<Lot> UpdateLotStatusAsync(int id, UpdateLotStatusDto updateLot)
         {
-            var lot = await _context.Lots.Include(l => l.KoiFish).
-                                            Include(l => l.LotStatus).
-                                            Include(l => l.AuctionMethod).FirstOrDefaultAsync(l => l.LotId == id);
+            var lot = await _context.Lots.FirstOrDefaultAsync(l => l.LotId == id);
             if (lot == null)
-                return null!;
+                throw new KeyNotFoundException($" Lot {id} was not found");
             var status = await _context.LotStatuses.FirstOrDefaultAsync(x => x.LotStatusName == updateLot.LotStatusName);
+            if (status == null)
+                throw new Exception("status not existed");
             lot.LotStatusId = status!.LotStatusId;
             return lot;
         }

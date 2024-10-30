@@ -1,4 +1,6 @@
 using AuctionService.Dto.AuctionLot;
+using AuctionService.Dto.Lot;
+using AuctionService.Enums;
 using AuctionService.Helper;
 using AuctionService.IRepository;
 using AuctionService.IServices;
@@ -58,22 +60,10 @@ namespace AuctionService.Controller
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            try
-            {
-                var auctionLot = auctionLotDto.ToAuctionLotFromCreateAuctionLotDto();
-                await _unitOfWork.Lots.UpdateLotStatusAsync(auctionLot.AuctionLotId,
-                                                new Dto.Lot.UpdateLotStatusDto { LotStatusName = "In auction" });
-                var newAuctionLot = await _unitOfWork.AuctionLots.CreateAsync(auctionLot);
-                if (!await _unitOfWork.SaveChangesAsync())
-                {
-                    return BadRequest("An error occurred while saving the data");
-                }
-                return CreatedAtAction(nameof(GetAuctionLotById), new { id = newAuctionLot.AuctionLotId }, newAuctionLot);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+
+            var newAuctionLot = await _auctionLotService.CreateAsync(auctionLotDto);
+            return CreatedAtAction(nameof(GetAuctionLotById), new { id = newAuctionLot.AuctionLotId }, newAuctionLot);
+
         }
 
 
@@ -133,20 +123,7 @@ namespace AuctionService.Controller
                 return BadRequest(ModelState);
             }
 
-            var auctionLots = listAuctionLotDto.Select(dto => dto.ToAuctionLotFromCreateAuctionLotDto()).ToList();
-
-            foreach (var auctionLot in auctionLots)
-            {
-                await _unitOfWork.Lots.UpdateLotStatusAsync(auctionLot.AuctionLotId, new Dto.Lot.UpdateLotStatusDto
-                {
-                    LotStatusName = "In auction"
-                });
-            }
-            await _unitOfWork.AuctionLots.CreateListAsync(auctionLots);
-            if (!await _unitOfWork.SaveChangesAsync())
-            {
-                return BadRequest("An error occurred while saving the data");
-            }
+            var auctionLots = await _auctionLotService.CreateListAsync(listAuctionLotDto);
             return CreatedAtAction(nameof(GetAuctionLotById), new { id = auctionLots.First().AuctionLotId }, auctionLots);
         }
 
@@ -163,10 +140,7 @@ namespace AuctionService.Controller
             if (auctionLot == null)
                 return NotFound();
             _unitOfWork.AuctionLots.Update(auctionLot, auctionLotDto);
-            if (!await _unitOfWork.SaveChangesAsync())
-            {
-                return BadRequest("An error occurred while saving the data");
-            }
+            await _unitOfWork.SaveChangesAsync();
             return Ok(auctionLot.ToAuctionLotDtoFromAuctionLot());
         }
 
@@ -190,10 +164,7 @@ namespace AuctionService.Controller
                 return ValidationProblem(ModelState);
             }
             _unitOfWork.AuctionLots.Update(auctionLot, updateAuctionLotDto);
-            if (!await _unitOfWork.SaveChangesAsync())
-            {
-                return BadRequest("An error occurred while saving the data");
-            }
+            await _unitOfWork.SaveChangesAsync();
             return Ok(auctionLot.ToAuctionLotDtoFromAuctionLot());
         }
 
@@ -205,47 +176,22 @@ namespace AuctionService.Controller
             {
                 return BadRequest(ModelState);
             }
-            var auctionLot = await _unitOfWork.AuctionLots.DeleteAsync(id);
-            if (auctionLot == null)
-            {
-                return NotFound();
-            }
-            await _unitOfWork.Lots.UpdateLotStatusAsync(auctionLot.AuctionLotId,
-                                                new Dto.Lot.UpdateLotStatusDto { LotStatusName = "Approved" });
-            if (!await _unitOfWork.SaveChangesAsync())
-            {
-                return BadRequest("An error occurred while saving the data");
-            }
+            await _auctionLotService.DeleteAsync(id);
             return NoContent();
         }
 
         [HttpDelete("listAuctionLot")]
         public async Task<ActionResult> DeleteListAuctionLot([FromBody] List<int> ids)
         {
-            if (ids == null)
+            if (!ModelState.IsValid)
             {
-                return BadRequest("List is empty");
+                return BadRequest(ModelState);
             }
 
-            var deletedAuctionLots = await _unitOfWork.AuctionLots.DeleteListAsync(ids);
+            var isDeleteList = await _auctionLotService.DeleteListAsync(ids);
 
-            if (deletedAuctionLots == null)
-            {
-                return NotFound("ids not existed");
-            }
-
-            foreach (var auctionLot in deletedAuctionLots)
-            {
-                await _unitOfWork.Lots.UpdateLotStatusAsync(auctionLot.AuctionLotId,
-                                            new Dto.Lot.UpdateLotStatusDto { LotStatusName = "Approved" });
-            }
-
-            if (!await _unitOfWork.SaveChangesAsync())
-            {
-                return BadRequest("An error occurred while saving the data");
-            }
-
-            return Ok(deletedAuctionLots);
+            if (isDeleteList) return NoContent();
+            return NotFound();
         }
     }
 
