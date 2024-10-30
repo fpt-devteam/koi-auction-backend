@@ -1,6 +1,9 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../utils/db'); 
 const Role = require('./role');
+const Province = require('./provinces');
+const District = require('./districts');
+const Ward = require('./wards');
 
 const User = sequelize.define('User', {
    UserId: {
@@ -40,6 +43,15 @@ const User = sequelize.define('User', {
       type: DataTypes.STRING,
    },
    GoogleId: {
+      type: DataTypes.STRING
+   },
+   ProvinceCode: {
+      type: DataTypes.STRING
+   },
+   DistrictCode: {
+      type: DataTypes.STRING
+   },
+   WardCode: {
       type: DataTypes.STRING
    },
    CreatedAt: {

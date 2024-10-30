@@ -6,6 +6,9 @@ const { Op } = require("sequelize");
 const { sign, verify } = require("jsonwebtoken");
 const sendEmail = require("../utils/sendEmail");
 const passport = require("../utils/passport");
+const Province = require("../models/provinces");
+const District = require("../models/districts");
+const Ward = require("../models/wards");
 
 const profile = async (req, res) => {
    try {
@@ -19,6 +22,9 @@ const profile = async (req, res) => {
          Email: user.Email,
          Active: user.Active,
          UserRoleId: user.UserRoleId,
+         ProvinceCode: user.ProvinceCode,
+         DistrictCode: user.DistrictCode,
+         WardCode: user.WardCode,
       });
    } catch (err) {
       console.log(err);
@@ -232,7 +238,7 @@ const register = async (req, res) => {
 
 const updateProfile = async (req, res) => {
    try {
-      const { Username, FirstName, LastName, Phone, Email } = req.body;
+      const { Username, FirstName, LastName, Phone, Email, ProvinceCode, DistrictCode, WardCode } = req.body;
       await User.update(
          {
             Username: Username,
@@ -240,6 +246,9 @@ const updateProfile = async (req, res) => {
             LastName: LastName,
             Phone: Phone,
             Email: Email,
+            ProvinceCode: ProvinceCode,
+            DistrictCode: DistrictCode,
+            WardCode: WardCode,
             CreatedAt: new Date(),
             UpdatedAt: new Date(),
          },
@@ -559,6 +568,80 @@ const manageGetDetailProfile = async (req, res) => {
    }
 }
 
+const getProvinces = async (req, res) => {
+   try {
+      const provinces = await Province.findAll();
+      res.status(200).json(provinces);
+   } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Internal server error" });
+   }
+}
+
+const getDistricts = async (req, res) => {
+   try {
+      const districts = await District.findAll();
+      res.status(200).json(districts);
+   } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Internal server error" });
+   }
+}
+
+const getWards = async (req, res) => {
+   try {
+      const wards = await Ward.findAll();
+      res.status(200).json(wards);
+   } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Internal server error" });
+   }
+}
+
+const getProvinceById = async (req, res) => {
+   try {
+      const province = await Province.findByPk(req.params.code);
+      if (!province) {
+         return res.status(404).json({ message: "Province not found" });
+      }
+      res.status(200).json(province);
+   } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Internal server error" });
+   }
+}
+
+const getDistrictByProvinceId = async (req, res) => {
+   try {
+      const district = await District.findAll({
+         where: { province_code: req.params.provinceId },   
+      });
+      if (!district) {
+         return res.status(404).json({ message: "District not found" });
+      }
+      res.status(200).json(district);
+   } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Internal server error" });
+   }
+}
+
+const getWardByDistrictId = async (req, res) => {
+   try {
+      const ward = await Ward.findAll({
+         where: { district_code: req.params.districtId },   
+      });
+      if (!ward) {
+         return res.status(404).json({ message: "Ward not found" });
+      }
+      res.status(200).json(ward);
+   } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Internal server error" });
+   }
+}
+
+
 module.exports = {
    profile,
    googleAuth,
@@ -582,4 +665,10 @@ module.exports = {
    getAllBreederProfiles,
    getBreederProfileById,
    manageDeleteBreederProfile,
+   getProvinces,
+   getDistricts,
+   getWards,
+   getProvinceById,
+   getDistrictByProvinceId,
+   getWardByDistrictId,
 };

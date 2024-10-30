@@ -42,6 +42,15 @@ const User = sequelize.define('User', {
    GoogleId: {
       type: DataTypes.STRING
    },
+   ProvinceCode: {
+      type: DataTypes.STRING
+   },
+   DistrictCode: {
+      type: DataTypes.STRING
+   },
+   WardCode: {
+      type: DataTypes.STRING
+   },
    CreatedAt: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW
