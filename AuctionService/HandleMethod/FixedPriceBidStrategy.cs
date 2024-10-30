@@ -12,11 +12,13 @@ namespace AuctionService.HandleMethod
     public class FixedPriceBidStrategy : ABidStrategyService
     {
         private readonly List<CreateBidLogDto> _bids; // list de chon winner
+        private readonly ConcurrentDictionary<int, bool> _isPlacedBid; // list de chon winner
 
         public FixedPriceBidStrategy()
-        : base() // Truyền bidService đến constructor của lớp cha
+        : base()
         {
             _bids = new();
+            _isPlacedBid = new();
         }
 
         public override HighestBidLog? GetWinner()
@@ -27,27 +29,29 @@ namespace AuctionService.HandleMethod
             Random random = new Random();
             int randomIndex = random.Next(_bids.Count);
             return _bids[randomIndex].ToHighestBidLogFromCreateBidLogDto();
+            //random winner in dictionary
         }
 
 
         public override bool IsBidValid(CreateBidLogDto bid, AuctionLotBidDto? auctionLotBidDto, decimal balance)
         {
-            //System.Console.WriteLine("hihi");
-
-            System.Console.WriteLine($"bid {auctionLotBidDto!.AuctionLotId} = {bid.AuctionLotId} start price = {auctionLotBidDto.StartPrice}");
+            // System.Console.WriteLine($"bid {auctionLotBidDto!.AuctionLotId} = {bid.AuctionLotId} start price = {auctionLotBidDto.StartPrice}");
             //kiểm tra AuctionLotStaus
-            if (auctionLotBidDto != null && auctionLotBidDto!.AuctionLotId == bid.AuctionLotId
-                    //&& _cacheService.GetBalance(bid.BidderId) <= bid.BidAmount
-                    && bid.BidAmount == auctionLotBidDto.StartPrice)
+            if (auctionLotBidDto != null
+                    && auctionLotBidDto!.AuctionLotId == bid.AuctionLotId
+                    && bid.BidAmount == auctionLotBidDto.StartPrice
+                    && bid.BidAmount <= balance
+                    && _isPlacedBid.ContainsKey(bid.BidderId) == false)
             {
-                System.Console.WriteLine($"Fixed: 54 {balance}");
+                // System.Console.WriteLine($"Fixed: 54 {balance}");
 
-                if (bid.BidAmount <= balance)
-                {
-                    _bids.Add(bid);
-                    //PrintAllBids();
-                    return true;
-                }
+                // if (bid.BidAmount <= balance)
+                // {
+                _bids.Add(bid);
+                _isPlacedBid.TryAdd(bid.BidderId, true);
+                //PrintAllBids();
+                return true;
+                // }
 
             }
             return false;

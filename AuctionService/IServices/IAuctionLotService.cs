@@ -7,14 +7,8 @@ namespace AuctionService.IServices
 {
     public interface IAuctionLotService
     {
-        public Task ScheduleAuctionLot(int auctionLotId, DateTime startTime);
-
-        public Task ScheduleEndAuctionLot(int auctionLotId, DateTime endTime);
-
-        public Task UpdateEndTimeAuctionLot(int auctionLotId, DateTime newEndTime);
-
-        //test only
-        public Task StartAuctionLot(int auctionLotId);
+        public Task ScheduleAuctionLotAsync(int auctionLotId, DateTime startTime);
+        public Task StartAuctionLotAsync(int auctionLotId);
 
     }
 }

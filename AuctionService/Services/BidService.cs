@@ -159,20 +159,22 @@ using AuctionService.HandleMethod;
 using AuctionService.IRepository;
 using AuctionService.IServices;
 using AuctionService.Mapper;
+using AuctionService.Enums;
+using Microsoft.AspNetCore.SignalR;
+using AuctionService.Hubs;
 
 namespace AuctionService.Services
 {
-    public enum BidMethodType
-    {
-        FixedPrice = 1,
-        SealedBid = 2,
-        AscendingBid = 3,
-        DescendingBid = 4
-    }
+
     public class BidService
     {
         private readonly ConcurrentQueue<CreateBidLogDto> _bidQueue; //add bid log
         private IBidStrategy? _currentStrategy; // chonj phuong thuc
+
+        public IBidStrategy? CurrentStrategy
+        {
+            get => _currentStrategy;
+        }
         private AuctionLotBidDto? _auctionLotBidDto; // dto
         public AuctionLotBidDto? AuctionLotBidDto
         {
@@ -191,7 +193,13 @@ namespace AuctionService.Services
                                                         // public WalletService? WalletService { get; set; }
         private readonly IServiceScopeFactory _serviceScopeFactory;
 
-        public BidService(IServiceScopeFactory serviceScopeFactory)
+        private readonly IHubContext<BidHub> _bidHub;
+
+        private const int EXTENDED_TIME = 20;
+        private const int TURN = 1000;
+
+        // private Timer? _timer;
+        public BidService(IServiceScopeFactory serviceScopeFactory, IHubContext<BidHub> bidHub)
         {
             _bidQueue = new ConcurrentQueue<CreateBidLogDto>();
             _userBalance = new ConcurrentDictionary<int, decimal>();
@@ -203,9 +211,35 @@ namespace AuctionService.Services
             var httpClient = new HttpClient();
             _walletService = new WalletService(httpClient, configuration);
             _serviceScopeFactory = serviceScopeFactory;
-            // _bids = new();
+            _bidHub = bidHub;
         }
+        // public void StartExtendPhase()
+        // {
+        //     _auctionLotBidDto!.RemainingTime = _auctionLotBidDto!.PredictEndTime!.Value - DateTime.Now;
+        //     _timer = new Timer(CountDown, null, 0, TURN);
+        // }
 
+        // private async void CountDown(object? state)
+        // {
+        //     if (_auctionLotBidDto!.RemainingTime <= TimeSpan.Zero)
+        //     {
+        //         //invoke end auction lot
+        //         await CountdownFinished!.Invoke(_auctionLotBidDto!.AuctionLotId);
+        //         _timer!.Dispose();
+        //         _timer = null;
+        //         return;
+        //     }
+        //     else
+        //     {
+        //         _auctionLotBidDto!.RemainingTime = _auctionLotBidDto!.RemainingTime.Subtract(TimeSpan.FromSeconds(1));
+        //         System.Console.WriteLine($"Remaining time: {_auctionLotBidDto?.RemainingTime}");
+        //     }
+        // }
+
+        public DateTime? GetPredictEndTime()
+        {
+            return _auctionLotBidDto!.PredictEndTime;
+        }
         // Phương thức xác định chiến lược đấu giá dựa trên loại đấu giá của AuctionLot
         // private IBidStrategy GetBidStrategy(IServiceScope scope, int auctionLotMethodId)
         // {
@@ -222,23 +256,48 @@ namespace AuctionService.Services
         // }
 
         // Thiết lập chiến lược đấu giá, cho phép BidManagementService cấu hình lại nếu cần
-        public void SetStrategy(int auctionLotMethodId)
+        public void SetStrategy(AuctionLotBidDto auctionLotBidDto)
         {
-            System.Console.WriteLine($"set strategy {auctionLotMethodId}");
+            System.Console.WriteLine($"set strategy {auctionLotBidDto.AuctionMethodId}");
             // Lấy chiến lược từ scope để đảm bảo mọi dịch vụ phụ thuộc được khởi tạo đúng
-            switch (auctionLotMethodId)
+            switch (auctionLotBidDto.AuctionMethodId)
             {
                 case (int)BidMethodType.FixedPrice:
-                    System.Console.WriteLine("Khoi tao current stratefy o day");
                     _currentStrategy = new FixedPriceBidStrategy();
                     break;
                 case (int)BidMethodType.SealedBid:
-                    System.Console.WriteLine("Khoi tao current stratefy o day");
                     _currentStrategy = new SealedBidStrategy();
                     break;
                 case (int)BidMethodType.AscendingBid:
-                    System.Console.WriteLine("Khoi tao current stratefy o day");
-                    _currentStrategy = new AscendingBidStrategy();
+                    try
+                    {
+                        _currentStrategy = new AscendingBidStrategy(_bidHub);
+                        if (_currentStrategy is AscendingBidStrategy ascendingBidStrategy)
+                        {
+                            ascendingBidStrategy.SetUp(_auctionLotBidDto!);
+                        }
+
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Console.Error.WriteLine(ex.Message);
+                    }
+                    break;
+                case (int)BidMethodType.DescendingBid:
+                    try
+                    {
+                        _currentStrategy = new DescendingBidStrategy(_bidHub);
+                        if (_currentStrategy is DescendingBidStrategy descendingBidStrategy)
+                        {
+                            descendingBidStrategy.SetUp(_auctionLotBidDto!);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Console.Error.WriteLine(ex.Message);
+
+                    }
+
                     break;
                 // Thêm các case khác ở đây nếu có
                 default:
@@ -249,21 +308,24 @@ namespace AuctionService.Services
         // Kiểm tra tính hợp lệ của bid với chiến lược hiện tại
         public async Task<bool> IsBidValid(CreateBidLogDto bid)
         {
+            System.Console.WriteLine("BidService:IsBidValid");
             if (_currentStrategy == null)
                 throw new InvalidOperationException("Strategy has not been set");
             if (!_userBalance.TryGetValue(bid.BidderId, out var balance))
             {
                 var wallet = await _walletService!.GetBalanceByIdAsync(bid.BidderId);
                 balance = wallet!.Balance;
+                System.Console.WriteLine("Balance: " + balance);
                 // Thêm balance vào Dictionary _userBalance
                 _userBalance[bid.BidderId] = balance;
             }
 
             if (!_currentStrategy.IsBidValid(bid, _auctionLotBidDto, _userBalance[bid.BidderId]))
             {
+                // System.Console.WriteLine("BidServie:Bid not valid");
                 return false;
             }
-            // await AddBidLog(bid);
+            // System.Console.WriteLine("Bid valid");
             return true;
         }
 

@@ -7,10 +7,11 @@ using Microsoft.EntityFrameworkCore;
 using AuctionService.Data;
 using AuctionService.IServices;
 using AuctionService.Services;
-using Hangfire;
+// using Hangfire;
 using AuctionService.HandleMethod;
 using AuctionService.Dto.UserConnection;
 using AuctionService.Hubs;
+using AuctionService.Helper;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpClient<WalletService>();
@@ -48,22 +49,20 @@ builder.Services.AddScoped<IAuctionLotRepository, AuctionLotRepository>();
 builder.Services.AddScoped<IBidLogRepository, BidLogRepository>();
 builder.Services.AddScoped<ISoldLotRepository, SoldLotRepository>();
 
+
 builder.Services.AddScoped<ISoldLotService, SoldLotService>();
-builder.Services.AddScoped<BidLogService>();
+builder.Services.AddScoped<IBidLogService, BidLogService>();
 builder.Services.AddScoped<BidService>();
 builder.Services.AddScoped<WalletService>();
+
 builder.Services.AddSingleton<BidManagementService>();
 builder.Services.AddScoped<IAuctionService, AuctionService.Services.AuctionService>();
 builder.Services.AddScoped<IAuctionLotService, AuctionLotService>();
+
+builder.Services.AddSingleton<ITaskSchedulerService, TaskSchedulerService>();
+
+
 builder.Services.AddScoped<BreederDetailService>();
-
-// hangfire
-builder.Services.AddHangfire(config =>
-{
-    config.UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnectionStringDB"));
-});
-builder.Services.AddHangfireServer();
-
 
 builder.Services.AddScoped<IAuctionStatusRepository, AuctionStatusRepository>();
 builder.Services.AddScoped<IAuctionLotStatusRepository, AuctionLotStatusRepository>();
@@ -73,13 +72,15 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigins", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "https://example.com") // Thay th? b?ng URL frontend c?a b?n
+        policy.WithOrigins("http://localhost:5173", "http://127.0.0.1:5501", "http://localhost:3002") // Thay th? b?ng URL frontend c?a b?n
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
 
     });
 });
+
+
 
 builder.Services.AddHttpContextAccessor();
 // Thêm HttpClient vào DI
@@ -99,6 +100,7 @@ if (app.Environment.IsDevelopment())
 app.MapHub<BidHub>("/hub");
 app.UseHttpsRedirection();
 app.MapControllers();
+
 // app.UseHangfireDashboard("/hangfire");
 
 app.Run();
