@@ -1,3 +1,4 @@
+
 using AuctionService.Controller;
 using AuctionService.IRepository;
 using AuctionService.Repository;
@@ -10,6 +11,7 @@ using AuctionService.Services;
 using AuctionService.HandleMethod;
 using AuctionService.Dto.UserConnection;
 using AuctionService.Hubs;
+using AuctionService.Helper;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpClient<WalletService>();
@@ -25,6 +27,7 @@ builder.Services.AddControllers().AddNewtonsoftJson(options =>
 {
     options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
 });
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AuctionManagementDbContext>(option =>
@@ -35,6 +38,7 @@ builder.Services.AddScoped<IBidStrategy, FixedPriceBidStrategy>();
 builder.Services.AddScoped<IBidStrategy, SealedBidStrategy>();
 builder.Services.AddScoped<IBidStrategy, AscendingBidStrategy>();
 builder.Services.AddScoped<IBidStrategy, DescendingBidStrategy>();
+
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ILotRepository, LotRepository>();
 builder.Services.AddScoped<IKoiFishRepository, KoiFishRepository>();
@@ -72,14 +76,20 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
+
     });
 });
+
+
 
 builder.Services.AddHttpContextAccessor();
 // Thêm HttpClient vào DI
 builder.Services.AddHttpClient();
+
 var app = builder.Build();
+
 app.UseMiddleware<AuthorizationMiddleware>();
+app.UseMiddleware<ExceptionMiddleware>();
 app.UseCors("AllowSpecificOrigins");
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -87,9 +97,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
 app.MapHub<BidHub>("/hub");
 app.UseHttpsRedirection();
 app.MapControllers();
 
 // app.UseHangfireDashboard("/hangfire");
+
 app.Run();

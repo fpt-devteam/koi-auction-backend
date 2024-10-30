@@ -52,7 +52,7 @@ namespace AuctionService.Services
                 return wallet;
             }
 
-            var token = await GetTokenAsync();
+            var token = await LoginAsync();
             if (token == null)
             {
                 throw new Exception("Unable to retrieve token");

@@ -12,49 +12,29 @@ using AuctionService.IRepository;
 using AuctionService.IServices;
 using AuctionService.Mapper;
 using AuctionService.Models;
-using AuctionService.Models;
 // using Hangfire;
 
 namespace AuctionService.Services
 {
     public class AuctionLotService : IAuctionLotService
     {
-        private readonly IUnitOfWork _unitOfWork;
-        private const int AUCTION_LOT_STATUS_ONGOING = 2;
-        private const int AUCTION_LOT_STATUS_ENDED = 3;
-        private const int AUCTION_STATUS_ENDED = 3;
-        private const int BREAK_TIME = 5;
+        private const int BREAK_TIME = 1;
+        private const int EXTENDED_TIME = 20;
 
+        private IAuctionService _auctionService;
+
+        private readonly BidManagementService _bidManagementService;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly ITaskSchedulerService _taskSchedulerService;
         private readonly IServiceScopeFactory _serviceScopeFactory;
 
-        public AuctionLotService(IAuctionService auctionService, BidManagementService bidManagementService, ITaskSchedulerService taskSchedulerService, IServiceScopeFactory serviceScopeFactory)
+        public AuctionLotService(IUnitOfWork unitOfWork, IAuctionService auctionService, BidManagementService bidManagementService, ITaskSchedulerService taskSchedulerService, IServiceScopeFactory serviceScopeFactory)
         {
             _bidManagementService = bidManagementService;
             _taskSchedulerService = taskSchedulerService;
             _serviceScopeFactory = serviceScopeFactory;
             _auctionService = auctionService;
-        }
-
-        public async Task DeleteAuctionLotAsync(int id)
-        {
-            var auctionLot = await _unitOfWork.AuctionLots.GetAuctionLotById(id);
-
-            // Kiểm tra trạng thái AuctionLot
-            if (auctionLot == null)
-                throw new KeyNotFoundException($"Auction Lot with ID {id} was not found.");
-
-            if (auctionLot.AuctionLotStatusId != (int)Enums.AuctionLotStatus.Ongoing)
-                throw new InvalidOperationException("AuctionLot Status must be Ongoing to delete.");
-
-            // Xóa AuctionLot nếu trạng thái hợp lệ
-            await _unitOfWork.AuctionLots.DeleteAsync(id);
-
-            // Cập nhật trạng thái Lot nếu cần
-            await _unitOfWork.Lots.UpdateLotStatusAsync(auctionLot.AuctionLotId,
-                new UpdateLotStatusDto { LotStatusName = "Approved" });
-
-            await _unitOfWork.SaveChangesAsync();
+            _unitOfWork = unitOfWork;
         }
 
         public async Task ScheduleAuctionLotAsync(int auctionLotId, DateTime startTime)
@@ -194,70 +174,6 @@ namespace AuctionService.Services
                     throw new Exception("An error occurred while saving the data");
                 }
             }
-
-        }
-
-        public async Task<AuctionLot> DeleteAsync(int id)
-        {
-            var auctionLot = await _unitOfWork.AuctionLots.GetAuctionLotById(id);
-
-            // Kiểm tra trạng thái AuctionLot
-            if (auctionLot == null)
-                throw new KeyNotFoundException($"Auction Lot with ID {id} was not found.");
-            var tmp = (int)Enums.AuctionLotStatus.Upcoming;
-            System.Console.WriteLine($"tmp = {tmp}");
-            if (auctionLot.AuctionLotStatusId != (int)Enums.AuctionLotStatus.Upcoming)
-                throw new InvalidOperationException("AuctionLot Status must be Upcoming to delete.");
-
-            // Xóa AuctionLot nếu trạng thái hợp lệ
-            await _unitOfWork.AuctionLots.DeleteAsync(id);
-
-            // Cập nhật trạng thái Lot nếu cần
-            await _unitOfWork.Lots.UpdateLotStatusAsync(auctionLot.AuctionLotId,
-                new UpdateLotStatusDto { LotStatusName = "Approved" });
-
-            await _unitOfWork.SaveChangesAsync();
-            return auctionLot;
-        }
-
-        public async Task<bool> DeleteListAsync(List<int> ids)
-        {
-            var deletedAuctionLots = await _unitOfWork.AuctionLots.DeleteListAsync(ids);
-
-            foreach (var auctionLot in deletedAuctionLots)
-            {
-                await _unitOfWork.Lots.UpdateLotStatusAsync(auctionLot.AuctionLotId,
-                                            new UpdateLotStatusDto { LotStatusName = "Approved" });
-            }
-            await _unitOfWork.SaveChangesAsync();
-            return true;
-        }
-
-        public async Task<AuctionLot> CreateAsync(CreateAuctionLotDto createAuctionLot)
-        {
-            var auctionLot = createAuctionLot.ToAuctionLotFromCreateAuctionLotDto();
-            await _unitOfWork.Lots.UpdateLotStatusAsync(auctionLot.AuctionLotId,
-                                            new UpdateLotStatusDto { LotStatusName = "In auction" });
-            var newAuctionLot = await _unitOfWork.AuctionLots.CreateAsync(auctionLot);
-            await _unitOfWork.SaveChangesAsync();
-            return newAuctionLot;
-        }
-
-        public async Task<List<AuctionLot>> CreateListAsync(List<CreateAuctionLotDto> auctionLotDtos)
-        {
-            // Logic kết thúc phiên đấu giá
-            Console.WriteLine($"Auction {auctionId} is ending!");
-
-            // Cập nhật trạng thái phiên đấu giá trong cơ sở dữ liệu
-            await _unitOfWork.Auctions.UpdateStatusAsync(auctionId, AUCTION_STATUS_ENDED);
-            // Cập nhật thời gian kết thúc phiên đấu giá
-            await _unitOfWork.Auctions.UpdateEndTimeAsync(auctionId, endTime);
-
-            if (!await _unitOfWork.SaveChangesAsync())
-            {
-                throw new Exception("An error occurred while saving the data");
-            }
-            // Thông báo qua SignalR hoặc các phương thức khác
         }
 
         public async Task<AuctionLot> DeleteAsync(int id)
@@ -321,6 +237,7 @@ namespace AuctionService.Services
             await _unitOfWork.SaveChangesAsync();
             return auctionLots;
         }
+
     }
 }
 
@@ -340,6 +257,55 @@ ScheduleExentedPhase
 StartExtendedPhase
     set up event handler cho CountdownFinished
     StartExtendPhase trong BidService
+
+EndAuctionLot sẽ cập nhật
+    status,
+    endTime của AuctionLot trong cơ sở dữ liệu
+    ScheduleAuctionLot cho AuctionLot tiếp theo
+    hoặc EndAuction nếu là AuctionLot cuối cùng
+    thông báo qua SignalR -> auction lot is ending
+*/
+
+
+
+// public async Task DeleteAuctionLotAsync(int id)
+// {
+//     var auctionLot = await _unitOfWork.AuctionLots.GetAuctionLotById(id);
+
+//     // Kiểm tra trạng thái AuctionLot
+//     if (auctionLot == null)
+//         throw new KeyNotFoundException($"Auction Lot with ID {id} was not found.");
+
+//     if (auctionLot.AuctionLotStatusId != (int)Enums.AuctionLotStatus.Ongoing)
+//         throw new InvalidOperationException("AuctionLot Status must be Ongoing to delete.");
+
+//     // Xóa AuctionLot nếu trạng thái hợp lệ
+//     await _unitOfWork.AuctionLots.DeleteAsync(id);
+
+//     // Cập nhật trạng thái Lot nếu cần
+//     await _unitOfWork.Lots.UpdateLotStatusAsync(auctionLot.AuctionLotId,
+//         new UpdateLotStatusDto { LotStatusName = "Approved" });
+
+//     await _unitOfWork.SaveChangesAsync();
+// }
+
+
+
+
+//     }
+// }
+
+/*
+ScheduleAuctionLot 
+    lên lịch để StartActionLot
+    cập nhật startTime của AuctionLot trong cơ sở dữ liệu
+
+ScheduleEndAuctionLot sẽ lên lịch để EndAuctionLot
+
+StartAuctionLot sẽ cập nhật 
+    status, 
+    ScheduleEndAuctionLot cho chính nó
+    thông báo qua SignalR -> auction lot is starting
 
 EndAuctionLot sẽ cập nhật
     status,
