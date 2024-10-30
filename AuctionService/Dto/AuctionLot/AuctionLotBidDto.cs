@@ -14,6 +14,10 @@ namespace AuctionService.Dto.AuctionLot
         public int AuctionMethodId { get; set; }
         public decimal? StartPrice { get; set; }
         public int? StepPercent { get; set; }
+        public TimeSpan RemainingTime { get; set; }
+        public TimeSpan Duration { get; set; }
+        public DateTime? StartTime { get; set; }
+        public DateTime? PredictEndTime { get; set; }
 
     }
 }

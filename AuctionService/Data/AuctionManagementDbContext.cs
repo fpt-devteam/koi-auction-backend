@@ -91,6 +91,9 @@ public partial class AuctionManagementDbContext : DbContext
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+            entity.Property(e => e.Duration)
+            .HasColumnType("time") // Chắc chắn rằng cột này là kiểu "time" trong SQL Server
+            .IsRequired();
             entity.Property(e => e.EndTime).HasColumnType("datetime");
             entity.Property(e => e.StartTime).HasColumnType("datetime");
             entity.Property(e => e.StepPercent).HasDefaultValue(0);

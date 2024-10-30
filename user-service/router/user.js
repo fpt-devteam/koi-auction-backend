@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { authenticate, verifyRole } = require("../middlewares/auth");
 const controller = require("../controllers/user");
+const passport = require("../utils/passport");
 
 const adminOnly = verifyRole(["Admin"]);
 const highRole = verifyRole(["Admin", "Staff"]);
@@ -18,6 +19,12 @@ router.patch("/update-profile", authenticate, controller.updateProfile);
 router.delete("/delete", authenticate, controller.deleteAccount);
 
 router.post("/auth/google", controller.googleAuth);
+// router.get("/auth/google/callback", passport.authenticate("google", { 
+//    successRedirect: '/user-service/auth/google/success',  
+//    failureRedirect: "/user-service/auth/google/failure"
+// }));
+// router.get("/auth/google/success", controller.googleSuccess);
+// router.get("/auth/google/failure", controller.googleFailure);
 
 router.get("/breeder/profile", authenticate, breederRole, controller.getBreederProfile);
 

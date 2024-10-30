@@ -10,7 +10,7 @@ using AuctionService.Services;
 using AuctionService.HandleMethod;
 using AuctionService.Dto.UserConnection;
 using AuctionService.Hubs;
-using AuctionService.Helper;
+
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpClient<WalletService>();
 // Đăng ký các cấu hình từ appsettings.json
@@ -44,15 +44,22 @@ builder.Services.AddScoped<IAuctionRepository, AuctionRepository>();
 builder.Services.AddScoped<IAuctionLotRepository, AuctionLotRepository>();
 builder.Services.AddScoped<IBidLogRepository, BidLogRepository>();
 builder.Services.AddScoped<ISoldLotRepository, SoldLotRepository>();
+
+
 builder.Services.AddScoped<ISoldLotService, SoldLotService>();
 builder.Services.AddScoped<IBidLogService, BidLogService>();
 builder.Services.AddScoped<BidService>();
 builder.Services.AddScoped<WalletService>();
+
 builder.Services.AddSingleton<BidManagementService>();
 builder.Services.AddScoped<IAuctionService, AuctionService.Services.AuctionService>();
 builder.Services.AddScoped<IAuctionLotService, AuctionLotService>();
-// builder.Services.AddSingleton<ITaskSchedulerService, TaskSchedulerService>();
+
+builder.Services.AddSingleton<ITaskSchedulerService, TaskSchedulerService>();
+
+
 builder.Services.AddScoped<BreederDetailService>();
+
 builder.Services.AddScoped<IAuctionStatusRepository, AuctionStatusRepository>();
 builder.Services.AddScoped<IAuctionLotStatusRepository, AuctionLotStatusRepository>();
 // Đăng ký MemoryCache
@@ -67,6 +74,7 @@ builder.Services.AddCors(options =>
               .AllowCredentials();
     });
 });
+
 builder.Services.AddHttpContextAccessor();
 // Thêm HttpClient vào DI
 builder.Services.AddHttpClient();
@@ -82,5 +90,6 @@ if (app.Environment.IsDevelopment())
 app.MapHub<BidHub>("/hub");
 app.UseHttpsRedirection();
 app.MapControllers();
+
 // app.UseHangfireDashboard("/hangfire");
 app.Run();

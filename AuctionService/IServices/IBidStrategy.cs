@@ -8,6 +8,7 @@ namespace AuctionService.IServices
     public interface IBidStrategy
     {
         bool IsBidValid(CreateBidLogDto bid, AuctionLotBidDto? auctionLotBidDto, decimal balance);
+
         HighestBidLog? GetWinner();
     }
 }
