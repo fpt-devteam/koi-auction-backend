@@ -6,7 +6,7 @@ namespace AuctionService.Dto.AuctionLot
     public class CreateAuctionLotDto
     {
         [Required]
-        public TimeOnly Duration { get; set; }
+        public TimeSpan Duration { get; set; }
         [Required]
         public int OrderInAuction { get; set; }
 

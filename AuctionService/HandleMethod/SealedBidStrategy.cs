@@ -43,6 +43,7 @@ namespace AuctionService.HandleMethod
             {
                 _highestBid = bid.BidAmount;
                 _bids.Clear(); // Xóa các bid có cùng giá trị với _highestBid trước đó
+                _bids.Add(bid);
             }
             else if (bid.BidAmount == _highestBid)
             {

@@ -3,155 +3,178 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AuctionService.Dto.AuctionLot;
+using AuctionService.Dto.ScheduledTask;
+using AuctionService.Enums;
+using AuctionService.HandleMethod;
+using AuctionService.Helper;
 using AuctionService.IRepository;
 using AuctionService.IServices;
 using AuctionService.Mapper;
-using Hangfire;
+using AuctionService.Models;
+// using Hangfire;
 
 namespace AuctionService.Services
 {
     public class AuctionLotService : IAuctionLotService
     {
-        private readonly IUnitOfWork _unitOfWork;
-        private const int AUCTION_LOT_STATUS_ONGOING = 2;
-        private const int AUCTION_LOT_STATUS_ENDED = 3;
-        private const int AUCTION_STATUS_ENDED = 3;
-        private const int BREAK_TIME = 5;
+        private const int BREAK_TIME = 1;
+        private const int EXTENDED_TIME = 20;
 
-        private readonly HttpClient _httpClient;
+        private IAuctionService _auctionService;
 
-        private const string BIDDING_SERVICE_URL = "http://localhost:3000/bidding-service";
+        private readonly BidManagementService _bidManagementService;
 
-        public AuctionLotService(IUnitOfWork unitOfWork, HttpClient httpClient)
+        private readonly ITaskSchedulerService _taskSchedulerService;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
+
+        public AuctionLotService(IAuctionService auctionService, BidManagementService bidManagementService, ITaskSchedulerService taskSchedulerService, IServiceScopeFactory serviceScopeFactory)
         {
-            _unitOfWork = unitOfWork;
-            _httpClient = httpClient;
+            _bidManagementService = bidManagementService;
+            _taskSchedulerService = taskSchedulerService;
+            _serviceScopeFactory = serviceScopeFactory;
+            _auctionService = auctionService;
         }
 
-        public async Task ScheduleAuctionLot(int auctionLotId, DateTime startTime)
+        public async Task ScheduleAuctionLotAsync(int auctionLotId, DateTime startTime)
         {
-            TimeSpan timeToStart = startTime - DateTime.Now;
-            var jobId = BackgroundJob.Schedule(() => StartAuctionLot(auctionLotId), timeToStart);
-            // Cập nhật start time trong cơ sở dữ liệu
-            await _unitOfWork.AuctionLots.UpdateStartTimeAsync(auctionLotId, startTime);
-
-            await _unitOfWork.AuctionLotJobs.CreateAsync(new Models.AuctionLotJob { AuctionLotId = auctionLotId, HangfireJobId = jobId });
-            if (!await _unitOfWork.SaveChangesAsync())
+            using (var scope = _serviceScopeFactory.CreateScope())
             {
-                throw new Exception("An error occurred while saving the data");
+                IUnitOfWork unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+                AuctionLot auctionLot = await unitOfWork.AuctionLots.GetAuctionLotById(auctionLotId);
+                auctionLot.StartTime = startTime;
+                auctionLot.AuctionLotStatusId = (int)Enums.AuctionLotStatus.Scheduled;
+
+                if (!await unitOfWork.SaveChangesAsync())
+                {
+                    throw new Exception("An error occurred while saving the data");
+                }
             }
+            // _taskSchedulerService.ScheduleTask(() => StartAuctionLotAsync(auctionLotId), startTime);
+            _taskSchedulerService.ScheduleTask(new ScheduledTask
+            {
+                ExecuteAt = startTime,
+                Task = async () => await StartAuctionLotAsync(auctionLotId)
+            });
+            System.Console.WriteLine($"Auction lot {auctionLotId} is scheduled to start at {startTime}");
         }
-        public async Task StartAuctionLot(int auctionLotId)
+        public async Task StartAuctionLotAsync(int auctionLotId)
         {
-            // Logic bắt đầu phiên đấu giá
             Console.WriteLine($"Auction lot {auctionLotId} is starting!");
 
-            // Cập nhật status của AuctionLot trong cơ sở dữ liệu
-            var auctionLot = await _unitOfWork.AuctionLots.UpdateStatusAsync(auctionLotId, AUCTION_LOT_STATUS_ONGOING);
-
-            // Lên lịch kết thúc phiên đấu giá
-            DateTime endTime = auctionLot!.StartTime!.Value.Add(auctionLot.Duration.ToTimeSpan());
-            await ScheduleEndAuctionLot(auctionLotId, endTime);
-            if (!await _unitOfWork.SaveChangesAsync())
+            using (var scope = _serviceScopeFactory.CreateScope())
             {
-                throw new Exception("An error occurred while saving the data");
-            }
+                IUnitOfWork unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+                AuctionLot auctionLot = await unitOfWork.AuctionLots.GetAuctionLotById(auctionLotId);
+                auctionLot.AuctionLotStatusId = (int)Enums.AuctionLotStatus.Ongoing;
 
-            AuctionLotBidDto auctionLotBidDto = auctionLot!.ToAuctionLotBidDtoFromAuctionLot();
+                //set up auction bid dto in bid service
+                AuctionLotBidDto auctionLotBidDto = auctionLot.ToAuctionLotBidDtoFromAuctionLot();
+                await _bidManagementService.StartAuctionLotAsync(auctionLotBidDto);
 
-            // httpClient để gửi auctionLotBidDto đến BidService
-            var response = await _httpClient.PostAsJsonAsync($"{BIDDING_SERVICE_URL}/bid/start-auction-lot", auctionLotBidDto);
-        }
-        public async Task ScheduleEndAuctionLot(int auctionLotId, DateTime endTime)
-        {
-            TimeSpan timeToEnd = endTime - DateTime.Now;
-            var jobId = BackgroundJob.Schedule(() => EndAuctionLot(auctionLotId, endTime), timeToEnd);
-            await _unitOfWork.AuctionLotJobs.UpdateAsync(auctionLotId, jobId);
-            if (!await _unitOfWork.SaveChangesAsync())
-            {
-                throw new Exception("An error occurred while saving the data");
+                if (!await unitOfWork.SaveChangesAsync())
+                {
+                    throw new Exception("An error occurred while saving the data");
+                }
+
+                DateTime endTimePredict = auctionLot.StartTime!.Value.Add(auctionLot.Duration);
+                // Schedule extended time auction lot
+                switch (auctionLotBidDto.AuctionMethodId)
+                {
+                    case (int)BidMethodType.FixedPrice:
+                        _taskSchedulerService.ScheduleTask(new ScheduledTask
+                        {
+                            ExecuteAt = endTimePredict,
+                            Task = async () => await EndAuctionLotAsync(auctionLotId)
+                        });
+                        break;
+                    case (int)BidMethodType.SealedBid:
+                        _taskSchedulerService.ScheduleTask(new ScheduledTask
+                        {
+                            ExecuteAt = endTimePredict,
+                            Task = async () => await EndAuctionLotAsync(auctionLotId)
+                        });
+                        break;
+                    case (int)BidMethodType.AscendingBid:
+                        if (_bidManagementService.BidService!.CurrentStrategy is AscendingBidStrategy strategyAsc)
+                        {
+                            strategyAsc.CountdownFinished += async (id) => await EndAuctionLotAsync(auctionLotId);
+                        }
+                        break;
+                    case (int)BidMethodType.DescendingBid:
+                        if (_bidManagementService.BidService!.CurrentStrategy is DescendingBidStrategy strategyDesc)
+                        {
+                            strategyDesc.CountdownFinished += async (id) => await EndAuctionLotAsync(auctionLotId);
+                        }
+                        break;
+                    // Thêm các case khác ở đây nếu có
+                    default:
+                        throw new ArgumentException("Invalid auctionLotMethodId");
+                }
+                // DateTime startExtendedTime = auctionLot.StartTime!.Value.Add(auctionLot.Duration).AddSeconds(-3 * EXTENDED_TIME);
+                // ScheduleExentedPhase(auctionLotId, startExtendedTime);
             }
         }
-        public async Task EndAuctionLot(int auctionLotId, DateTime endTime)
+        // public void ScheduleExentedPhase(int auctionLotId, DateTime startExtendedTime)
+        // {
+        //     // _jobScheduler.Schedule(() => StartExtendedPhase(auctionLotId), startExtendedTime);
+        //     _taskSchedulerService.ScheduleTask(new ScheduledTask
+        //     {
+        //         ExecuteAt = startExtendedTime,
+        //         Action = () => StartExtendedPhase(auctionLotId)
+        //     });
+        //     System.Console.WriteLine($"Auction lot {auctionLotId} is scheduled to start extended phase at {startExtendedTime}");
+        // }
+        // public void StartExtendedPhase(int auctionLotId)
+        // {
+        //     _bidManagementService.BidService!.CountdownFinished += (id) => EndAuctionLotAsync(auctionLotId);
+        //     _bidManagementService.BidService!.StartExtendPhase();
+        // }
+
+
+
+        public async Task EndAuctionLotAsync(int auctionLotId)
         {
-            // Logic kết thúc phiên đấu giá
             Console.WriteLine($"Auction lot {auctionLotId} is ending!");
-
-            // Cập nhật trạng thái phiên đấu giá trong cơ sở dữ liệu
-            await _unitOfWork.AuctionLots.UpdateEndTimeAsync(auctionLotId, endTime);
-            await _unitOfWork.AuctionLots.UpdateStatusAsync(auctionLotId, AUCTION_LOT_STATUS_ENDED);
-
-            var currentAuctionLot = await _unitOfWork.AuctionLots.GetAuctionLotById(auctionLotId);
-
-            var nextLotAuction = await _unitOfWork.AuctionLots.GetAuctionLotByOrderInAuction(currentAuctionLot.AuctionId, currentAuctionLot.OrderInAuction + 1);
-            if (nextLotAuction != null)
+            AuctionLot? auctionLot = null;
+            using (var scope = _serviceScopeFactory.CreateScope())
             {
-                // Nếu còn AuctionLot tiếp theo thì lên lịch bắt đầu
-                // start time của AuctionLot tiếp theo = end time của AuctionLot hiện tại + BREAK_TIME phút
-                var nextStartTime = endTime.AddMinutes(BREAK_TIME);
-                await ScheduleAuctionLot(nextLotAuction.AuctionLotId, nextStartTime);
-            }
-            else
-            {
-                // Nếu là AuctionLot cuối cùng trong phiên đấu giá thì cập nhật trạng thái phiên đấu giá
-                await EndAuction(currentAuctionLot.AuctionId, endTime);
-            }
-            if (!await _unitOfWork.SaveChangesAsync())
-            {
-                throw new Exception("An error occurred while saving the data");
+                //unit of work
+                var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+                auctionLot = await unitOfWork.AuctionLots.GetAuctionLotById(auctionLotId);
+                auctionLot.AuctionLotStatusId = (int)Enums.AuctionLotStatus.Ended;
+                auctionLot.EndTime = DateTime.Now;
+
+                if (!await unitOfWork.SaveChangesAsync())
+                {
+                    throw new Exception("An error occurred while saving the data");
+                }
             }
 
-            // Notify to BiddingService
-            var response = await _httpClient.PostAsync($"{BIDDING_SERVICE_URL}/bid/end-auction-lot", null);
+            await _bidManagementService.EndAuctionLotAsync();
+
+            AuctionLot? nextLot = null;
+            using (var scope = _serviceScopeFactory.CreateScope())
+            {
+                var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+                nextLot = await unitOfWork.AuctionLots.GetAuctionLotByOrderInAuction(auctionLot.AuctionId, auctionLot.OrderInAuction + 1);
+                if (nextLot != null)
+                {
+                    DateTime? nextStartTime = auctionLot.EndTime?.AddMinutes(BREAK_TIME);
+                    await ScheduleAuctionLotAsync(nextLot.AuctionLotId, nextStartTime!.Value);
+                }
+                else
+                {
+                    // Nếu là AuctionLot cuối cùng trong phiên đấu giá thì cập nhật trạng thái phiên đấu giá
+                    await _auctionService.EndAuctionAsync(auctionLot.AuctionId);
+                }
+                if (!await unitOfWork.SaveChangesAsync())
+                {
+                    throw new Exception("An error occurred while saving the data");
+                }
+            }
+
         }
-        public async Task UpdateEndTimeAuctionLot(int auctionLotId, DateTime newEndTime)
-        {
-            // Bước 1: Lấy thông tin AuctionLotJob từ database
-            var auctionLotJob = await _unitOfWork.AuctionLotJobs.GetByAuctionLotIdAsync(auctionLotId);
 
-            if (auctionLotJob == null)
-            {
-                throw new Exception($"No AuctionLotJob found for AuctionLotId {auctionLotId}");
-            }
-
-            // Bước 2: Xóa Hangfire job cũ nếu tồn tại
-            if (!string.IsNullOrEmpty(auctionLotJob.HangfireJobId))
-            {
-                Hangfire.BackgroundJob.Delete(auctionLotJob.HangfireJobId);
-            }
-
-            // Bước 3: Tạo Hangfire job mới với thời gian mới (newEndTime)
-            TimeSpan timeToEnd = newEndTime - DateTime.Now;
-            var newJobId = Hangfire.BackgroundJob.Schedule(() => EndAuctionLot(auctionLotId, newEndTime), timeToEnd);
-
-            // Bước 4: Cập nhật Job ID mới vào bảng AuctionLotJob
-            // auctionLotJob.HangfireJobId = newJobId;
-            await _unitOfWork.AuctionLotJobs.UpdateAsync(auctionLotId, newJobId);
-
-            if (!await _unitOfWork.SaveChangesAsync())
-            {
-                throw new Exception("An error occurred while updating the AuctionLotJob");
-            }
-
-            // Log thông tin cập nhật thành công
-            Console.WriteLine($"Updated AuctionLotId {auctionLotId} with new JobId {newJobId}");
-        }
-        public async Task EndAuction(int auctionId, DateTime endTime)
-        {
-            // Logic kết thúc phiên đấu giá
-            Console.WriteLine($"Auction {auctionId} is ending!");
-
-            // Cập nhật trạng thái phiên đấu giá trong cơ sở dữ liệu
-            await _unitOfWork.Auctions.UpdateStatusAsync(auctionId, AUCTION_STATUS_ENDED);
-            // Cập nhật thời gian kết thúc phiên đấu giá
-            await _unitOfWork.Auctions.UpdateEndTimeAsync(auctionId, endTime);
-
-            if (!await _unitOfWork.SaveChangesAsync())
-            {
-                throw new Exception("An error occurred while saving the data");
-            }
-            // Thông báo qua SignalR hoặc các phương thức khác
-        }
     }
 }
 
@@ -160,12 +183,17 @@ ScheduleAuctionLot
     lên lịch để StartActionLot
     cập nhật startTime của AuctionLot trong cơ sở dữ liệu
 
-ScheduleEndAuctionLot sẽ lên lịch để EndAuctionLot
-
 StartAuctionLot sẽ cập nhật 
     status, 
-    ScheduleEndAuctionLot cho chính nó
+    set up auction bid dto in bid service
     thông báo qua SignalR -> auction lot is starting
+
+ScheduleExentedPhase 
+    lên lịch để StartExtendedPhase
+
+StartExtendedPhase
+    set up event handler cho CountdownFinished
+    StartExtendPhase trong BidService
 
 EndAuctionLot sẽ cập nhật
     status,
