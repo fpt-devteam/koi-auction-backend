@@ -376,6 +376,11 @@ const getProfileById = async (req, res) => {
 
 const manageDeleteProfile = async (req, res) => {
    try {
+      const user = await User.findByPk(req.params.id);
+      if (!user) {
+         return res.status(404).json({ message: "User not found" });
+      }
+
       await User.update(
          { Active: false },
          { where: { UserId: req.params.id } }
@@ -492,6 +497,11 @@ const manageUpdateProfile = async (req, res) => {
    try {
       const { Username, FirstName, LastName, Phone, Email, FarmName, Certificate, About, Active } = req.body;
 
+      const user = await User.findByPk(req.params.id);
+      if (!user) {
+         return res.status(404).json({ message: "User not found" });
+      }
+
       await User.update(
          {
             Username: Username,
@@ -522,6 +532,11 @@ const manageUpdateProfile = async (req, res) => {
 
 const manageDeleteBreederProfile = async (req, res) => {
    try {
+      const user = await User.findByPk(req.params.id);
+      if (!user) {
+         return res.status(404).json({ message: "User not found" });
+      }
+
       await User.update(
          { Active: false },
          { where: { UserId: req.params.id } }
