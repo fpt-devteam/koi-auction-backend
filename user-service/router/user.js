@@ -19,12 +19,13 @@ router.patch("/update-profile", authenticate, controller.updateProfile);
 router.delete("/delete", authenticate, controller.deleteAccount);
 
 router.post("/auth/google", controller.googleAuth);
-// router.get("/auth/google/callback", passport.authenticate("google", { 
-//    successRedirect: '/user-service/auth/google/success',  
-//    failureRedirect: "/user-service/auth/google/failure"
-// }));
-// router.get("/auth/google/success", controller.googleSuccess);
-// router.get("/auth/google/failure", controller.googleFailure);
+
+router.get("/address/province", controller.getProvinces);
+router.get("/address/province/:code", controller.getProvinceById);
+router.get("/address/district", controller.getDistricts);
+router.get("/address/district/:provinceId", controller.getDistrictByProvinceId);
+router.get("/address/ward", controller.getWards);
+router.get("/address/ward/:districtId", controller.getWardByDistrictId);
 
 router.get("/breeder/profile", authenticate, breederRole, controller.getBreederProfile);
 

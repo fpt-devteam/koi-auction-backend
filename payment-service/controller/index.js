@@ -2,10 +2,11 @@ const axios = require('axios').default; // npm install axios
 const CryptoJS = require('crypto-js'); // npm install crypto-js
 const moment = require('moment'); // npm install moment
 const qs = require('qs'); // npm install qs
-const { Op } = require('sequelize');
+const { Op, NUMBER } = require('sequelize');
 const User = require('../models/user');
 const Transaction = require('../models/transaction');
 const Wallet = require('../models/wallet');
+const { RelationshipType } = require('sequelize/lib/errors/database/foreign-key-constraint-error');
 
 const deposit = async (req, res) => {
    const { Amount } = req.body;
@@ -143,6 +144,52 @@ const checkOrderStatus = async (orderId) => {
    return response.data;
 };
 
+const refreshWallet = async (UserId) => {
+   const wallet = await Wallet.findOne({ where: { UserId: UserId } });
+
+   const transaction = await Transaction.findAll({
+      where: {
+         WalletId: wallet.WalletId,
+         StatusId: 1,
+      }
+   });
+
+   let balance = Number(wallet.Balance);
+
+   for (const trans of transaction) {
+      try {
+         const status = await checkOrderStatus(trans.AppTransId);
+         if (status.return_code === 1) {
+            balance += trans.Amount;
+            await Transaction.update(
+               { StatusId: 2 },
+               { where: { AppTransId: trans.AppTransId } }
+            );
+         } else if (status.return_code === 2) {
+            await Transaction.update(
+               { StatusId: 3 },
+               { where: { AppTransId: trans.AppTransId } }
+            );
+         }
+      } catch (err) {
+         console.log(err);
+         return { message: "Internal Server Error", status: 500 };
+      }
+   }
+
+   await Wallet.update(
+      { Balance: balance },
+      { where: { WalletId: wallet.WalletId } }
+   );
+
+   return { 
+      WalletId: wallet.WalletId,
+      Balance: balance,
+      Currency: wallet.Currency,
+      status: 200
+   };
+}
+
 const reloadWallet = async (req, res) => {
    const { UserId } = req.user;
 
@@ -165,7 +212,7 @@ const reloadWallet = async (req, res) => {
             { StatusId: 2 },
             { where: { AppTransId: trans.AppTransId } }
          );
-      } else {
+      } else if (status.return_code === 2) {
          await Transaction.update(
             { StatusId: 3 },
             { where: { AppTransId: trans.AppTransId } }
@@ -184,9 +231,12 @@ const reloadWallet = async (req, res) => {
 const getWalletBalance = async (req, res) => {
    const { UserId } = req.user;
 
-   const wallet = await Wallet.findOne({ where: { UserId: UserId } });
+   const refresh = await refreshWallet(UserId);
+   if (refresh.status === 500) {
+      return res.status(500).json({ message: "Internal Server Error" });
+   }
 
-   res.status(200).json({ balance: wallet.Balance });
+   res.status(200).json({ balance: refresh.Balance });
 };
 
 const getTransactionHistory = async (req, res) => {
@@ -251,14 +301,10 @@ const payment = async (req, res) => {
 
 const getAllWalletBalance = async (req, res) => {
    let wallets = await Wallet.findAll();
-   wallets.map(wallet => {
-      {
-         wallet.UserId;
-         wallet.WalletId;
-         wallet.Balance;
-         wallet.Currency;
-      }
-   })
+   await Promise.all(wallets.map(async (wallet) => {
+      const refresh = await refreshWallet(wallet.UserId);
+      wallet.Balance = refresh.Balance;
+   }));
 
    res.status(200).json(wallets);
 }
@@ -267,13 +313,14 @@ const getWalletBalanceByUserId = async (req, res) => {
    const { UserId } = req.params;
 
    try {
-      const wallet = await Wallet.findOne({ where: { UserId: UserId } });
+      // const wallet = await Wallet.findOne({ where: { UserId: UserId } });
+      const refresh = await refreshWallet(UserId);
 
       res.status(200).json({
-         UserId: wallet.UserId,
-         WalletId: wallet.WalletId,
-         Balance: wallet.Balance,
-         Currency: wallet.Currency,
+         UserId: UserId,
+         WalletId: refresh.WalletId,
+         Balance: refresh.Balance,
+         Currency: refresh.Currency,
       });
 
    } catch (err) {
