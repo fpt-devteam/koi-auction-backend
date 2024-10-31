@@ -38,4 +38,6 @@ router.get(
   controller.getTransactionHistoryByUserId
 );
 
+router.post('/internal/payment/:UserId', authenticate, verifyRole(['Internal Service']), controller.internalPayment);
+
 module.exports = router;

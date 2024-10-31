@@ -182,7 +182,7 @@ const refreshWallet = async (UserId) => {
       { where: { WalletId: wallet.WalletId } }
    );
 
-   return { 
+   return {
       WalletId: wallet.WalletId,
       Balance: balance,
       Currency: wallet.Currency,
@@ -262,19 +262,13 @@ const payment = async (req, res) => {
    const { Amount } = req.body;
    const { UserId } = req.user;
 
-   if (!Amount) {
-      return res.status(400).json({ message: "Amount is required" });
-   }
-
-   if (Amount <= 0) {
-      return res.status(400).json({ message: "Amount must be greater than 0" });
-   }
+   if (!Amount) return res.status(400).json({ message: "Amount is required" });
+   if (isNaN(Amount)) return res.status(400).json({ message: "Amount must be a number" });
+   if (Amount <= 0) return res.status(400).json({ message: "Amount must be greater than 0" });
 
    const wallet = await Wallet.findOne({ where: { UserId: UserId } });
 
-   if (wallet.Balance < Amount) {
-      return res.status(400).json({ message: "Not enough money" });
-   }
+   if (wallet.Balance < Amount) return res.status(400).json({ message: "Not enough money" });
 
    try {
       await Transaction.create({
@@ -339,7 +333,6 @@ const getTransactionHistoryByUserId = async (req, res) => {
    const { UserId } = req.params;
 
    try {
-
       const wallet = await Wallet.findOne({ where: { UserId: UserId } });
 
       let transaction = await Transaction.findAll({
@@ -355,6 +348,40 @@ const getTransactionHistoryByUserId = async (req, res) => {
    }
 }
 
+const internalPayment = async (req, res) => {
+   const { Amount } = req.body;
+   const { UserId } = req.params;
+   if (!UserId) return res.json(400).json({ message: "UserId is required" });
+   if (!Amount) return res.json(400).json({ message: "Amount is required" });
+   if (isNaN(Amount)) return res.json(400).json({ message: "Amount must be a number" });
+   if (Amount <= 0) return res.json(400).json({ message: "Amount must be greater than 0" });
+
+   const wallet = await Wallet.findOne({ where: { UserId: UserId } });
+   if (!wallet) return res.status(404).json({ message: "User not found" });
+   if (wallet.Balance < Amount) return res.status(400).json({ message: "Not enough money" });
+
+   try {
+      await Transaction.create({
+         UserId: UserId,
+         Amount: Amount,
+         WalletId: wallet.WalletId,
+         StatusId: 2,
+         TransTypeId: 2,
+         BalanceAfter: wallet.Balance - Amount,
+         Note: "Thanh toán hóa đơn",
+         CreatedAt: Date.now(),
+      });
+
+      await Wallet.update(
+         { Balance: wallet.Balance - Amount },
+         { where: { WalletId: wallet.WalletId } }
+      );
+   } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Internal Server Error" });
+   }
+}
+
 module.exports = {
    deposit,
    payment,
@@ -366,4 +393,5 @@ module.exports = {
    getWalletBalanceByUserId,
    getTransactionHistoryByUserId,
    getAllTransactionHistory,
+   internalPayment
 };
