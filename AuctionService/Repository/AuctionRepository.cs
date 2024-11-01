@@ -24,18 +24,10 @@ namespace AuctionService.Repository
 
         public async Task<Auction> DeleteAsync(int id)
         {
-            var auction = await _context.Auctions.Include(a => a.AuctionLots)
-                                                .ThenInclude(l => l.AuctionLotNavigation)
-                                                    .ThenInclude(k => k.KoiFish)
-                                            .Include(a => a.AuctionLots)
-                                                .ThenInclude(a => a.AuctionLotNavigation)
-                                                    .ThenInclude(l => l.AuctionMethod)
-                                            .Include(a => a.AuctionLots)
-                                                .ThenInclude(a => a.AuctionLotNavigation)
-                                                    .ThenInclude(s => s.LotStatus)
-                                            .Include(a => a.AuctionStatus).FirstOrDefaultAsync(a => a.AuctionId == id);
+            var auction = await _context.Auctions.FirstOrDefaultAsync(a => a.AuctionId == id);
+            if (auction == null)
+                throw new KeyNotFoundException($"Auction {id} was not found");
             _context.Remove(auction!);
-
             return auction!;
         }
 
@@ -83,21 +75,16 @@ namespace AuctionService.Repository
                                             .Include(a => a.AuctionLots)
                                                 .ThenInclude(a => a.AuctionLotNavigation)
                                                     .ThenInclude(s => s.LotStatus).Include(a => a.AuctionStatus).FirstOrDefaultAsync(a => a.AuctionId == id);
+            if (auction == null)
+                throw new KeyNotFoundException($"Auction {id} was not found");
             return auction!;
         }
 
         public async Task<Auction> UpdateAsync(int id, UpdateAuctionDto updateAuctionDto)
         {
-            var auction = await _context.Auctions.Include(a => a.AuctionLots)
-                                                .ThenInclude(l => l.AuctionLotNavigation)
-                                                    .ThenInclude(k => k.KoiFish)
-                                            .Include(a => a.AuctionLots)
-                                                .ThenInclude(a => a.AuctionLotNavigation)
-                                                    .ThenInclude(l => l.AuctionMethod)
-                                            .Include(a => a.AuctionStatus)
-                                            .Include(a => a.AuctionLots)
-                                                .ThenInclude(a => a.AuctionLotNavigation)
-                                                    .ThenInclude(s => s.LotStatus).Include(a => a.AuctionStatus).FirstOrDefaultAsync(a => a.AuctionId == id);
+            var auction = await _context.Auctions.FirstOrDefaultAsync(a => a.AuctionId == id);
+            if (auction == null)
+                throw new KeyNotFoundException($"Auction {id} was not found");
             auction!.StaffId = updateAuctionDto.StaffId;
             auction.StartTime = updateAuctionDto.StartTime;
             auction.EndTime = updateAuctionDto.EndTime;
@@ -107,17 +94,9 @@ namespace AuctionService.Repository
 
         public async Task<Auction?> UpdateStatusAsync(int id, int auctionStatusId)
         {
-            var auction = await _context.Auctions.Include(a => a.AuctionLots)
-                                                .ThenInclude(l => l.AuctionLotNavigation)
-                                                    .ThenInclude(k => k.KoiFish)
-                                            .Include(a => a.AuctionLots)
-                                                .ThenInclude(a => a.AuctionLotNavigation)
-                                                    .ThenInclude(l => l.AuctionMethod)
-                                            .Include(a => a.AuctionLots)
-                                                .ThenInclude(a => a.AuctionLotNavigation)
-                                                    .ThenInclude(s => s.LotStatus).FirstOrDefaultAsync(a => a.AuctionId == id);
+            var auction = await _context.Auctions.FirstOrDefaultAsync(a => a.AuctionId == id);
             if (auction == null)
-                return null;
+                throw new KeyNotFoundException($"Auction {id} was not found");
 
             auction.AuctionStatusId = auctionStatusId;
 
@@ -126,17 +105,9 @@ namespace AuctionService.Repository
 
         public async Task<Auction?> UpdateEndTimeAsync(int id, DateTime endTime)
         {
-            var auction = await _context.Auctions.Include(a => a.AuctionLots)
-                                                .ThenInclude(l => l.AuctionLotNavigation)
-                                                    .ThenInclude(k => k.KoiFish)
-                                            .Include(a => a.AuctionLots)
-                                                .ThenInclude(a => a.AuctionLotNavigation)
-                                                    .ThenInclude(l => l.AuctionMethod)
-                                            .Include(a => a.AuctionLots)
-                                                .ThenInclude(a => a.AuctionLotNavigation)
-                                                    .ThenInclude(s => s.LotStatus).FirstOrDefaultAsync(a => a.AuctionId == id);
+            var auction = await _context.Auctions.FirstOrDefaultAsync(a => a.AuctionId == id);
             if (auction == null)
-                return null;
+                throw new KeyNotFoundException($"Auction {id} was not found");
             auction.EndTime = endTime;
 
             return auction;

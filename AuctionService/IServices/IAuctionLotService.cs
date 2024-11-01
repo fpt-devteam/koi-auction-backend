@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AuctionService.Dto.Auction;
+using AuctionService.Dto.AuctionLot;
+using AuctionService.Models;
 
 namespace AuctionService.IServices
 {
@@ -9,6 +12,11 @@ namespace AuctionService.IServices
     {
         public Task ScheduleAuctionLotAsync(int auctionLotId, DateTime startTime);
         public Task StartAuctionLotAsync(int auctionLotId);
+        Task<AuctionLot> DeleteAsync(int id);
+        Task<bool> DeleteListAsync(List<int> ids);
+        Task<AuctionLot> CreateAsync(CreateAuctionLotDto auctionLot);
+        Task<List<AuctionLot>> CreateListAsync(List<CreateAuctionLotDto> auctionLots);
+
 
     }
 }

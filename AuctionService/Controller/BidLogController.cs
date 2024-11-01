@@ -10,6 +10,8 @@ using AuctionService.Mapper;
 using AuctionService.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using System;
+using System.Collections.Generic;
 
 namespace AuctionService.Controllers
 {
@@ -29,38 +31,22 @@ namespace AuctionService.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllBidLog([FromQuery] BidLogQueryObject queryObject)
         {
-            try
-            {
-                var bidLog = await _service.GetAllBidLog(queryObject);
-                if (bidLog == null)
-                    return NotFound("No bid logs found.");
+            var bidLog = await _service.GetAllBidLog(queryObject);
+            if (bidLog == null)
+                return NotFound("No bid logs found.");
 
-                var bidDtos = bidLog.Select(b => b.ToBidLogDtoFromBidLog());
-                return Ok(bidDtos);
-            }
-            catch (Exception ex)
-            {
-                // Log the exception (optional)
-                return StatusCode(500, "Internal server error: " + ex.Message);
-            }
+            var bidDtos = bidLog.Select(b => b.ToBidLogDtoFromBidLog());
+            return Ok(bidDtos);
         }
 
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetBidLogById([FromRoute] int id)
         {
-            try
-            {
-                var bidLog = await _service.GetBidLogById(id);
-                if (bidLog == null)
-                    return NotFound($"BidLog with ID {id} does not exist.");
+            var bidLog = await _service.GetBidLogById(id);
+            if (bidLog == null)
+                return NotFound($"BidLog with ID {id} does not exist.");
 
-                return Ok(bidLog.ToBidLogDtoFromBidLog());
-            }
-            catch (Exception ex)
-            {
-                // Log the exception (optional)
-                return StatusCode(500, "Internal server error: " + ex.Message);
-            }
+            return Ok(bidLog.ToBidLogDtoFromBidLog());
         }
 
         // [HttpPost]
@@ -87,4 +73,20 @@ namespace AuctionService.Controllers
         // }
     }
 }
+//         var newBid = await _service.CreateBidLog(placeBid.ToBidLogFromCreateBidLogDto());
+//         var newBidDto = newBid.ToBidLogDtoFromBidLog();
+//         return CreatedAtAction(nameof(GetBidLogById), new { id = newBid.BidLogId }, newBidDto);
+//     }
+//     catch (InvalidOperationException ex)
+//     {
+//         return BadRequest(new { message = ex.Message });
+//     }
+//     catch (Exception ex)
+//     {
+//         // Log the exception (optional)
+//         return StatusCode(500, "Internal server error: " + ex.Message);
+//     }
+// }
+
+
 

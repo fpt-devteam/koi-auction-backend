@@ -30,17 +30,8 @@ namespace AuctionService.Controller
             {
                 return BadRequest(ModelState);
             }
-            try
-            {
-                var AuctionStatuses = await _unitOfWork.AuctionStatuses.GetAuctionStatusByIdAsync(id);
-                return Ok(AuctionStatuses.ToAuctionStatusDtoFromAuctionStatus());
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
-
-
+            var AuctionStatuses = await _unitOfWork.AuctionStatuses.GetAuctionStatusByIdAsync(id);
+            return Ok(AuctionStatuses.ToAuctionStatusDtoFromAuctionStatus());
         }
     }
 }

@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using AuctionService.Dto.Wallet;
@@ -51,14 +52,14 @@ namespace AuctionService.Services
                 return wallet;
             }
 
-            // var token = await GetTokenAsync();
-            // if (token == null)
-            // {
-            //     throw new Exception("Unable to retrieve token");
-            // }
-
-            // Thêm token vào header
-            //_httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var token = await LoginAsync();
+            if (token == null)
+            {
+                throw new Exception("Unable to retrieve token");
+            }
+            // thêm token vào cookie
+            _httpClient.DefaultRequestHeaders.Remove("Cookie");
+            _httpClient.DefaultRequestHeaders.Add("Cookie", $"access_token={token}");
 
             // await LoginAsync();
             // Gọi PaymentService để lấy thông tin ví
