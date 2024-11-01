@@ -154,11 +154,25 @@ namespace AuctionService.Controller
             }
 
             // print listAuctionLotDto và 
+            //print all list
+            foreach (var auctionLot in listAuctionLotDto)
+            {
+                System.Console.WriteLine($"Auction Id: {auctionLot.AuctionId}");
+                System.Console.WriteLine($"Auction Lot: {auctionLot.AuctionLotId}");
+                System.Console.WriteLine($"Order in Auction: {auctionLot.OrderInAuction}");
+                System.Console.WriteLine($"Duration: {auctionLot.Duration}");
+                System.Console.WriteLine($"Step Percent: {auctionLot.StepPercent}");
+            }
 
             var auctionLots = listAuctionLotDto.Select(dto => dto.ToAuctionLotFromCreateAuctionLotDto()).ToList();
+            System.Console.WriteLine($"List Auction Lot: {auctionLots.Count}");
+
+
+
             int firstAuctionLotId = 1; // default first auction lot id is 1
             int auctionId = auctionLots.First().AuctionId;
             DateTime startTime = DateTime.Now; // default start time is now
+
             System.Console.WriteLine($"Auction Id: {auctionId}");
             // startTime = _unitOfWork.Auctions.GetByIdAsync(auctionId).Result.StartTime;
             var auction = await _unitOfWork.Auctions.GetByIdAsync(auctionId);
@@ -184,7 +198,7 @@ namespace AuctionService.Controller
             {
                 return BadRequest("An error occurred while saving the data");
             }
-            // await _auctionLotService.ScheduleAuctionLotAsync(firstAuctionLotId, startTime.AddSeconds(10));
+            await _auctionLotService.ScheduleAuctionLotAsync(firstAuctionLotId, startTime.AddSeconds(10));
             return StatusCode(201);
         }
 

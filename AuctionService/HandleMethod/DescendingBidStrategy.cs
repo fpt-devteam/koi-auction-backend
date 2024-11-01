@@ -1,5 +1,6 @@
 using AuctionService.Dto.AuctionLot;
 using AuctionService.Dto.BidLog;
+using AuctionService.Helper;
 using AuctionService.Hubs;
 using AuctionService.IServices;
 using AuctionService.Mapper;
@@ -16,6 +17,7 @@ namespace AuctionService.HandleMethod
         private IHubContext<BidHub> _bidHub;
         private AuctionLotBidDto? _auctionLotBidDto;
         private decimal? _currentPrice;
+        public decimal? CurrentPrice => _currentPrice;
         private decimal? _stepPrice;
         public event Func<int, Task>? CountdownFinished;
 
@@ -27,7 +29,7 @@ namespace AuctionService.HandleMethod
             // Khởi tạo giá hiện tại nếu chưa có(bắt đầu với giá khởi điểm)
             System.Console.WriteLine($"DescendingBidStrategy constructor called");
             // Initialize and start the timer to decrease the price every minute
-            _timer = new Timer(DecreasePrice, null, TimeSpan.Zero, TimeSpan.FromSeconds(_decreaseInterval));
+            _timer = new Timer(DecreasePrice, null, TimeSpan.FromSeconds(_decreaseInterval - 1), TimeSpan.FromSeconds(_decreaseInterval - 1));
             _bidHub = bidHub;
         }
 
@@ -87,7 +89,7 @@ namespace AuctionService.HandleMethod
                     Task.Run(() => CountdownFinished!.Invoke(_auctionLotBidDto.AuctionLotId));
                     System.Console.WriteLine("chet khong");
                 }
-                _bidHub.Clients.Group(_auctionLotBidDto.AuctionLotId.ToString()).SendAsync("ReceiveCurrentPrice", _currentPrice);
+                _bidHub.Clients.All.SendAsync(WsMess.ReceivePriceDesc, _currentPrice);
             }
             System.Console.WriteLine($"Updated currentPrice = {_currentPrice}");
         }

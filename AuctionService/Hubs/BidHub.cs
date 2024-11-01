@@ -1,6 +1,7 @@
 using AuctionService.Dto.AuctionLot;
 using AuctionService.Dto.BidLog;
 using AuctionService.Dto.UserConnection;
+using AuctionService.Helper;
 using AuctionService.IServices;
 using AuctionService.Mapper;
 using AuctionService.Services;
@@ -60,13 +61,17 @@ namespace AuctionService.Hubs
             {
                 await Groups.AddToGroupAsync(Context.ConnectionId, userConnection.AuctionLotId.ToString());
                 _connections[Context.ConnectionId] = userConnection;
-                // send remaining time to user
-                // send highest bid to user
+
                 if (_bidManagementService != null && _bidManagementService.BidService != null)
                 {
-                    await Clients.Caller.SendAsync("ReceivePredictEndTime", _bidManagementService.BidService!.GetPredictEndTime());
+                    System.Console.WriteLine($"Join auction lot {userConnection.AuctionLotId}");
+                    await Clients.All.SendAsync(WsMess.ReceivePredictEndTime, _bidManagementService.BidService.GetPredictEndTime());
+
+                    System.Console.Error.WriteLine($"Send Predict End Time: {_bidManagementService.BidService.GetPredictEndTime()}");
+
+                    if (_bidManagementService.BidService.AuctionLotBidDto!.AuctionMethodId == (int)Enums.BidMethodType.AscendingBid)
+                        await Clients.All.SendAsync(WsMess.ReceiveWinner, _bidManagementService.BidService.GetWinner());
                 }
-                Console.WriteLine($"User {(userConnection.UserId == null ? "Guest" : userConnection.UserId)} joined auction lot {userConnection.AuctionLotId}");
             }
             catch (Exception e)
             {
@@ -75,19 +80,25 @@ namespace AuctionService.Hubs
         }
         public async Task PlaceBid(CreateBidLogDto bid)
         {
-            System.Console.WriteLine("Place Bid");
+            System.Console.WriteLine($"User {bid.BidderId} placed bid {bid.BidAmount}");
             try
             {
                 if (await _bidManagementService!.BidService!.IsBidValid(bid))
                 {
-                    await Clients.Group(bid.AuctionLotId.ToString()).SendAsync("ReceivePlaceBid", bid);
+                    await Clients.Caller.SendAsync(WsMess.ReceiveSuccessBid, bid.BidAmount);
+                    await Clients.All.SendAsync(WsMess.ReceivePredictEndTime, _bidManagementService.BidService.GetPredictEndTime());
+                    if (_bidManagementService.BidService.AuctionLotBidDto!.AuctionMethodId == (int)Enums.BidMethodType.AscendingBid)
+                        await Clients.All.SendAsync(WsMess.ReceiveWinner, _bidManagementService.BidService.GetWinner());
+                    if (_bidManagementService.BidService.AuctionLotBidDto!.AuctionMethodId == (int)Enums.BidMethodType.DescendingBid)
+                        await Clients.All.SendAsync(WsMess.ReceivePriceDesc, _bidManagementService.BidService.GetPriceDesc());
+
                     await _bidManagementService.BidService.AddBidLog(bid);
-                    await Clients.Group(bid.AuctionLotId.ToString()).SendAsync("ReceiveFetchBidLog");
-                    await Clients.Group(bid.AuctionLotId.ToString()).SendAsync("ReceivePredictEndTime", _bidManagementService.BidService.GetPredictEndTime());
+
+                    await Clients.All.SendAsync(WsMess.ReceiveFetchBidLog);
                 }
                 else
                 {
-                    await Clients.Caller.SendAsync("ReceiveExceptionMessage", "Bid is invalid! Please check your balance and bid amount");
+                    await Clients.Caller.SendAsync(WsMess.ReceiveExceptionMessage, "Bid is invalid! Please check your balance and bid amount!");
                 }
 
             }
@@ -95,15 +106,12 @@ namespace AuctionService.Hubs
             {
                 System.Console.WriteLine(ex.Message);
             }
-
-
         }
         public override Task OnDisconnectedAsync(Exception? exception)
         {
             if (_connections.TryGetValue(Context.ConnectionId, out UserConnectionDto? connection))
             {
                 _connections.Remove(Context.ConnectionId);
-                System.Console.WriteLine($"User {connection.UserId} left auction lot {connection.AuctionLotId}");
             }
             return base.OnDisconnectedAsync(exception);
         }

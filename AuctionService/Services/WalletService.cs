@@ -76,5 +76,30 @@ namespace AuctionService.Services
 
             return wallet;
         }
+
+
+        public async Task<bool> UpdateBalanceAsync(int id, int balance)
+        {
+            var wallet = await GetBalanceByIdAsync(id);
+            if (wallet == null)
+            {
+                return false;
+            }
+
+            wallet.Balance = balance;
+            _walletCache[id] = wallet;
+            return true;
+        }
+
+        public async Task PaymentAsync(PaymentDto paymentDto)
+        {
+            //use httpClient to payment
+            System.Console.WriteLine($"Payment {paymentDto.Amount} for user {paymentDto.UserId}");
+            var response = await _httpClient.PostAsJsonAsync($"http://localhost:3004/api/internal/payment/{paymentDto.UserId}", new PaymentDto
+            {
+                Amount = paymentDto.Amount,
+            });
+            System.Console.WriteLine($"Payment response: {response.Content.ReadAsStringAsync()}");
+        }
     }
 }

@@ -1,5 +1,6 @@
 using AuctionService.Dto.AuctionLot;
 using AuctionService.Dto.BidLog;
+using AuctionService.Helper;
 using AuctionService.Hubs;
 using AuctionService.IServices;
 using AuctionService.Mapper;
@@ -82,10 +83,12 @@ namespace AuctionService.HandleMethod
                 _auctionLotBidDto!.RemainingTime = TimeSpan.FromSeconds(EXTENDED_TIME);
             }
             _auctionLotBidDto.PredictEndTime = DateTime.Now.Add(_auctionLotBidDto.RemainingTime);
-            _bidHub.Clients.Group(_auctionLotBidDto!.AuctionLotId.ToString()).SendAsync("ReceivePredictEndTime", _auctionLotBidDto!.RemainingTime);
+            _bidHub.Clients.All.SendAsync(WsMess.ReceivePredictEndTime, _auctionLotBidDto.PredictEndTime);
+            // _bidHub.Clients.Group(_auctionLotBidDto!.AuctionLotId.ToString()).SendAsync("ReceivePredictEndTime", _auctionLotBidDto.PredictEndTime);
             System.Console.WriteLine($"Remaining Time = {_auctionLotBidDto!.RemainingTime}");
             if (_auctionLotBidDto!.RemainingTime <= TimeSpan.Zero)
             {
+                System.Console.WriteLine($"Zero Zero = {_auctionLotBidDto!.RemainingTime}");
                 _timer!.Dispose();
                 CountdownFinished?.Invoke(_auctionLotBidDto!.AuctionLotId);
             }

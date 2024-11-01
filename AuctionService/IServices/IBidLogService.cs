@@ -13,5 +13,7 @@ namespace AuctionService.IServices
         Task<BidLog> GetBidLogById(int id);
         //Task<BidLog> CreateBidLog(BidLog bidLog);
 
+        Task<BidLog> GetHighestBidLogByAuctionLotId(int auctionLotId);
+
     }
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AuctionService.Dto.BidLog;
 using AuctionService.Helper;
 using AuctionService.IRepository;
 using AuctionService.IServices;
@@ -19,6 +20,30 @@ namespace AuctionService.Services
         {
             _unitOfWork = unitOfWork;
         }
+
+        //call repository to get highest bid log by auction lot id
+        public async Task<BidLog> GetHighestBidLogByAuctionLotId(int auctionLotId)
+        {
+            try
+            {
+                var bid = await _unitOfWork.BidLog.GetHighestBidLogByAuctionLotId(auctionLotId);
+                if (bid == null)
+                {
+                    throw new KeyNotFoundException($"No bid log found with auction lot ID: {auctionLotId}");
+                }
+                return bid;
+            }
+            catch (KeyNotFoundException ex)
+            {
+                throw new KeyNotFoundException(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                // Xử lý lỗi khác
+                throw new Exception("An error occurred while retrieving the highest bid log by auction lot ID.", ex);
+            }
+        }
+
         // public async Task<BidLog> CreateBidLog(BidLog bidLog)
         // {
         //     try

@@ -41,5 +41,12 @@ namespace AuctionService.Repository
             return bid ?? throw new KeyNotFoundException($"No bid found with ID: {id}"); // Ném ngoại lệ nếu không tìm thấy
         }
 
+        //get bid log has bid amount is highest in auciton lot id 
+        public async Task<BidLog?> GetHighestBidLogByAuctionLotId(int auctionLotId)
+        {
+            var bid = await _context.BidLogs.Where(b => b.AuctionLotId == auctionLotId).OrderByDescending(b => b.BidAmount).FirstOrDefaultAsync();
+            return bid;
+        }
+
     }
 }

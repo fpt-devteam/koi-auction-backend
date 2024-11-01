@@ -349,18 +349,26 @@ const getTransactionHistoryByUserId = async (req, res) => {
 }
 
 const internalPayment = async (req, res) => {
-   const { Amount } = req.body;
+   console.log(`req.body = ${JSON.stringify(req.body)}`);
+   const { amount, userId } = req.body;
+   const Amount = Number(amount);
    const { UserId } = req.params;
-   if (!UserId) return res.json(400).json({ message: "UserId is required" });
-   if (!Amount) return res.json(400).json({ message: "Amount is required" });
-   if (isNaN(Amount)) return res.json(400).json({ message: "Amount must be a number" });
-   if (Amount <= 0) return res.json(400).json({ message: "Amount must be greater than 0" });
+   console.log("amount = ", amount);
+   console.warn("UserId = ", UserId);
+   console.warn("Amount = ", Amount);
+   if (!UserId) return res.status(400).json({ message: "UserId is required" });
+   if (!Amount) return res.status(400).json({ message: "Amount is required" });
+   if (isNaN(UserId)) return res.status(400).json({ message: "UserId must be a number" });
+   if (isNaN(Amount)) return res.status(400).json({ message: "Amount must be a number" });
+   if (Amount <= 0) return res.status(400).json({ message: "Amount must be greater than 0" });
 
    const wallet = await Wallet.findOne({ where: { UserId: UserId } });
-   if (!wallet) return res.status(404).json({ message: "User not found" });
    if (wallet.Balance < Amount) return res.status(400).json({ message: "Not enough money" });
 
    try {
+      console.log("UserId = ", UserId);
+      console.log("Amount = ", Amount);
+
       await Transaction.create({
          UserId: UserId,
          Amount: Amount,
@@ -376,9 +384,11 @@ const internalPayment = async (req, res) => {
          { Balance: wallet.Balance - Amount },
          { where: { WalletId: wallet.WalletId } }
       );
+
+      return res.status(200).json({ message: "Payment successfully" });
    } catch (err) {
       console.log(err);
-      res.status(500).json({ message: "Internal Server Error" });
+      return res.status(500).json({ message: "Internal Server Error" });
    }
 }
 
