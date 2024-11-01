@@ -63,6 +63,24 @@ namespace AuctionService.Controllers
             }
         }
 
+        [HttpGet("highest-bid/{auctionLotId:int}")]
+        public async Task<IActionResult> GetHighestBidLogByAuctionLotId([FromRoute] int auctionLotId)
+        {
+            try
+            {
+                var bidLog = await _service.GetHighestBidLogByAuctionLotId(auctionLotId);
+                if (bidLog == null)
+                    return NotFound($"No bid logs found for auction lot with ID {auctionLotId}.");
+
+                return Ok(bidLog.ToBidLogDtoFromBidLog());
+            }
+            catch (Exception ex)
+            {
+                // Log the exception (optional)
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
+        }
+
         // [HttpPost]
         // public async Task<IActionResult> PlaceBid(CreateBidLogDto placeBid)
         // {

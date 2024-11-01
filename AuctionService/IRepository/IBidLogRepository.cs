@@ -13,6 +13,8 @@ namespace AuctionService.IRepository
         Task<List<BidLog>> GetAllAsync(BidLogQueryObject queryObject);
         Task<BidLog> GetByIdAsync(int id);
         Task<BidLog> CreateAsync(BidLog bidLog);
+
+        Task<BidLog?> GetHighestBidLogByAuctionLotId(int auctionLotId);
     }
 
 }

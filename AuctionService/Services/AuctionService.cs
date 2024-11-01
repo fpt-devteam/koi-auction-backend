@@ -50,6 +50,7 @@ namespace AuctionService.Services
                 var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
                 Auction auction = await unitOfWork.Auctions.GetByIdAsync(auctionId);
                 auction.AuctionStatusId = (int)Enums.AuctionStatus.Ended;
+                auction.EndTime = DateTime.Now;
                 await unitOfWork.SaveChangesAsync();
             }
         }

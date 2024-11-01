@@ -67,14 +67,16 @@ namespace AuctionService.Services
                 AuctionLot auctionLot = await unitOfWork.AuctionLots.GetAuctionLotById(auctionLotId);
                 auctionLot.AuctionLotStatusId = (int)Enums.AuctionLotStatus.Ongoing;
 
-                //set up auction bid dto in bid service
-                AuctionLotBidDto auctionLotBidDto = auctionLot.ToAuctionLotBidDtoFromAuctionLot();
-                await _bidManagementService.StartAuctionLotAsync(auctionLotBidDto);
-
                 if (!await unitOfWork.SaveChangesAsync())
                 {
                     throw new Exception("An error occurred while saving the data");
                 }
+
+                //set up auction bid dto in bid service
+                AuctionLotBidDto auctionLotBidDto = auctionLot.ToAuctionLotBidDtoFromAuctionLot();
+                await _bidManagementService.StartAuctionLotAsync(auctionLotBidDto);
+
+
 
                 DateTime endTimePredict = auctionLot.StartTime!.Value.Add(auctionLot.Duration);
                 // Schedule extended time auction lot

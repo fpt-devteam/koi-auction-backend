@@ -72,7 +72,7 @@ namespace AuctionService.Controller
 
                 // Schedule auction
                 _auctionService.ScheduleAuction(auction.AuctionId, auction.StartTime);
-                return StatusCode(201);
+                return CreatedAtAction(nameof(GetAuctionById), new { id = auction.AuctionId }, auction.ToAuctionDtoFromAuction());
             }
             catch (Exception e)
             {
