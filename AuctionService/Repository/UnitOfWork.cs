@@ -25,6 +25,7 @@ namespace AuctionService.Repository
             AuctionLotJobs = new AuctionLotJobRepository(_context);
             BidLog = new BidLogRepository(_context);
             SoldLot = new SoldLotRepository(_context);
+
         }
 
         public IAuctionLotRepository AuctionLots { get; private set; }
@@ -39,6 +40,7 @@ namespace AuctionService.Repository
         public IAuctionLotJobRepository AuctionLotJobs { get; private set; }
         public IBidLogRepository BidLog { get; private set; }
         public ISoldLotRepository SoldLot { get; private set; }
+        
 
         public async Task<bool> SaveChangesAsync()
         {

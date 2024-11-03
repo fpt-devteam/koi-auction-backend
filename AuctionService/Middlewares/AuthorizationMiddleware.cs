@@ -33,6 +33,12 @@ namespace AuctionService.Middlewares
                     { HttpMethods.Put, new[] { UserRole.Staff,  UserRole.Admin } }, // PUT cho Breeder và Staff
                 }
             },
+            {
+                "api/lots/auction-method-statistic", new Dictionary<string, UserRole[]>
+                {
+                    { HttpMethods.Get, new[] { UserRole.Admin }}
+                }
+            },
             { "/api/auctions", new Dictionary<string, UserRole[]>
                 {
                     { HttpMethods.Post, new[] { UserRole.Staff,  UserRole.Admin } } // POST chỉ dành cho Staff
