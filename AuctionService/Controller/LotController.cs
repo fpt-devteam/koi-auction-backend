@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using AuctionService.Dto.AuctionMethod;
 using AuctionService.Dto.BreederDetail;
 using AuctionService.Dto.KoiFish;
 using AuctionService.Dto.Lot;
@@ -10,6 +11,7 @@ using AuctionService.Dto.LotRequestForm;
 using AuctionService.Dto.LotStatus;
 using AuctionService.Helper;
 using AuctionService.IRepository;
+using AuctionService.IServices;
 using AuctionService.Mapper;
 using AuctionService.Models;
 using AuctionService.Services;
@@ -26,10 +28,12 @@ namespace AuctionService.Controller
         // private readonly BreederDetailController _breederDetailController;
 
         private readonly BreederDetailService _breederService;
-        public LotController(IUnitOfWork unitOfWork, BreederDetailService service)
+        private readonly ILotService _lotService;
+        public LotController(IUnitOfWork unitOfWork, BreederDetailService service, ILotService lotService)
         {
             _unitOfWork = unitOfWork;
             _breederService = service;
+            _lotService = lotService;
         }
 
         [HttpGet]
@@ -168,6 +172,12 @@ namespace AuctionService.Controller
                 return BadRequest("An error occurred while saving the data");
             }
             return NoContent();
+        }
+        [HttpGet("auction-method-statistic")]
+        public async Task<ActionResult<List<AuctionMethodDto>>> GetLotAuctionMethodStatistic()
+        {
+            var statistic = await _lotService.GetLotAuctionMethodStatisticAsync();
+            return Ok(statistic);
         }
     }
 }

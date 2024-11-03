@@ -185,5 +185,34 @@ namespace AuctionService.Repository
             lot.LotStatusId = status!.LotStatusId;
             return lot;
         }
+
+        public async Task<List<LotAuctionMethodStatisticDto>> GetLotAuctionMethodStatisticAsync()
+        {
+            var totalLots = await _context.Lots.CountAsync(); //sum Lots
+
+            var statistic = await _context.Lots
+                .GroupBy(l => l.AuctionMethodId)
+                .Select(g => new 
+                {
+                    AuctionMethodId = g.Key, //why Key? 
+                    Count = g.Count()
+                })
+                .ToListAsync();
+
+            var auctionMethods = await _context.AuctionMethods.ToListAsync();
+            //tinh toan thong ke nek
+            var result = statistic.Select(s => {
+                var auctionMethod = auctionMethods.First(am => am.AuctionMethodId == s.AuctionMethodId);
+                return new LotAuctionMethodStatisticDto
+                {
+                    AuctionMethodId = s.AuctionMethodId,
+                    AuctionMethodName = auctionMethod.AuctionMethodName,
+                    Count = s.Count,
+                    Rate = totalLots > 0 ? Math.Round((double)s.Count / totalLots * 100, 2) : 0
+                };
+            }).ToList();
+
+            return result;
+        }
     }
 }

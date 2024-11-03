@@ -35,7 +35,7 @@ const deposit = async (req, res) => {
       amount: Amount,
       description: "Thanh toán hóa đơn",
       bank_code: "zalopayapp",
-      callback_url: "https://b4e3-2401-d800-5aec-76ef-c58c-ff24-9016-45ef.ngrok-free.app/payment-service/callback",
+      callback_url: "https://375a-2402-800-6310-8486-5dd-eac6-99a1-5ef0.ngrok-free.app/payment-service/callback",
    };
 
    console.log(`app_trans_id = ${app_trans_id}`);
