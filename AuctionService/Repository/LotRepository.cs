@@ -214,5 +214,21 @@ namespace AuctionService.Repository
 
             return result;
         }
+
+        public async Task<List<Lot>> GetBreederLotsStatisticsAsync(int? breederId)
+        {
+            var query = _context.Lots
+                .Include(l => l.LotStatus)
+                .Include(l => l.AuctionLot)
+                    .ThenInclude(al => al.SoldLot)
+                .AsQueryable();
+
+            if (breederId.HasValue)
+            {
+                query = query.Where(l => l.BreederId == breederId.Value);
+            }
+
+            return await query.ToListAsync();
+        }
     }
 }
