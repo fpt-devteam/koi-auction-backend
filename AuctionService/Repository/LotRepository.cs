@@ -163,7 +163,7 @@ namespace AuctionService.Repository
             var lot = await _context.Lots.Include(l => l.KoiFish).
                                             Include(l => l.LotStatus).
                                             Include(l => l.AuctionMethod).FirstOrDefaultAsync(l => l.LotId == id);
-            if (lot == null)
+            if (lot == null)    
                 return null!;
 
             var koiFish = lot.KoiFish;
@@ -220,7 +220,7 @@ namespace AuctionService.Repository
             var query = _context.Lots
                 .Include(l => l.LotStatus)
                 .Include(l => l.AuctionLot)
-                    .ThenInclude(al => al.SoldLot)
+                    .ThenInclude(al => al!.SoldLot)
                 .AsQueryable();
 
             if (breederId.HasValue)

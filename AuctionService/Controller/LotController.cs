@@ -173,6 +173,21 @@ namespace AuctionService.Controller
             }
             return NoContent();
         }
+
+        [HttpGet("auction-method-statistics")]
+        public async Task<ActionResult<List<LotAuctionMethodStatisticDto>>> GetAuctionMethodStatistics()
+        {
+            try
+            {
+                var statistics = await _lotService.GetLotAuctionMethodStatisticAsync();
+                return Ok(statistics);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Error retrieving auction method statistics", error = ex.Message });
+            }
+        }
+
         [HttpGet("breeder-statistics")]
         public async Task<ActionResult<List<BreederStatisticDto>>> GetBreederStatistics([FromQuery] int? breederId)
         {
