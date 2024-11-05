@@ -20,8 +20,6 @@ public partial class AuctionManagementDbContext : DbContext
 
     public virtual DbSet<AuctionLot> AuctionLots { get; set; }
 
-    public virtual DbSet<AuctionLotJob> AuctionLotJobs { get; set; }
-
     public virtual DbSet<AuctionLotStatus> AuctionLotStatuses { get; set; }
 
     public virtual DbSet<AuctionMethod> AuctionMethods { get; set; }
@@ -40,24 +38,15 @@ public partial class AuctionManagementDbContext : DbContext
 
     public virtual DbSet<SoldLot> SoldLots { get; set; }
 
-    private string GetConnectionString()
-    {
-        IConfiguration config = new ConfigurationBuilder()
-             .SetBasePath(Directory.GetCurrentDirectory())
-                    .AddJsonFile("appsettings.json", true, true)
-                    .Build();
-        var strConn = config["ConnectionStrings:DefaultConnectionStringDB"];
-
-        return strConn!;
-    }
-
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer(GetConnectionString());
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Server=35.247.172.255;Initial Catalog=KoiAuctionDB;User ID=sqlserver;Password=sa123456!;TrustServerCertificate=True;Connection Timeout=30;");
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Auction>(entity =>
         {
-            entity.HasKey(e => e.AuctionId).HasName("PK__Auction__51004A4CAA2054EE");
+            entity.HasKey(e => e.AuctionId).HasName("PK__Auction__51004A4C41F9D350");
 
             entity.ToTable("Auction");
 
@@ -66,12 +55,12 @@ public partial class AuctionManagementDbContext : DbContext
             entity.Property(e => e.AuctionName).HasMaxLength(100);
             entity.Property(e => e.AuctionStatusId).HasDefaultValue(1);
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
+                .HasDefaultValueSql("((sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time'))")
                 .HasColumnType("datetime");
             entity.Property(e => e.EndTime).HasColumnType("datetime");
             entity.Property(e => e.StartTime).HasColumnType("datetime");
             entity.Property(e => e.UpdatedAt)
-                .HasDefaultValueSql("(getdate())")
+                .HasDefaultValueSql("((sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time'))")
                 .HasColumnType("datetime");
 
             entity.HasOne(d => d.AuctionStatus).WithMany(p => p.Auctions)
@@ -82,7 +71,7 @@ public partial class AuctionManagementDbContext : DbContext
 
         modelBuilder.Entity<AuctionLot>(entity =>
         {
-            entity.HasKey(e => e.AuctionLotId).HasName("PK__AuctionL__8A0269CF4469A727");
+            entity.HasKey(e => e.AuctionLotId).HasName("PK__AuctionL__8A0269CF6F45A3A7");
 
             entity.ToTable("AuctionLot");
 
@@ -91,9 +80,6 @@ public partial class AuctionManagementDbContext : DbContext
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
-            entity.Property(e => e.Duration)
-            .HasColumnType("time") // Chắc chắn rằng cột này là kiểu "time" trong SQL Server
-            .IsRequired();
             entity.Property(e => e.EndTime).HasColumnType("datetime");
             entity.Property(e => e.StartTime).HasColumnType("datetime");
             entity.Property(e => e.StepPercent).HasDefaultValue(0);
@@ -117,18 +103,9 @@ public partial class AuctionManagementDbContext : DbContext
                 .HasConstraintName("FK_AuctionLot_AuctionLotStatus");
         });
 
-        modelBuilder.Entity<AuctionLotJob>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK__AuctionL__3214EC076F2A7208");
-
-            entity.ToTable("AuctionLotJob");
-
-            entity.Property(e => e.HangfireJobId).HasMaxLength(100);
-        });
-
         modelBuilder.Entity<AuctionLotStatus>(entity =>
         {
-            entity.HasKey(e => e.AuctionLotStatusId).HasName("PK__AuctionL__07A5E3C39FE294C8");
+            entity.HasKey(e => e.AuctionLotStatusId).HasName("PK__AuctionL__07A5E3C3219CCA3D");
 
             entity.ToTable("AuctionLotStatus");
 
@@ -143,7 +120,7 @@ public partial class AuctionManagementDbContext : DbContext
 
         modelBuilder.Entity<AuctionMethod>(entity =>
         {
-            entity.HasKey(e => e.AuctionMethodId).HasName("PK__AuctionM__FCD1A18B371CBB3F");
+            entity.HasKey(e => e.AuctionMethodId).HasName("PK__AuctionM__FCD1A18BBDBDB361");
 
             entity.ToTable("AuctionMethod");
 
@@ -159,7 +136,7 @@ public partial class AuctionManagementDbContext : DbContext
 
         modelBuilder.Entity<AuctionStatus>(entity =>
         {
-            entity.HasKey(e => e.AuctionStatusId).HasName("PK__AuctionS__B2535E95B679012E");
+            entity.HasKey(e => e.AuctionStatusId).HasName("PK__AuctionS__B2535E958E1BCE35");
 
             entity.ToTable("AuctionStatus");
 
@@ -174,7 +151,7 @@ public partial class AuctionManagementDbContext : DbContext
 
         modelBuilder.Entity<BidLog>(entity =>
         {
-            entity.HasKey(e => e.BidLogId).HasName("PK__BidLog__A459EE9E98F7C7D3");
+            entity.HasKey(e => e.BidLogId).HasName("PK__BidLog__A459EE9EB705A49A");
 
             entity.ToTable("BidLog");
 
@@ -191,7 +168,7 @@ public partial class AuctionManagementDbContext : DbContext
 
         modelBuilder.Entity<KoiFish>(entity =>
         {
-            entity.HasKey(e => e.KoiFishId).HasName("PK__KoiFish__44D35C25776325B3");
+            entity.HasKey(e => e.KoiFishId).HasName("PK__KoiFish__44D35C25EB29C4A2");
 
             entity.ToTable("KoiFish");
 
@@ -212,7 +189,7 @@ public partial class AuctionManagementDbContext : DbContext
 
         modelBuilder.Entity<KoiMedia>(entity =>
         {
-            entity.HasKey(e => e.KoiMediaId).HasName("PK__KoiMedia__4CC7808360C9C026");
+            entity.HasKey(e => e.KoiMediaId).HasName("PK__KoiMedia__4CC780832EF9B140");
 
             entity.HasIndex(e => e.FilePath, "UQ_KoiMedia_FilePath").IsUnique();
 
@@ -229,7 +206,7 @@ public partial class AuctionManagementDbContext : DbContext
 
         modelBuilder.Entity<Lot>(entity =>
         {
-            entity.HasKey(e => e.LotId).HasName("PK__Lot__4160EFAD2877410E");
+            entity.HasKey(e => e.LotId).HasName("PK__Lot__4160EFADFD0A2547");
 
             entity.ToTable("Lot");
 
@@ -258,7 +235,7 @@ public partial class AuctionManagementDbContext : DbContext
 
         modelBuilder.Entity<LotStatus>(entity =>
         {
-            entity.HasKey(e => e.LotStatusId).HasName("PK__LotStatu__B5B83877A3248B3F");
+            entity.HasKey(e => e.LotStatusId).HasName("PK__LotStatu__B5B838777103AE5C");
 
             entity.ToTable("LotStatus");
 
@@ -273,7 +250,7 @@ public partial class AuctionManagementDbContext : DbContext
 
         modelBuilder.Entity<SoldLot>(entity =>
         {
-            entity.HasKey(e => e.SoldLotId).HasName("PK__SoldLot__A006956D9629DC74");
+            entity.HasKey(e => e.SoldLotId).HasName("PK__SoldLot__A006956D74F831B3");
 
             entity.ToTable("SoldLot");
 

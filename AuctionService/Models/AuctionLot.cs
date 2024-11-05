@@ -9,7 +9,7 @@ public partial class AuctionLot
 
     public int AuctionId { get; set; }
 
-    public TimeSpan Duration { get; set; }
+    public TimeOnly Duration { get; set; }
 
     public int OrderInAuction { get; set; }
 
