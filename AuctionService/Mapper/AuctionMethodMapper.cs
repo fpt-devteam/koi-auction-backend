@@ -20,7 +20,7 @@ namespace AuctionService.Mapper
         {
             return new AuctionMethod
             {
-                AuctionMethodName = auctionMethod.AuctionMethodName,
+                AuctionMethodName = auctionMethod.AuctionMethodName!,
                 Description = auctionMethod.Description
             };
         }

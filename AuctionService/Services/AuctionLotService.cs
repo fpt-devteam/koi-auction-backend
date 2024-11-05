@@ -11,7 +11,6 @@ using AuctionService.IRepository;
 using AuctionService.IServices;
 using AuctionService.Mapper;
 using AuctionService.Models;
-// using Hangfire;
 
 namespace AuctionService.Services
 {

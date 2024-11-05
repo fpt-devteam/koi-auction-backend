@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 using AuctionService.Data;
 using AuctionService.IServices;
 using AuctionService.Services;
-// using Hangfire;
 using AuctionService.HandleMethod;
 using AuctionService.Dto.UserConnection;
 using AuctionService.Hubs;
@@ -101,7 +100,5 @@ if (app.Environment.IsDevelopment())
 app.MapHub<BidHub>("/hub");
 app.UseHttpsRedirection();
 app.MapControllers();
-
-// app.UseHangfireDashboard("/hangfire");
 
 app.Run();

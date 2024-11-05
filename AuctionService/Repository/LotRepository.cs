@@ -192,7 +192,7 @@ namespace AuctionService.Repository
 
             var statistic = await _context.Lots
                 .GroupBy(l => l.AuctionMethodId)
-                .Select(g => new 
+                .Select(g => new
                 {
                     AuctionMethodId = g.Key, //why Key? 
                     Count = g.Count()
@@ -201,7 +201,8 @@ namespace AuctionService.Repository
 
             var auctionMethods = await _context.AuctionMethods.ToListAsync();
             //tinh toan thong ke nek
-            var result = statistic.Select(s => {
+            var result = statistic.Select(s =>
+            {
                 var auctionMethod = auctionMethods.First(am => am.AuctionMethodId == s.AuctionMethodId);
                 return new LotAuctionMethodStatisticDto
                 {

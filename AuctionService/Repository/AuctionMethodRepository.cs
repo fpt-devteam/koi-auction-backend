@@ -52,7 +52,7 @@ namespace AuctionService.Repository
             {
                 return null!;
             }
-            method.AuctionMethodName = updateAuctionMethodDto.AuctionMethodName;
+            method.AuctionMethodName = updateAuctionMethodDto.AuctionMethodName!;
             method.Description = updateAuctionMethodDto.Description;
 
             return method;
