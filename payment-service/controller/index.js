@@ -6,7 +6,8 @@ const { Op, NUMBER } = require('sequelize');
 const User = require('../models/user');
 const Transaction = require('../models/transaction');
 const Wallet = require('../models/wallet');
-const { RelationshipType } = require('sequelize/lib/errors/database/foreign-key-constraint-error');
+const TransactionType = require('../models/transaction-type');
+const TransactionStatus = require('../models/transaction-status');
 
 const deposit = async (req, res) => {
    const { Amount } = req.body;
@@ -56,7 +57,7 @@ const deposit = async (req, res) => {
          TransTypeId: 3,
          AppTransId: app_trans_id,
          BalanceAfter: wallet.Balance + Amount,
-         Note: "Thanh toán hóa đơn",
+         Description: "Nạp tiền vào ví",
          CreatedAt: Date.now(),
       });
    } catch (err) {
@@ -151,6 +152,7 @@ const refreshWallet = async (UserId) => {
       where: {
          WalletId: wallet.WalletId,
          StatusId: 1,
+         TransTypeId: { [Op.ne]: 1 }
       }
    });
 
@@ -159,13 +161,13 @@ const refreshWallet = async (UserId) => {
    for (const trans of transaction) {
       try {
          const status = await checkOrderStatus(trans.AppTransId);
-         if (status.return_code === 1) {
+         if (status.return_code == 1) {
             balance += trans.Amount;
             await Transaction.update(
                { StatusId: 2 },
                { where: { AppTransId: trans.AppTransId } }
             );
-         } else if (status.return_code === 2) {
+         } else if (status.return_code == 2) {
             await Transaction.update(
                { StatusId: 3 },
                { where: { AppTransId: trans.AppTransId } }
@@ -190,49 +192,11 @@ const refreshWallet = async (UserId) => {
    };
 }
 
-const reloadWallet = async (req, res) => {
-   const { UserId } = req.user;
-
-   const wallet = await Wallet.findOne({ where: { UserId: UserId } });
-
-   const transaction = await Transaction.findAll({
-      where: {
-         WalletId: wallet.WalletId,
-         StatusId: 1,
-      }
-   });
-
-   let balance = Number(wallet.Balance);
-
-   for (const trans of transaction) {
-      const status = await checkOrderStatus(trans.AppTransId);
-      if (status.return_code === 1) {
-         balance += trans.Amount;
-         await Transaction.update(
-            { StatusId: 2 },
-            { where: { AppTransId: trans.AppTransId } }
-         );
-      } else if (status.return_code === 2) {
-         await Transaction.update(
-            { StatusId: 3 },
-            { where: { AppTransId: trans.AppTransId } }
-         );
-      }
-   }
-
-   await Wallet.update(
-      { Balance: balance },
-      { where: { WalletId: wallet.WalletId } }
-   );
-
-   res.status(200).json({ message: "Update wallet successfully" });
-}
-
 const getWalletBalance = async (req, res) => {
    const { UserId } = req.user;
 
    const refresh = await refreshWallet(UserId);
-   if (refresh.status === 500) {
+   if (refresh.status == 500) {
       return res.status(500).json({ message: "Internal Server Error" });
    }
 
@@ -241,17 +205,41 @@ const getWalletBalance = async (req, res) => {
 
 const getTransactionHistory = async (req, res) => {
    const { UserId } = req.user;
+   const { Status, TransType } = req.body;
 
    try {
       const wallet = await Wallet.findOne({ where: { UserId: UserId } });
+      const [transactionTypes, transactionStatus] = await Promise.all([
+         TransactionType.findAll(),
+         TransactionStatus.findAll()
+      ]);
 
-      const transaction = await Transaction.findAll({
+      const TransTypeId = transactionTypes.find((type) => type.TransTypeName == TransType)?.TransTypeId;
+      const StatusId = transactionStatus.find((status) => status.TransStatusName == Status)?.TransStatusId;
+
+      let transactions = await Transaction.findAll({
          where: {
-            WalletId: wallet.WalletId
+            WalletId: wallet.WalletId,
+            TransTypeId: TransTypeId || { [Op.ne]: null },
+            StatusId: StatusId || { [Op.ne]: null }
          }
       });
 
-      res.status(200).json(transaction);
+      let result = [];
+      transactions.forEach((transaction) => {
+         result.push({
+            TransId: transaction.TransId,
+            UserId: transaction.UserId,
+            Amount: transaction.Amount,
+            WalletId: transaction.WalletId,
+            Status: transactionStatus.find((status) => status.TransStatusId == transaction.StatusId).TransStatusName,
+            TransType: transactionTypes.find((type) => type.TransTypeId == transaction.TransTypeId).TransTypeName,
+            BalanceAfter: transaction.BalanceAfter,
+            Description: transaction.Description,
+         });
+      });
+
+      res.status(200).json(result);
    } catch (err) {
       console.log(err);
       return res.status(500).json({ message: "Internal Server Error" });
@@ -278,7 +266,7 @@ const payment = async (req, res) => {
          StatusId: 2,
          TransTypeId: 2,
          BalanceAfter: wallet.Balance - Amount,
-         Note: "Thanh toán hóa đơn",
+         Description: "Thanh toán hóa đơn",
          CreatedAt: Date.now(),
       });
 
@@ -324,24 +312,69 @@ const getWalletBalanceByUserId = async (req, res) => {
 }
 
 const getAllTransactionHistory = async (req, res) => {
+
+   const transactionTypes = await TransactionType.findAll();
+   const transactionStatus = await TransactionStatus.findAll();
+
    let transactions = await Transaction.findAll();
 
-   res.status(200).json(transactions);
+   let result = [];
+   transactions.forEach((transaction) => {
+      result.push({
+         TransId: transaction.TransId,
+         UserId: transaction.UserId,
+         Amount: transaction.Amount,
+         WalletId: transaction.WalletId,
+         Status: transactionStatus.find((status) => status.TransStatusId == transaction.StatusId).TransStatusName,
+         TransType: transactionTypes.find((type) => type.TransTypeId == transaction.TransTypeId).TransTypeName,
+         BalanceAfter: transaction.BalanceAfter,
+         Description: transaction.Description,
+      });
+   });
+
+   res.status(200).json(result);
 }
 
 const getTransactionHistoryByUserId = async (req, res) => {
    const { UserId } = req.params;
+   const { Status, TransType } = req.body;
 
    try {
       const wallet = await Wallet.findOne({ where: { UserId: UserId } });
 
-      let transaction = await Transaction.findAll({
+      if (!wallet) return res.status(404).json({ message: "User not found" });
+
+      const [transactionTypes, transactionStatus] = await Promise.all([
+         TransactionType.findAll(),
+         TransactionStatus.findAll()
+      ]);
+
+      const TransTypeId = transactionTypes.find((type) => type.TransTypeName == TransType)?.TransTypeId;
+      const StatusId = transactionStatus.find((status) => status.TransStatusName == Status)?.TransStatusId;
+      
+      let transactions = await Transaction.findAll({
          where: {
-            WalletId: wallet.WalletId
+            WalletId: wallet.WalletId,
+            TransTypeId: TransTypeId || { [Op.ne]: null },
+            StatusId: StatusId || { [Op.ne]: null }
          }
       });
-
-      res.status(200).json(transaction);
+      
+      let result = [];
+      transactions.forEach((transaction) => {
+         result.push({
+            TransId: transaction.TransId,
+            UserId: transaction.UserId,
+            Amount: transaction.Amount,
+            WalletId: transaction.WalletId,
+            Status: transactionStatus.find((status) => status.TransStatusId == transaction.StatusId).TransStatusName,
+            TransType: transactionTypes.find((type) => type.TransTypeId == transaction.TransTypeId).TransTypeName,
+            BalanceAfter: transaction.BalanceAfter,
+            Description: transaction.Description,
+         });
+      });
+   
+      res.status(200).json(result);
    } catch (err) {
       console.log(err);
       return res.status(500).json({ message: "Internal Server Error" });
@@ -366,8 +399,6 @@ const internalPayment = async (req, res) => {
    if (wallet.Balance < Amount) return res.status(400).json({ message: "Not enough money" });
 
    try {
-      console.log("UserId = ", UserId);
-      console.log("Amount = ", Amount);
 
       await Transaction.create({
          UserId: UserId,
@@ -376,7 +407,7 @@ const internalPayment = async (req, res) => {
          StatusId: 2,
          TransTypeId: 2,
          BalanceAfter: wallet.Balance - Amount,
-         Note: "Thanh toán hóa đơn",
+         Description: "Thanh toán hóa đơn",
          CreatedAt: Date.now(),
       });
 
@@ -392,16 +423,88 @@ const internalPayment = async (req, res) => {
    }
 }
 
+const withdraw = async (req, res) => {
+   const { Amount, BankAccount, BankName, AccountHolder } = req.body;
+   const { UserId } = req.user;
+
+   if (!Amount) return res.status(400).json({ message: "Amount is required" });
+   if (isNaN(Amount)) return res.status(400).json({ message: "Amount must be a number" });
+   if (Amount <= 0) return res.status(400).json({ message: "Amount must be greater than 0" });
+
+   const wallet = await Wallet.findOne({ where: { UserId: UserId } });
+
+   if (wallet.Balance < Amount) return res.status(400).json({ message: "Not enough money" });
+
+   try {
+      await Transaction.create({
+         UserId: UserId,
+         Amount: Amount,
+         WalletId: wallet.WalletId,
+         StatusId: 1,
+         TransTypeId: 1,
+         BalanceAfter: wallet.Balance - Amount,
+         Description: `Bank Account: ${BankAccount}, Bank Name: ${BankName}, Account Holder: ${AccountHolder}`,
+         CreatedAt: Date.now(),
+      });
+
+   } catch (err) {
+      console.log(err);
+   }
+
+   res.status(200).json({ message: "Withdraw post successfully" });
+};
+
+const updateUserWithdrawStatusById = async (req, res) => {
+   const { UserId, Id } = req.params;
+   const { Status } = req.body;
+
+   if (!UserId) return res.status(400).json({ message: "UserId is required" });
+   if (!Id) return res.status(400).json({ message: "Id is required" });
+   if (!Status) return res.status(400).json({ message: "Status is required" });
+   
+   try {
+      const wallet = await Wallet.findOne({ where: { UserId: UserId } });
+   
+      if (!wallet) return res.status(404).json({ message: "User not found" });
+
+      const transaction = await Transaction.findOne({ where: { WalletId : wallet.WalletId, TransId: Id } });
+      if (!transaction) return res.status(404).json({ message: "Transaction not found" });
+      if (transaction.TransTypeId != 1) return res.status(400).json({ message: "Transaction is not withdraw" });
+      if (transaction.StatusId != 1) return res.status(400).json({ message: "Transaction is not pending" });
+
+      if (wallet.Balance < transaction.Amount) return res.status(400).json({ message: "Not enough money" });
+
+      const transactionStatus = await TransactionStatus.findAll();
+      const StatusId = transactionStatus.find((status) => status.TransStatusName == Status)?.TransStatusId;
+
+      await Wallet.update(
+         { Balance: (StatusId == 2) ? wallet.Balance - transaction.Amount : wallet.Balance },
+         { where: { WalletId: wallet.WalletId } }
+      );
+
+      await Transaction.update(
+         { StatusId: StatusId, BalanceAfter: (StatusId == 2) ? wallet.Balance - transaction.Amount : wallet.Balance },
+         { where: { WalletId: wallet.WalletId, TransTypeId: 1, TransId: Id } }
+      );
+
+      res.status(200).json({ message: "Update withdraw status successfully" });
+   } catch (err) {
+      console.log(err);
+      return res.status(500).json({ message: "Internal Server Error" });
+   }
+}
+
 module.exports = {
    deposit,
    payment,
    callback,
-   reloadWallet,
    getWalletBalance,
    getTransactionHistory,
    getAllWalletBalance,
    getWalletBalanceByUserId,
    getTransactionHistoryByUserId,
    getAllTransactionHistory,
-   internalPayment
+   internalPayment,
+   withdraw,
+   updateUserWithdrawStatusById,
 };
