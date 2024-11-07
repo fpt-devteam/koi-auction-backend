@@ -226,10 +226,11 @@ const getTransactionHistory = async (req, res) => {
       });
 
       let result = [];
-      transactions.forEach((transaction) => {
+      await Promise.all(transactions.map(async (transaction) => {
+         const wallet = await Wallet.findByPk(transaction.WalletId);
          result.push({
             TransId: transaction.TransId,
-            UserId: transaction.UserId,
+            UserId: wallet.UserId,
             Amount: transaction.Amount,
             WalletId: transaction.WalletId,
             Status: transactionStatus.find((status) => status.TransStatusId == transaction.StatusId).TransStatusName,
@@ -237,7 +238,7 @@ const getTransactionHistory = async (req, res) => {
             BalanceAfter: transaction.BalanceAfter,
             Description: transaction.Description,
          });
-      });
+      }));
 
       res.status(200).json(result);
    } catch (err) {
@@ -312,17 +313,27 @@ const getWalletBalanceByUserId = async (req, res) => {
 }
 
 const getAllTransactionHistory = async (req, res) => {
+   const { Status, TransType } = req.body;
 
    const transactionTypes = await TransactionType.findAll();
    const transactionStatus = await TransactionStatus.findAll();
 
-   let transactions = await Transaction.findAll();
+   const TransTypeId = transactionTypes.find((type) => type.TransTypeName == TransType)?.TransTypeId;
+   const StatusId = transactionStatus.find((status) => status.TransStatusName == Status)?.TransStatusId;
+   
+   let transactions = await Transaction.findAll({
+      where: {
+         TransTypeId: TransTypeId || { [Op.ne]: null },
+         StatusId: StatusId || { [Op.ne]: null }
+      }
+   });
 
    let result = [];
-   transactions.forEach((transaction) => {
+   await Promise.all(transactions.map(async (transaction) => {
+      const wallet = await Wallet.findByPk(transaction.WalletId);
       result.push({
          TransId: transaction.TransId,
-         UserId: transaction.UserId,
+         UserId: wallet.UserId,
          Amount: transaction.Amount,
          WalletId: transaction.WalletId,
          Status: transactionStatus.find((status) => status.TransStatusId == transaction.StatusId).TransStatusName,
@@ -330,7 +341,7 @@ const getAllTransactionHistory = async (req, res) => {
          BalanceAfter: transaction.BalanceAfter,
          Description: transaction.Description,
       });
-   });
+   }));
 
    res.status(200).json(result);
 }
@@ -361,10 +372,11 @@ const getTransactionHistoryByUserId = async (req, res) => {
       });
       
       let result = [];
-      transactions.forEach((transaction) => {
+      await Promise.all(transactions.map(async(transaction) => {
+         const wallet = await Wallet.findByPk(transaction.WalletId);
          result.push({
             TransId: transaction.TransId,
-            UserId: transaction.UserId,
+            UserId: wallet.UserId,
             Amount: transaction.Amount,
             WalletId: transaction.WalletId,
             Status: transactionStatus.find((status) => status.TransStatusId == transaction.StatusId).TransStatusName,
@@ -372,8 +384,7 @@ const getTransactionHistoryByUserId = async (req, res) => {
             BalanceAfter: transaction.BalanceAfter,
             Description: transaction.Description,
          });
-      });
-   
+      }));
       res.status(200).json(result);
    } catch (err) {
       console.log(err);
