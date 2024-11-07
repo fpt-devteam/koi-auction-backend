@@ -25,7 +25,7 @@ namespace AuctionService.Repository
             var method = await _context.AuctionMethods.FirstOrDefaultAsync(m => m.AuctionMethodId == id);
             if (method == null)
             {
-                return null!;
+                throw new KeyNotFoundException($"Auction Method  {id} is not registered.");
             }
             _context.Remove(method);
             return method;
@@ -33,7 +33,10 @@ namespace AuctionService.Repository
 
         public async Task<List<AuctionMethod>> GetAllAsync()
         {
-            return await _context.AuctionMethods.ToListAsync();
+            var auctionMethod = await _context.AuctionMethods.ToListAsync();
+            if (auctionMethod.Count == 0)
+                throw new Exception("Not existed any auction method");
+            return auctionMethod;
         }
 
         public async Task<AuctionMethod> GetByIdAsync(int id)
@@ -41,7 +44,7 @@ namespace AuctionService.Repository
             var method = await _context.AuctionMethods.FirstOrDefaultAsync(m => m.AuctionMethodId == id);
             if (method == null)
             {
-                return null!;
+                throw new KeyNotFoundException($"Auction Method  {id} is not registered.");
             }
             return method;
         }
@@ -50,7 +53,7 @@ namespace AuctionService.Repository
             var method = await _context.AuctionMethods.FirstOrDefaultAsync(m => m.AuctionMethodId == id);
             if (method == null)
             {
-                return null!;
+                throw new KeyNotFoundException($"Auction Method  {id} is not registered.");
             }
             method.AuctionMethodName = updateAuctionMethodDto.AuctionMethodName!;
             method.Description = updateAuctionMethodDto.Description;

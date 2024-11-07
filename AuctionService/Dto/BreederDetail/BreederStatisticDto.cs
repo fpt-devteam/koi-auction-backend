@@ -9,4 +9,5 @@ public class BreederStatisticDto
     public double PercentCancelledSoldLot { get; set; }
     public double PercentSuccess { get; set; }
     public double PercentUnsuccess { get; set; }
-} 
+    public int Priority { get; set; }
+}

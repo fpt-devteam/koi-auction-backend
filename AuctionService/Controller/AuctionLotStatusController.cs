@@ -31,15 +31,9 @@ namespace AuctionService.Controller
             {
                 return BadRequest(ModelState);
             }
-            try
-            {
-                var AuctionLotStatuses = await _unitOfWork.AuctionLotStatuses.GetAuctionLotStatusByIdAsync(id);
-                return Ok(AuctionLotStatuses.ToAuctionLotStatusDtoFromAuctionLotStatus());
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
+
+            var AuctionLotStatuses = await _unitOfWork.AuctionLotStatuses.GetAuctionLotStatusByIdAsync(id);
+            return Ok(AuctionLotStatuses.ToAuctionLotStatusDtoFromAuctionLotStatus());
 
         }
     }

@@ -25,7 +25,7 @@ namespace AuctionService.Repository
             var deleteKoiMedia = await _context.KoiMedia.Where(m => m.KoiFishId == id).ToListAsync();
             if (deleteKoiMedia == null)
             {
-                return null!;
+                throw new KeyNotFoundException($"No koi media found with koi fish ID: {id}");
             }
             foreach (var media in deleteKoiMedia)
             {

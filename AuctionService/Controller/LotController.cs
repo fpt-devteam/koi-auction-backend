@@ -100,10 +100,7 @@ namespace AuctionService.Controller
                 newKoiFish.KoiMedia.Add(media);
             }
 
-            if (!await _unitOfWork.SaveChangesAsync())
-            {
-                return BadRequest("An error occurred while saving the data");
-            }
+            await _unitOfWork.SaveChangesAsync();
             return CreatedAtAction(nameof(GetLotById), new { id = newLot.LotId }, newLot.ToLotDtoFromLot());
         }
 
@@ -136,10 +133,7 @@ namespace AuctionService.Controller
                 newMedia.KoiFishId = id;
                 await _unitOfWork.KoiMedia.CreateKoiMediaAsync(newMedia);
             }
-            if (!await _unitOfWork.SaveChangesAsync())
-            {
-                return BadRequest("An error occurred while saving the data");
-            }
+            await _unitOfWork.SaveChangesAsync();
             return Ok(updateLot.ToLotDtoFromLot());
         }
 
@@ -149,10 +143,7 @@ namespace AuctionService.Controller
             var updateLot = await _unitOfWork.Lots.UpdateLotStatusAsync(id, lotStatusDto);
             if (updateLot == null)
                 return BadRequest();
-            if (!await _unitOfWork.SaveChangesAsync())
-            {
-                return BadRequest("An error occurred while saving the data");
-            }
+            await _unitOfWork.SaveChangesAsync();
             return Ok(updateLot.ToLotDtoFromLot());
         }
 
@@ -167,10 +158,7 @@ namespace AuctionService.Controller
             var deleteLot = await _unitOfWork.Lots.DeleteLotAsync(id);
             if (deleteLot == null)
                 return NotFound();
-            if (!await _unitOfWork.SaveChangesAsync())
-            {
-                return BadRequest("An error occurred while saving the data");
-            }
+            await _unitOfWork.SaveChangesAsync();
             return NoContent();
         }
 
@@ -189,17 +177,24 @@ namespace AuctionService.Controller
         }
 
         [HttpGet("breeder-statistics")]
-        public async Task<ActionResult<List<BreederStatisticDto>>> GetBreederStatistics([FromQuery] int? breederId)
+        public async Task<ActionResult<List<BreederStatisticDto>>> GetBreederStatistics()
         {
             try
             {
-                var statistics = await _lotService.GetBreederStatisticsAsync(breederId);
+                var statistics = await _lotService.GetBreederStatisticsAsync();
                 return Ok(statistics);
             }
             catch (Exception ex)
             {
                 return BadRequest(new { message = "Error retrieving breeder statistics", error = ex.Message });
             }
+        }
+
+        [HttpGet("total-statistics")]
+        public async Task<ActionResult<TotalDto>> GetTotalLotsStatisticsAsync([FromQuery] LotQueryObject lotQuery)
+        {
+            var result = await _lotService.GetTotalLotsStatisticsAsync(lotQuery);
+            return Ok(result);
         }
     }
 }

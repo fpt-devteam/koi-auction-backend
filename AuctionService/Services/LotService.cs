@@ -1,4 +1,5 @@
 using AuctionService.Dto.Lot;
+using AuctionService.Helper;
 using AuctionService.IRepository;
 using AuctionService.IServices;
 
@@ -6,76 +7,144 @@ namespace AuctionService.Services
 {
     public class LotService : ILotService
     {
-        private readonly ILotRepository _lotRepo;
+        private readonly int REJECT = 3;
+        private readonly int UNSOLD = 5;
+        private readonly int COMPLETED = 8;
+        private readonly int CANCELED = 9;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly BreederDetailService _breederService;
 
-        public LotService(ILotRepository lotRepo, BreederDetailService breederService)
+        public LotService(IUnitOfWork unitOfWork, BreederDetailService breederService)
         {
-            _lotRepo = lotRepo;
+            _unitOfWork = unitOfWork;
             _breederService = breederService;
         }
 
         public async Task<List<LotAuctionMethodStatisticDto>> GetLotAuctionMethodStatisticAsync()
         {
-            return await _lotRepo.GetLotAuctionMethodStatisticAsync();
+            return await _unitOfWork.Lots.GetLotAuctionMethodStatisticAsync();
         }
 
-        public async Task<List<BreederStatisticDto>> GetBreederStatisticsAsync(int? breederId = null)
+        public async Task<List<BreederStatisticDto>> GetBreederStatisticsAsync()
         {
-            var lots = await _lotRepo.GetBreederLotsStatisticsAsync(breederId);
+            var breeders = await _breederService.GetAllBreederAsync();
+            var lots = await _unitOfWork.Lots.GetBreederLotsStatisticsAsync();
             var statistics = new List<BreederStatisticDto>();
 
-            var breederGroups = lots.GroupBy(l => l.BreederId);
+            var breederGroups = lots.GroupBy(l => l.BreederId).ToDictionary(g => g.Key, g => g.ToList()); ;
 
-            foreach (var group in breederGroups)
+            foreach (var breeder in breeders)
             {
-                var breeder = await _breederService.GetBreederByIdAsync(group.Key);
-                if (breeder == null) continue;
-
-
-                //Total auction lots
-                var totalLots = group.Count(l =>
-                  l.AuctionLot != null
-                );
-
-                //System.Console.WriteLine("total AuctionLot: " + totalLots);
-
-                // Unsold lots are those with "Unsold" status
-                var unsoldLots = group.Count(l => l.LotStatus.LotStatusId == 5);
-                //System.Console.WriteLine("Unsold Lot:" + unsoldLots);
-                // Cancelled sold lots are those with "Canceled" status AND have a SoldLot record
-                var cancelledSoldLots = group.Count(l =>
-                    l.LotStatus.LotStatusId == 9 &&
-                    l.AuctionLot != null &&
-                    l.AuctionLot.SoldLot != null);
-
-                // Completed lots are those with "Completed" status and have a SoldLot record
-                var completedLots = group.Count(l =>
-                    l.LotStatus.LotStatusId == 8 &&
-                    l.AuctionLot != null &&
-                    l.AuctionLot.SoldLot != null);
-
-                statistics.Add(new BreederStatisticDto
+                if (breederGroups.TryGetValue(breeder.BreederId, out var group))
                 {
-                    BreederId = group.Key,
-                    FarmName = breeder.FarmName!,
-                    TotalAuctionLot = totalLots,
-                    CountSuccess = completedLots,
-                    CountUnsuccess = unsoldLots + cancelledSoldLots,
-                    PercentUnsold = CalculatePercentage(unsoldLots, totalLots),
-                    PercentCancelledSoldLot = CalculatePercentage(cancelledSoldLots, totalLots),
-                    PercentSuccess = CalculatePercentage(completedLots, totalLots),
-                    PercentUnsuccess = CalculatePercentage(unsoldLots + cancelledSoldLots, totalLots)
-                });
-            }
 
-            return statistics;
+                    // var breeder = await _breederService.GetBreederByIdAsync(group.Key);
+                    // if (breeder == null) continue;
+                    // Tính các thống kê cho breeder có lot đấu giá
+
+                    //Total auction lots
+                    var totalLots = group.Count(l =>
+                      l.AuctionLot != null
+                    );
+
+                    // Unsold lots are those with "Unsold" status
+                    var unsoldLots = group.Count(l => l.LotStatus.LotStatusId == UNSOLD);
+
+                    // Cancelled sold lots are those with "Canceled" status AND have a SoldLot record
+                    var cancelledSoldLots = group.Count(l =>
+                        l.LotStatus.LotStatusId == CANCELED &&
+                        l.AuctionLot != null &&
+                        l.AuctionLot.SoldLot != null);
+
+                    // Completed lots are those with "Completed" status and have a SoldLot record
+                    var completedLots = group.Count(l =>
+                        l.LotStatus.LotStatusId == COMPLETED &&
+                        l.AuctionLot != null &&
+                        l.AuctionLot.SoldLot != null);
+
+                    statistics.Add(new BreederStatisticDto
+                    {
+                        BreederId = breeder.BreederId,
+                        FarmName = breeder.FarmName!,
+                        TotalAuctionLot = totalLots,
+                        CountSuccess = completedLots,
+                        CountUnsuccess = unsoldLots + cancelledSoldLots,
+                        PercentUnsold = CalculatePercentage(unsoldLots, totalLots),
+                        PercentCancelledSoldLot = CalculatePercentage(cancelledSoldLots, totalLots),
+                        PercentSuccess = CalculatePercentage(completedLots, totalLots),
+                        PercentUnsuccess = CalculatePercentage(unsoldLots + cancelledSoldLots, totalLots),
+                        Priority = GetPriorityBasedOnSuccessRate(CalculatePercentage(completedLots, totalLots))
+                    });
+                }
+                else
+                {
+                    // Thêm breeder vào thống kê với các giá trị mặc định khi không có lô đấu giá
+                    statistics.Add(new BreederStatisticDto
+                    {
+                        BreederId = breeder.BreederId,
+                        FarmName = breeder.FarmName!,
+                        TotalAuctionLot = 0,
+                        CountSuccess = 0,
+                        CountUnsuccess = 0,
+                        PercentUnsold = 0,
+                        PercentCancelledSoldLot = 0,
+                        PercentSuccess = 0,
+                        PercentUnsuccess = 0,
+                        Priority = 3
+                    });
+                }
+            }
+            return statistics.OrderBy(s => s.Priority).ToList();
         }
 
         private double CalculatePercentage(int part, int total)
         {
             if (total == 0) return 0;
             return Math.Round((double)part / total * 100, 2);
+        }
+
+        // Phương thức để xác định priority dựa trên tỷ lệ thành công
+        private int GetPriorityBasedOnSuccessRate(double percentSuccess)
+        {
+            if (percentSuccess >= 75)
+                return 1;
+            else if (percentSuccess >= 50)
+                return 2;
+            else if (percentSuccess >= 25)
+                return 3;
+            else
+                return 4;
+        }
+
+        public async Task<TotalDto> GetTotalLotsStatisticsAsync(LotQueryObject lotQuery)
+        {
+            var lots = await _unitOfWork.Lots.GetAllAsync(lotQuery);
+            var total = lots.Count;
+            var completedLots = lots.Count(l =>
+                        l.LotStatus.LotStatusId == COMPLETED &&
+                        l.AuctionLot != null &&
+                        l.AuctionLot.SoldLot != null);
+            var unsoldLots = lots.Count(l => l.LotStatus.LotStatusId == UNSOLD);
+            var cancelledSoldLots = lots.Count(l =>
+                        l.LotStatus.LotStatusId == CANCELED &&
+                        l.AuctionLot != null &&
+                        l.AuctionLot.SoldLot != null);
+            var rejectLot = lots.Count(l =>
+                        l.LotStatus.LotStatusId == REJECT);
+
+            var result = new TotalDto
+            {
+                Total = total,
+                CompletedLots = completedLots > 0 ? completedLots : 0,
+                UnsoldLots = unsoldLots > 0 ? unsoldLots : 0,
+                CanceledSoldLots = cancelledSoldLots > 0 ? cancelledSoldLots : 0,
+                RejectedLots = rejectLot > 0 ? rejectLot : 0
+            };
+            if (result == null)
+            {
+                throw new InvalidOperationException("Total Statistics Fail");
+            }
+            return result;
         }
     }
 }

@@ -18,6 +18,6 @@ namespace AuctionService.IRepository
         Task<Lot> UpdateLotStatusAsync(int id, UpdateLotStatusDto lotRequest);
         Task<Lot> DeleteLotAsync(int id);
         Task<List<LotAuctionMethodStatisticDto>> GetLotAuctionMethodStatisticAsync();
-        Task<List<Lot>> GetBreederLotsStatisticsAsync(int? breederId);
+        Task<List<Lot>> GetBreederLotsStatisticsAsync();
     }
 }

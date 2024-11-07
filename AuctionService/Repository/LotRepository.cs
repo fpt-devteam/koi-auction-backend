@@ -34,9 +34,9 @@ namespace AuctionService.Repository
 
         public async Task<Lot> DeleteLotAsync(int id)
         {
-            var lot = await _context.Lots.Include(l => l.KoiFish).Include(l => l.LotStatus).FirstOrDefaultAsync(l => l.LotId == id);
+            var lot = await _context.Lots.Include(l => l.KoiFish).FirstOrDefaultAsync(l => l.LotId == id);
             if (lot == null)
-                return null!;
+                throw new KeyNotFoundException($" Lot {id} was not found");
             var status = await _context.LotStatuses
                                   .FirstOrDefaultAsync(ls => ls.LotStatusName == "Canceled");
             lot.LotStatusId = status!.LotStatusId;
@@ -154,7 +154,7 @@ namespace AuctionService.Repository
                                             Include(l => l.LotStatus).
                                             Include(l => l.AuctionMethod).FirstOrDefaultAsync(l => l.LotId == id);
             if (lot == null)
-                return null!;
+                throw new KeyNotFoundException($" Lot {id} was not found");
             return lot;
         }
 
@@ -163,8 +163,8 @@ namespace AuctionService.Repository
             var lot = await _context.Lots.Include(l => l.KoiFish).
                                             Include(l => l.LotStatus).
                                             Include(l => l.AuctionMethod).FirstOrDefaultAsync(l => l.LotId == id);
-            if (lot == null)    
-                return null!;
+            if (lot == null)
+                throw new KeyNotFoundException($" Lot {id} was not found");
 
             var koiFish = lot.KoiFish;
             lot.StartingPrice = updateLotDto.StartingPrice;
@@ -180,7 +180,7 @@ namespace AuctionService.Repository
                                             Include(l => l.LotStatus).
                                             Include(l => l.AuctionMethod).FirstOrDefaultAsync(l => l.LotId == id);
             if (lot == null)
-                return null!;
+                throw new KeyNotFoundException($" Lot {id} was not found");
             var status = await _context.LotStatuses.FirstOrDefaultAsync(x => x.LotStatusName == updateLot.LotStatusName);
             lot.LotStatusId = status!.LotStatusId;
             return lot;
@@ -216,20 +216,15 @@ namespace AuctionService.Repository
             return result;
         }
 
-        public async Task<List<Lot>> GetBreederLotsStatisticsAsync(int? breederId)
+        public async Task<List<Lot>> GetBreederLotsStatisticsAsync()
         {
-            var query = _context.Lots
+            var query = await _context.Lots
                 .Include(l => l.LotStatus)
                 .Include(l => l.AuctionLot)
                     .ThenInclude(al => al!.SoldLot)
-                .AsQueryable();
-
-            if (breederId.HasValue)
-            {
-                query = query.Where(l => l.BreederId == breederId.Value);
-            }
-
-            return await query.ToListAsync();
+                .ToListAsync();
+            if (query.Count == 0) throw new KeyNotFoundException($" Lots was not found");
+            return query;
         }
     }
 }

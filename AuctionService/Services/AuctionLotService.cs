@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AuctionService.Dto.AuctionLot;
+using AuctionService.Dto.Lot;
 using AuctionService.Dto.ScheduledTask;
 using AuctionService.Enums;
 using AuctionService.HandleMethod;
@@ -25,13 +26,67 @@ namespace AuctionService.Services
 
         private readonly ITaskSchedulerService _taskSchedulerService;
         private readonly IServiceScopeFactory _serviceScopeFactory;
-
-        public AuctionLotService(IAuctionService auctionService, BidManagementService bidManagementService, ITaskSchedulerService taskSchedulerService, IServiceScopeFactory serviceScopeFactory)
+        private readonly IUnitOfWork _unitOfWork;
+        public AuctionLotService(IUnitOfWork unitOfWork, IAuctionService auctionService, BidManagementService bidManagementService, ITaskSchedulerService taskSchedulerService, IServiceScopeFactory serviceScopeFactory)
         {
             _bidManagementService = bidManagementService;
             _taskSchedulerService = taskSchedulerService;
             _serviceScopeFactory = serviceScopeFactory;
             _auctionService = auctionService;
+            _unitOfWork = unitOfWork;
+        }
+
+        public async Task<AuctionLot> DeleteAsync(int id)
+        {
+            var auctionLot = await _unitOfWork.AuctionLots.GetAuctionLotById(id);
+            // Kiểm tra trạng thái AuctionLot
+            if (auctionLot == null)
+                throw new KeyNotFoundException($"Auction Lot with ID {id} was not found.");
+            var tmp = (int)Enums.AuctionLotStatus.Upcoming;
+            System.Console.WriteLine($"tmp = {tmp}");
+            if (auctionLot.AuctionLotStatusId != (int)Enums.AuctionLotStatus.Upcoming)
+                throw new InvalidOperationException("AuctionLot Status must be Upcoming to delete.");
+            // Xóa AuctionLot nếu trạng thái hợp lệ
+            await _unitOfWork.AuctionLots.DeleteAsync(id);
+            // Cập nhật trạng thái Lot nếu cần
+            await _unitOfWork.Lots.UpdateLotStatusAsync(auctionLot.AuctionLotId,
+                new UpdateLotStatusDto { LotStatusName = "Approved" });
+            await _unitOfWork.SaveChangesAsync();
+            return auctionLot;
+        }
+        public async Task<bool> DeleteListAsync(List<int> ids)
+        {
+            var deletedAuctionLots = await _unitOfWork.AuctionLots.DeleteListAsync(ids);
+            foreach (var auctionLot in deletedAuctionLots)
+            {
+                await _unitOfWork.Lots.UpdateLotStatusAsync(auctionLot.AuctionLotId,
+                                            new UpdateLotStatusDto { LotStatusName = "Approved" });
+            }
+            await _unitOfWork.SaveChangesAsync();
+            return true;
+        }
+        public async Task<AuctionLot> CreateAsync(CreateAuctionLotDto createAuctionLot)
+        {
+            var auctionLot = createAuctionLot.ToAuctionLotFromCreateAuctionLotDto();
+            await _unitOfWork.Lots.UpdateLotStatusAsync(auctionLot.AuctionLotId,
+                                            new UpdateLotStatusDto { LotStatusName = "In auction" });
+            var newAuctionLot = await _unitOfWork.AuctionLots.CreateAsync(auctionLot);
+            await _unitOfWork.SaveChangesAsync();
+            return newAuctionLot;
+        }
+        public async Task<List<AuctionLot>> CreateListAsync(List<CreateAuctionLotDto> auctionLotDtos)
+        {
+            var auctionLots = auctionLotDtos.Select(dto => dto.ToAuctionLotFromCreateAuctionLotDto()).ToList();
+            foreach (var auctionLot in auctionLots)
+            {
+                await _unitOfWork.Lots.UpdateLotStatusAsync(auctionLot.AuctionLotId, new Dto.Lot.UpdateLotStatusDto
+                {
+                    LotStatusName = "In auction"
+                });
+            }
+            await _unitOfWork.AuctionLots.CreateListAsync(auctionLots);
+            await _unitOfWork.SaveChangesAsync();
+            return auctionLots;
         }
 
         public async Task ScheduleAuctionLotAsync(int auctionLotId, DateTime startTime)

@@ -14,7 +14,10 @@ namespace AuctionService.Repository
         }
         public async Task<List<AuctionLotStatus>> GetAllAsync()
         {
-            return await _context.AuctionLotStatuses.ToListAsync();
+            var statuses = await _context.AuctionLotStatuses.ToListAsync();
+            if (statuses == null || statuses.Count == 0)
+                throw new Exception("Auction Lot Statuses not existed");
+            return statuses;
         }
 
         public async Task<AuctionLotStatus> GetAuctionLotStatusByIdAsync(int id)
@@ -22,7 +25,7 @@ namespace AuctionService.Repository
             var status = await _context.AuctionLotStatuses.FirstOrDefaultAsync(a => a.AuctionLotStatusId == id);
             if (status == null)
             {
-                throw new ArgumentException("status not existed");
+                throw new ArgumentException($"Auction Lot Status {id} not existed");
             }
             return status;
         }
