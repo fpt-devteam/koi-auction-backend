@@ -6,8 +6,8 @@ namespace AuctionService.IServices
 {
     public interface ISoldLotService
     {
-        Task<List<SoldLot>> GetAllAsync(SoldLotQueryObject queryObject);
-        Task<SoldLot> GetSoldLotById(int id);
+        Task<List<SoldLotDto>> GetAllAsync(SoldLotQueryObject queryObject);
+        Task<SoldLotDto> GetSoldLotById(int id);
         Task<SoldLot> CreateSoldLot(CreateSoldLotDto soldLotDto);
     }
 }
