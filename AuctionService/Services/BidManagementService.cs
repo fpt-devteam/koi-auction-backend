@@ -72,7 +72,7 @@ namespace AuctionService.Services
             await _bidHub.Clients.All.SendAsync(WsMess.ReceiveFetchAuctionLot);
             await _bidHub.Clients.All.SendAsync(WsMess.ReceiveFetchBidLog);
 
-
+            //test only
             if (winner == null) System.Console.WriteLine("No winner");
             else
                 System.Console.WriteLine($"winner = {winner!.BidderId}");
@@ -83,9 +83,9 @@ namespace AuctionService.Services
                 using (var scope = _serviceScopeFactory.CreateScope())
                 {
                     var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
-                    var lot = await unitOfWork.Lots.GetLotByIdAsync(_bidService.AuctionLotBidDto!.AuctionLotId);
-                    // var winner1 = _bidService.GetWinner();
-                    lot.LotStatusId = winner == null ? (int)Enums.LotStatus.UnSold : (int)Enums.LotStatus.ToShip;
+                    // var lot = await unitOfWork.Lots.GetLotByIdAsync(_bidService.AuctionLotBidDto!.AuctionLotId);
+                    // lot.LotStatusId = winner == null ? (int)Enums.LotStatus.UnSold : (int)Enums.LotStatus.ToShip;
+                    //move to the bot to save change one time
                     if (winner != null)
                     {
                         System.Console.WriteLine($"Winner : {winner.BidderId}");
@@ -93,10 +93,9 @@ namespace AuctionService.Services
                         {
                             WinnerId = winner.BidderId,
                             FinalPrice = winner.BidAmount,
-                            SoldLotId = _bidService.AuctionLotBidDto.AuctionLotId
+                            SoldLotId = _bidService.AuctionLotBidDto!.AuctionLotId
                         };
                         await unitOfWork.SoldLot.CreateSoldLot(soldLot);
-                        await unitOfWork.SaveChangesAsync();
 
                         await _bidService.PaymentAsync(new PaymentDto
                         {
@@ -114,6 +113,9 @@ namespace AuctionService.Services
                             });
                         }
                     }
+                    var lot = await unitOfWork.Lots.GetLotByIdAsync(_bidService.AuctionLotBidDto!.AuctionLotId);
+                    lot.LotStatusId = winner == null ? (int)Enums.LotStatus.UnSold : (int)Enums.LotStatus.ToShip;
+                    await unitOfWork.SaveChangesAsync();
                 }
             }
             catch (Exception e)

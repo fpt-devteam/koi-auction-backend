@@ -29,80 +29,63 @@ namespace AuctionService.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllBidLog([FromQuery] BidLogQueryObject queryObject)
         {
-            try
-            {
-                var bidLog = await _service.GetAllBidLog(queryObject);
-                if (bidLog == null)
-                    return NotFound("No bid logs found.");
+            var bidLog = await _service.GetAllBidLog(queryObject);
+            if (bidLog == null)
+                return NotFound("No bid logs found.");
 
-                var bidDtos = bidLog.Select(b => b.ToBidLogDtoFromBidLog());
-                return Ok(bidDtos);
-            }
-            catch (Exception ex)
-            {
-                // Log the exception (optional)
-                return StatusCode(500, "Internal server error: " + ex.Message);
-            }
+            var bidDtos = bidLog.Select(b => b.ToBidLogDtoFromBidLog());
+            return Ok(bidDtos);
         }
+
+
 
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetBidLogById([FromRoute] int id)
         {
-            try
-            {
-                var bidLog = await _service.GetBidLogById(id);
-                if (bidLog == null)
-                    return NotFound($"BidLog with ID {id} does not exist.");
 
-                return Ok(bidLog.ToBidLogDtoFromBidLog());
-            }
-            catch (Exception ex)
-            {
-                // Log the exception (optional)
-                return StatusCode(500, "Internal server error: " + ex.Message);
-            }
+            var bidLog = await _service.GetBidLogById(id);
+            if (bidLog == null)
+                return NotFound($"BidLog with ID {id} does not exist.");
+
+            return Ok(bidLog.ToBidLogDtoFromBidLog());
+
         }
 
         [HttpGet("highest-bid/{auctionLotId:int}")]
         public async Task<IActionResult> GetHighestBidLogByAuctionLotId([FromRoute] int auctionLotId)
         {
-            try
-            {
-                var bidLog = await _service.GetHighestBidLogByAuctionLotId(auctionLotId);
-                if (bidLog == null)
-                    return NotFound($"No bid logs found for auction lot with ID {auctionLotId}.");
 
-                return Ok(bidLog.ToBidLogDtoFromBidLog());
-            }
-            catch (Exception ex)
-            {
-                // Log the exception (optional)
-                return StatusCode(500, "Internal server error: " + ex.Message);
-            }
+            var bidLog = await _service.GetHighestBidLogByAuctionLotId(auctionLotId);
+            if (bidLog == null)
+                return NotFound($"No bid logs found for auction lot with ID {auctionLotId}.");
+
+            return Ok(bidLog.ToBidLogDtoFromBidLog());
         }
 
-        // [HttpPost]
-        // public async Task<IActionResult> PlaceBid(CreateBidLogDto placeBid)
-        // {
-        //     try
-        //     {
-        //         if (!ModelState.IsValid)
-        //             return BadRequest(ModelState);
-
-        //         var newBid = await _service.CreateBidLog(placeBid.ToBidLogFromCreateBidLogDto());
-        //         var newBidDto = newBid.ToBidLogDtoFromBidLog();
-        //         return CreatedAtAction(nameof(GetBidLogById), new { id = newBid.BidLogId }, newBidDto);
-        //     }
-        //     catch (InvalidOperationException ex)
-        //     {
-        //         return BadRequest(new { message = ex.Message });
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         // Log the exception (optional)
-        //         return StatusCode(500, "Internal server error: " + ex.Message);
-        //     }
-        // }
     }
+
+    // [HttpPost]
+    // public async Task<IActionResult> PlaceBid(CreateBidLogDto placeBid)
+    // {
+    //     try
+    //     {
+    //         if (!ModelState.IsValid)
+    //             return BadRequest(ModelState);
+
+    //         var newBid = await _service.CreateBidLog(placeBid.ToBidLogFromCreateBidLogDto());
+    //         var newBidDto = newBid.ToBidLogDtoFromBidLog();
+    //         return CreatedAtAction(nameof(GetBidLogById), new { id = newBid.BidLogId }, newBidDto);
+    //     }
+    //     catch (InvalidOperationException ex)
+    //     {
+    //         return BadRequest(new { message = ex.Message });
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         // Log the exception (optional)
+    //         return StatusCode(500, "Internal server error: " + ex.Message);
+    //     }
+    // }
 }
+
 

@@ -1,4 +1,5 @@
 using AuctionService.Data;
+using AuctionService.Helper;
 using AuctionService.IRepository;
 using AuctionService.Models;
 using Microsoft.EntityFrameworkCore;
@@ -18,12 +19,15 @@ namespace AuctionService.Repository
             return soldLot;
         }
 
-        public async Task<List<SoldLot>> GetAllAsync()
+        public async Task<List<SoldLot>> GetAllAsync(SoldLotQueryObject query)
         {
-            var soldLots = await _context.SoldLots.ToListAsync();
+            var soldLots = _context.SoldLots.AsQueryable();
             if (soldLots == null)
                 throw new Exception("SoldLots is null");
-            return soldLots;
+
+            if (query.UserID.HasValue)
+                soldLots = soldLots.Where(x => x.WinnerId == query.UserID.Value);
+            return await soldLots.ToListAsync();
         }
 
         public async Task<SoldLot> GetSoldLotById(int id)
@@ -31,7 +35,7 @@ namespace AuctionService.Repository
             var soldLot = await _context.SoldLots.FirstOrDefaultAsync(s => s.SoldLotId == id);
             if (soldLot == null)
             {
-                throw new Exception("Sold Lot is not existed");
+                throw new Exception($"Sold Lot is not existed with ID: {id}");
             }
             return soldLot;
         }

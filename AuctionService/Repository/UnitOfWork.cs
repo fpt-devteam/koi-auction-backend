@@ -42,24 +42,10 @@ namespace AuctionService.Repository
 
         public async Task<bool> SaveChangesAsync()
         {
-            try
-            {
-                await _context.SaveChangesAsync();
-                return true;
-            }
-            catch (DbUpdateException ex)
-            {
-                if (ex.InnerException is SqlException sqlEx && (sqlEx.Number == 547)) // 547 là mã lỗi khóa ngoại của SQL Server
-                {
-                    return false;
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
+            await _context.SaveChangesAsync();
+            return true;
         }
+
 
         public void Dispose()
         {

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AuctionService.Helper;
 using AuctionService.IServices;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,21 +19,17 @@ namespace AuctionService.Controller
             _service = service;
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetAllSoldLot([FromQuery] SoldLotQueryObject queryObject)
+        {
+            var soldLots = await _service.GetAllAsync(queryObject);
+            return Ok(soldLots);
+        }
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetSoldLotById([FromRoute] int id)
         {
-            try
-            {
-                var soldLot = await _service.GetSoldLotById(id);
-                if (soldLot == null)
-                    return NotFound($"SoldLot with ID {id} does not exist.");
-
-                return Ok(soldLot);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Internal server error: " + ex.Message);
-            }
+            var soldLot = await _service.GetSoldLotById(id);
+            return Ok(soldLot);
         }
     }
 }

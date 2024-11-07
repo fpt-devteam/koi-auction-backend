@@ -50,35 +50,31 @@ namespace AuctionService.Controller
         [HttpPost]
         public async Task<IActionResult> CreateAuction([FromBody] CreateAuctionDto auctionDto)
         {
-            try
+
+            var uidHeader = HttpContext.Request.Headers["uid"].FirstOrDefault();
+            if (string.IsNullOrEmpty(uidHeader) || !int.TryParse(uidHeader, out var uid))
             {
-                var uidHeader = HttpContext.Request.Headers["uid"].FirstOrDefault();
-                if (string.IsNullOrEmpty(uidHeader) || !int.TryParse(uidHeader, out var uid))
-                {
-                    return BadRequest("Invalid or missing uid header");
-                }
-                if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
-
-                Auction auction = auctionDto.ToAuctionFromCreateAuctionDto(uid);
-                auction.AuctionName = AuctionHelper.GenerateAuctionName(auction);
-                auction.StartTime = auctionDto.StartTime;
-
-                await _unitOfWork.Auctions.CreateAsync(auction);
-                if (!await _unitOfWork.SaveChangesAsync())
-                {
-                    return BadRequest("An error occurred while saving the data");
-                }
-
-                // Schedule auction
-                _auctionService.ScheduleAuction(auction.AuctionId, auction.StartTime);
-                return CreatedAtAction(nameof(GetAuctionById), new { id = auction.AuctionId }, auction.ToAuctionDtoFromAuction());
+                return BadRequest("Invalid or missing uid header");
             }
-            catch (Exception e)
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            Auction auction = auctionDto.ToAuctionFromCreateAuctionDto(uid);
+            auction.AuctionName = AuctionHelper.GenerateAuctionName(auction);
+            auction.StartTime = auctionDto.StartTime;
+
+            await _unitOfWork.Auctions.CreateAsync(auction);
+            if (!await _unitOfWork.SaveChangesAsync())
             {
-                return BadRequest(e.Message);
+                return BadRequest("An error occurred while saving the data");
             }
+
+            // Schedule auction
+            _auctionService.ScheduleAuction(auction.AuctionId, auction.StartTime);
+            return CreatedAtAction(nameof(GetAuctionById), new { id = auction.AuctionId }, auction.ToAuctionDtoFromAuction());
         }
+
+
 
         [HttpPut]
         [Route("{id:int}")]
@@ -87,10 +83,7 @@ namespace AuctionService.Controller
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             var action = await _unitOfWork.Auctions.UpdateAsync(id, auctionDto);
-            if (!await _unitOfWork.SaveChangesAsync())
-            {
-                return BadRequest("An error occurred while saving the data");
-            }
+            await _unitOfWork.SaveChangesAsync();
             return Ok(action.ToAuctionDtoFromAuction());
         }
 
@@ -114,10 +107,7 @@ namespace AuctionService.Controller
                 }
             }
             await _unitOfWork.Auctions.DeleteAsync(id);
-            if (!await _unitOfWork.SaveChangesAsync())
-            {
-                return BadRequest("An error occurred while saving the data");
-            }
+            await _unitOfWork.SaveChangesAsync();
             return NoContent();
         }
     }
