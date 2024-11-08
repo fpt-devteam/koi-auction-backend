@@ -25,6 +25,7 @@ const profile = async (req, res) => {
          ProvinceCode: user.ProvinceCode,
          DistrictCode: user.DistrictCode,
          WardCode: user.WardCode,
+         Address: user.Address,
       });
    } catch (err) {
       console.log(err);
@@ -238,7 +239,7 @@ const register = async (req, res) => {
 
 const updateProfile = async (req, res) => {
    try {
-      const { Username, FirstName, LastName, Phone, Email, ProvinceCode, DistrictCode, WardCode } = req.body;
+      const { Username, FirstName, LastName, Phone, Email, ProvinceCode, DistrictCode, WardCode, Address } = req.body;
       await User.update(
          {
             Username: Username,
@@ -249,6 +250,7 @@ const updateProfile = async (req, res) => {
             ProvinceCode: ProvinceCode,
             DistrictCode: DistrictCode,
             WardCode: WardCode,
+            Address: Address,
             CreatedAt: new Date(),
             UpdatedAt: new Date(),
          },
@@ -474,7 +476,25 @@ const getBreederProfile = async (req, res) => {
 
 const getAllBreederProfiles = async (req, res) => {
    try {
-      const breeders = await BreederDetail.findAll();
+      // const breeders = await BreederDetail.findAll();
+      User.hasOne(BreederDetail, { foreignKey: "BreederId" });
+      BreederDetail.belongsTo(User, { foreignKey: "BreederId" });
+      let breeders = await User.findAll({
+         where: { UserRoleId: 2 },
+         include: [{ model: BreederDetail }],
+      });
+      // only return breeder details and address
+      breeders = breeders.map((breeder) => {
+         return {
+            Address: breeder.Address,
+            DistrictCode: breeder.DistrictCode,
+            WardCode: breeder.WardCode,
+            ProvinceCode: breeder.ProvinceCode,
+            FarmName: breeder.BreederDetail?.FarmName,
+            Certificate: breeder.BreederDetail?.Certificate,
+            About: breeder.BreederDetail?.About,
+         };
+      });
       if (!breeders) {
          return res.status(404).json({ message: "Breeder Profiles not found" });
       }
@@ -487,11 +507,25 @@ const getAllBreederProfiles = async (req, res) => {
 
 const getBreederProfileById = async (req, res) => {
    try {
-      const breeder = await BreederDetail.findByPk(req.params.id);
+      User.hasOne(BreederDetail, { foreignKey: "BreederId" });
+      BreederDetail.belongsTo(User, { foreignKey: "BreederId" });
+      const breeder = await User.findOne({
+         where: { UserId: req.params.id },
+         include: [{ model: BreederDetail }],
+      });
+
       if (!breeder) {
          return res.status(404).json({ message: "Breeder Profile not found" });
       }
-      res.status(200).json(breeder);
+      res.status(200).json({
+         Address: breeder.Address,
+         DistrictCode: breeder.DistrictCode,
+         WardCode: breeder.WardCode,
+         ProvinceCode: breeder.ProvinceCode,
+         FarmName: breeder.BreederDetail?.FarmName,
+         Certificate: breeder.BreederDetail?.Certificate,
+         About: breeder.BreederDetail?.About,
+      });
    } catch (err) {
       console.log(err);
       res.status(500).json({ message: "Internal server error" });
