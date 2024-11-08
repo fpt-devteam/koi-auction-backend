@@ -45,6 +45,8 @@ namespace AuctionService.Repository
         public async Task<BidLog?> GetHighestBidLogByAuctionLotId(int auctionLotId)
         {
             var bid = await _context.BidLogs.Where(b => b.AuctionLotId == auctionLotId).OrderByDescending(b => b.BidAmount).FirstOrDefaultAsync();
+            if (bid == null)
+                throw new KeyNotFoundException($"No bid log found with auction lot ID: {auctionLotId}");
             return bid;
         }
 

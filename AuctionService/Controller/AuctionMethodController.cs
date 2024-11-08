@@ -49,10 +49,7 @@ namespace AuctionService.Controller
             }
             var method = methodDto.ToActionMethodFromCreateAuctionMethodDto();
             var newMethod = await _unitOfWork.AuctionMethods.CreateAsync(method);
-            if (!await _unitOfWork.SaveChangesAsync())
-            {
-                return BadRequest("An error occurred while saving the data");
-            };
+            await _unitOfWork.SaveChangesAsync(); ;
             return CreatedAtAction(nameof(GetAuctionMethodByID), new { id = newMethod.AuctionMethodId }, newMethod.ToAuctionMethodDtoFromAuctionMethod());
         }
 
@@ -65,10 +62,7 @@ namespace AuctionService.Controller
                 return BadRequest(ModelState);
             }
             var updateMethod = await _unitOfWork.AuctionMethods.UpdateAsync(id, methodDto);
-            if (!await _unitOfWork.SaveChangesAsync())
-            {
-                return BadRequest("An error occurred while saving the data");
-            }
+            await _unitOfWork.SaveChangesAsync();
             return Ok(updateMethod.ToAuctionMethodDtoFromAuctionMethod());
         }
 
@@ -83,10 +77,7 @@ namespace AuctionService.Controller
             var deleteMethod = await _unitOfWork.AuctionMethods.DeleteAsync(id);
             if (deleteMethod == null)
                 return NotFound();
-            if (!await _unitOfWork.SaveChangesAsync())
-            {
-                return BadRequest("An error occurred while saving the data");
-            }
+            await _unitOfWork.SaveChangesAsync();
             return NoContent();
         }
 

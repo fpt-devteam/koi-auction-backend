@@ -29,7 +29,7 @@ namespace AuctionService.Repository
             var koiFish = await _context.KoiFishes.FirstOrDefaultAsync(f => f.KoiFishId == id);
             if (koiFish == null)
             {
-                return null!;
+                throw new KeyNotFoundException($"No koifish found with ID: {id}");
             }
             koiFish.Variety = updateKoiDto.Variety;
             koiFish.Sex = updateKoiDto.Sex;

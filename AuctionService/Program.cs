@@ -89,6 +89,7 @@ builder.Services.AddHttpClient();
 var app = builder.Build();
 
 app.UseMiddleware<AuthorizationMiddleware>();
+app.UseMiddleware<ExceptionMiddleware>();
 app.UseCors("AllowSpecificOrigins");
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

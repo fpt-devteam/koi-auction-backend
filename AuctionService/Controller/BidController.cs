@@ -40,8 +40,5 @@ namespace AuctionService.Controllers
             }
             return Ok();
         }
-
-
-
     }
 }
