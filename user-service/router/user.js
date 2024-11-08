@@ -40,4 +40,6 @@ router.get("/manage/breeder/profile", controller.getAllBreederProfiles);
 router.get("/manage/breeder/profile/:id", controller.getBreederProfileById);
 router.delete("/manage/breeder/profile/:id", authenticate, highRole, controller.manageDeleteBreederProfile);
 
+router.get("/statistics/users", authenticate, adminOnly, controller.getStatisticsUsers);
+
 module.exports = router;
