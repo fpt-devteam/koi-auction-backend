@@ -106,14 +106,12 @@ namespace AuctionService.Services
         // Phương thức để xác định priority dựa trên tỷ lệ thành công
         private int GetPriorityBasedOnSuccessRate(double percentSuccess)
         {
-            if (percentSuccess >= 75)
+            if (percentSuccess >= 70)
                 return 1;
-            else if (percentSuccess >= 50)
+            else if (percentSuccess >= 40)
                 return 2;
-            else if (percentSuccess >= 25)
-                return 3;
             else
-                return 4;
+                return 3;
         }
 
         public async Task<TotalDto> GetTotalLotsStatisticsAsync(LotQueryObject lotQuery)
@@ -144,6 +142,12 @@ namespace AuctionService.Services
             {
                 throw new InvalidOperationException("Total Statistics Fail");
             }
+            return result;
+        }
+
+        public async Task<List<LotSearchResultDto>> GetLotSearchResults(int breederId)
+        {
+            var result = await _unitOfWork.Lots.GetLotSearchResults(breederId) ?? throw new InvalidOperationException("Not lot search existed");
             return result;
         }
     }

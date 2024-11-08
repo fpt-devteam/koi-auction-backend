@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AuctionService.Dto.AuctionLot;
+using AuctionService.Helper;
 using AuctionService.Models;
 
 namespace AuctionService.IServices
@@ -15,6 +16,7 @@ namespace AuctionService.IServices
         Task<bool> DeleteListAsync(List<int> ids);
         Task<AuctionLot> CreateAsync(CreateAuctionLotDto auctionLot);
         Task<List<AuctionLot>> CreateListAsync(List<CreateAuctionLotDto> auctionLots);
+        Task<List<AuctionLotBidDto>> SearchAuctionLot(AuctionLotQueryObject queryObject);
 
     }
 }
