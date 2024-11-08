@@ -33,7 +33,7 @@ namespace AuctionService.HandleMethod
         public override bool IsBidValid(CreateBidLogDto bid, AuctionLotBidDto? auctionLotBidDto, decimal balance)
         {
             // Kiểm tra điều kiện cơ bản về AuctionLot và số dư trước
-            if (auctionLotBidDto == null || auctionLotBidDto.AuctionLotId != bid.AuctionLotId || bid.BidAmount > balance)
+            if (auctionLotBidDto == null || auctionLotBidDto.AuctionLotId != bid.AuctionLotId || bid.BidAmount > balance || bid.BidAmount < auctionLotBidDto.StartPrice)
             {
                 return false;
             }

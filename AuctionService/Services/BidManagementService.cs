@@ -93,11 +93,12 @@ namespace AuctionService.Services
                         await unitOfWork.SoldLot.CreateSoldLot(soldLot);
 
                         System.Console.WriteLine($"Payment payment {winner.BidderId} {winner.BidAmount}");
-                        // await _bidService.PaymentAsync(new PaymentDto
-                        // {
-                        //     UserId = winner.BidderId,
-                        //     Amount = winner.BidAmount
-                        // });
+                        await _bidService.PaymentAsync(new PaymentDto
+                        {
+                            UserId = winner.BidderId,
+                            Amount = winner.BidAmount,
+                            SoldLotId = _bidService.AuctionLotBidDto!.AuctionLotId
+                        });
 
                         //send message to winner
                         var connection = _connections.FirstOrDefault(x => x.Value.UserId == winner.BidderId);
@@ -106,7 +107,8 @@ namespace AuctionService.Services
                             await _bidHub.Clients.Client(connection.Key).SendAsync(WsMess.ReceiveSuccessPayment, new PaymentDto
                             {
                                 UserId = winner.BidderId,
-                                Amount = winner.BidAmount
+                                Amount = winner.BidAmount,
+                                SoldLotId = _bidService.AuctionLotBidDto!.AuctionLotId
                             });
                         }
                     }
@@ -114,6 +116,7 @@ namespace AuctionService.Services
                     await _bidHub.Clients.All.SendAsync(WsMess.ReceiveWinner, winner);
                     await _bidHub.Clients.All.SendAsync(WsMess.ReceiveFetchAuctionLot);
                     await _bidHub.Clients.All.SendAsync(WsMess.ReceiveFetchBidLog);
+                    await _bidHub.Clients.All.SendAsync(WsMess.ReceiveFetchWinnerPrice);
                     await _bidHub.Clients.All.SendAsync(WsMess.ReceiveEndAuctionLot);
                 }
             }
