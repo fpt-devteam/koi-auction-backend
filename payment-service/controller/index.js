@@ -420,7 +420,7 @@ const getTransactionHistoryByUserId = async (req, res) => {
 
 const internalPayment = async (req, res) => {
   console.log(`req.body = ${JSON.stringify(req.body)}`);
-  const { amount, userId } = req.body;
+  const { amount, soldLotId } = req.body;
   const Amount = Number(amount);
   const { UserId } = req.params;
   console.log("amount = ", amount);
@@ -448,6 +448,7 @@ const internalPayment = async (req, res) => {
          StatusId: 2,
          TransTypeId: 2,
          BalanceAfter: wallet.Balance - Amount,
+         SoldLotId: soldLotId,
          Description: "Thanh toán hóa đơn",
          CreatedAt: Date.now(),
       });
