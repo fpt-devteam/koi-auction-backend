@@ -210,6 +210,10 @@ namespace AuctionService.Services
 
         }
 
+        public Task<List<AuctionLotBidDto>> SearchAuctionLot(AuctionLotQueryObject queryObject)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
 

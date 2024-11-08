@@ -8,5 +8,7 @@ namespace AuctionService.IServices
     Task<List<LotAuctionMethodStatisticDto>> GetLotAuctionMethodStatisticAsync();
     Task<List<BreederStatisticDto>> GetBreederStatisticsAsync();
     Task<TotalDto> GetTotalLotsStatisticsAsync(LotQueryObject lotQuery);
+    Task<List<LotSearchResultDto>> GetLotSearchResults(int breederId);
+
   }
 }

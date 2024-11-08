@@ -9,6 +9,8 @@ using AuctionService.IRepository;
 using Microsoft.EntityFrameworkCore;
 using AuctionService.Helper;
 using AuctionService.Data;
+using AuctionService.Mapper;
+using AuctionService.Dto.KoiMedia;
 
 namespace AuctionService.Repository
 {
@@ -225,6 +227,32 @@ namespace AuctionService.Repository
                 .ToListAsync();
             if (query.Count == 0) throw new KeyNotFoundException($" Lots was not found");
             return query;
+        }
+
+        public async Task<List<LotSearchResultDto>> GetLotSearchResults(int breederId)
+        {
+            var result = from lot in _context.Lots
+                         join koiFish in _context.KoiFishes on lot.LotId equals koiFish.KoiFishId
+                         join soldLot in _context.SoldLots on lot.LotId equals soldLot.SoldLotId into soldLotGroup
+                         from soldLot in soldLotGroup.DefaultIfEmpty() // LEFT JOIN
+                         where lot.BreederId == breederId && new int[] { 5, 6, 7, 8 }.Contains(lot.LotStatusId)
+
+                         select new LotSearchResultDto
+                         {
+                             LotId = lot.LotId,
+                             Variety = lot.KoiFish!.Variety,
+                             Sex = lot.KoiFish.Sex,
+                             SizeCm = lot.KoiFish.SizeCm,
+                             YearOfBirth = lot.KoiFish.YearOfBirth,
+                             WeightKg = lot.KoiFish.WeightKg,
+                             FinalPrice = soldLot.FinalPrice > 0 ? soldLot.FinalPrice : 0,
+                             Sku = lot.Sku,
+                             KoiMedia = koiFish.KoiMedia != null
+                                        ? koiFish.KoiMedia.Select(x => x.ToKoiMediaDtoFromKoiMedia()).ToList()
+                                        : new List<KoiMediaDto>()
+
+                         };
+            return await result.ToListAsync();
         }
     }
 }

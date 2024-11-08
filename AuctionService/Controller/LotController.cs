@@ -74,6 +74,17 @@ namespace AuctionService.Controller
             return Ok(lotDto);
         }
 
+        [HttpGet("search-koi")]
+        public async Task<IActionResult> GetLotSearchResult([FromQuery] int id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var result = await _lotService.GetLotSearchResults(id);
+            return Ok(result);
+        }
 
         [HttpPost]
         public async Task<IActionResult> CreateLot([FromBody] CreateLotRequestFormDto lotRequest)

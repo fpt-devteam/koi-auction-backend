@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using AuctionService.Dto.KoiMedia;
+using AuctionService.Helper;
 
 namespace AuctionService.Dto.LotRequestForm
 {
@@ -27,6 +28,7 @@ namespace AuctionService.Dto.LotRequestForm
         public int SizeCm { get; set; }
 
         [Required]
+        [CustomValidation(typeof(KoiFishHelper), nameof(KoiFishHelper.IsValid))]
         public int YearOfBirth { get; set; }
 
         [Required]

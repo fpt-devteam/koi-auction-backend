@@ -34,18 +34,18 @@ namespace AuctionService.Middlewares
                 }
             },
             {
-                "api/lots/auction-method-statistics", new Dictionary<string, UserRole[]>
+                "/api/lots/auction-method-statistics", new Dictionary<string, UserRole[]>
                 {
                     { HttpMethods.Get, new[] { UserRole.Admin }}
                 }
             },
             {
-                "api/lots/total-statistics", new Dictionary<string, UserRole[]>
+                "/api/lots/total-statistics", new Dictionary<string, UserRole[]>
                 {
                     { HttpMethods.Get, new[] { UserRole.Admin }}
                 }
             },{
-                "api/lots/breeder-statistics", new Dictionary<string, UserRole[]>
+                "/api/lots/breeder-statistics", new Dictionary<string, UserRole[]>
                 {
                     { HttpMethods.Get, new[] { UserRole.Admin }}
                 }
