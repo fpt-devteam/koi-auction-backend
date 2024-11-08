@@ -249,7 +249,7 @@ const getTransactionHistory = async (req, res) => {
 }
 
 const payment = async (req, res) => {
-   const { Amount } = req.body;
+   const { Amount, SoldLotId } = req.body;
    const { UserId } = req.user;
 
    if (!Amount) return res.status(400).json({ message: "Amount is required" });
@@ -267,6 +267,7 @@ const payment = async (req, res) => {
          WalletId: wallet.WalletId,
          StatusId: 2,
          TransTypeId: 2,
+         SoldLotId: SoldLotId,
          BalanceAfter: wallet.Balance - Amount,
          Description: "Thanh toán hóa đơn",
          CreatedAt: Date.now(),

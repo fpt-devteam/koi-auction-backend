@@ -19,6 +19,12 @@ router.post('/payout', authenticate, controller.payout);
 
 router.patch('/manage/withdraw/:UserId/:Id', authenticate, adminOnly, controller.updateUserWithdrawStatusById);
 
+// Role-based access control for Staff/Admin
+router.get("/manage/get-wallet-balance", authenticate, highRole, controller.getAllWalletBalance);
+router.get("/manage/get-wallet-balance/:UserId", authenticate, highRole, controller.getWalletBalanceByUserId);
+router.get("/manage/get-transaction-history", authenticate, highRole, controller.getAllTransactionHistory);
+router.get("/manage/get-transaction-history/:UserId", authenticate, highRole, controller.getTransactionHistoryByUserId);
+
 // Role-based access control for Internal Service
 router.get("/internal/get-wallet-balance", authenticate, internalRole, controller.getAllWalletBalance);
 router.get("/internal/get-wallet-balance/:UserId", authenticate, internalRole, controller.getWalletBalanceByUserId);
