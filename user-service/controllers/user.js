@@ -9,6 +9,7 @@ const passport = require("../utils/passport");
 const Province = require("../models/provinces");
 const District = require("../models/districts");
 const Ward = require("../models/wards");
+const moment = require("moment");
 
 const profile = async (req, res) => {
    try {
@@ -486,6 +487,7 @@ const getAllBreederProfiles = async (req, res) => {
       // only return breeder details and address
       breeders = breeders.map((breeder) => {
          return {
+            BreederId: breeder.UserId,
             Address: breeder.Address,
             DistrictCode: breeder.DistrictCode,
             WardCode: breeder.WardCode,
@@ -518,6 +520,7 @@ const getBreederProfileById = async (req, res) => {
          return res.status(404).json({ message: "Breeder Profile not found" });
       }
       res.status(200).json({
+         BreederId: breeder.UserId,
          Address: breeder.Address,
          DistrictCode: breeder.DistrictCode,
          WardCode: breeder.WardCode,
@@ -695,6 +698,36 @@ const getWardByDistrictId = async (req, res) => {
    }
 }
 
+const getStatisticsUsers = async (req, res) => {
+   try {
+      let { start, end, dayAmount } = req.query;
+      if (dayAmount) {
+         start = moment().subtract(dayAmount, "days").format("YYYY-MM-DD");
+         end = moment().format("YYYY-MM-DD");
+      }
+      let users = await User.findAll();
+      if (start && end) {
+         start = moment(start).format("YYYY-MM-DD");
+         end = moment(end).format("YYYY-MM-DD");
+         users = users.filter((user) => {
+            const createdAt = moment(user.CreatedAt).format("YYYY-MM-DD");
+            return createdAt >= start && createdAt <= end;
+         });
+      }
+
+      const totalUsers = users.length;
+      const totalActiveUsers = users.filter((user) => user.Active).length;
+      const totalInactiveUsers = totalUsers - totalActiveUsers;
+      res.status(200).json({
+         totalUsers,
+         totalActiveUsers,
+         totalInactiveUsers,
+      });
+   } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Internal server error" });
+   }
+}
 
 module.exports = {
    profile,
@@ -725,4 +758,5 @@ module.exports = {
    getProvinceById,
    getDistrictByProvinceId,
    getWardByDistrictId,
+   getStatisticsUsers,
 };

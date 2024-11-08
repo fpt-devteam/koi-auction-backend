@@ -14,6 +14,17 @@ const deposit = async (req, res) => {
    const { Amount } = req.body;
    const { UserId } = req.user;
 
+   if (!Amount) return res.status(400).json({ message: "Amount is required" });
+   if (isNaN(Amount)) return res.status(400).json({ message: "Amount must be a number" });
+   if (Amount <= 0) return res.status(400).json({ message: "Amount must be greater than 0" });
+
+   const wallet = await Wallet.findOne({ where: { UserId: UserId } });
+
+   await Transaction.update(
+      { StatusId: 3 },
+      { where: { WalletId: wallet.WalletId, StatusId: 1 } }
+   );
+
    const config = {
       app_id: "2553",
       key1: "PcY4iZIKFCIdgZvA6ueMcMHHUbRLYjPL",
@@ -60,8 +71,6 @@ const deposit = async (req, res) => {
    order.mac = CryptoJS.HmacSHA256(data, config.key1).toString();
 
    const response = await axios.post(config.endpoint, null, { params: order });
-
-   const wallet = await Wallet.findOne({ where: { UserId: UserId } });
 
    try {
       await Transaction.create({
@@ -589,6 +598,54 @@ const updateUserWithdrawStatusById = async (req, res) => {
    }
 }
 
+const getStatisticsTransactionHistory = async (req, res) => {
+   const { Status, TransType } = req.body;
+
+   const transactionTypes = await TransactionType.findAll();
+   const transactionStatus = await TransactionStatus.findAll();
+
+   const TransTypeId = transactionTypes.find((type) => type.TransTypeName == TransType)?.TransTypeId;
+   const StatusId = transactionStatus.find((status) => status.TransStatusName == Status)?.TransStatusId;
+
+   let transactions = await Transaction.findAll({
+      where: {
+         TransTypeId: TransTypeId || { [Op.ne]: null },
+         StatusId: StatusId || { [Op.ne]: null }
+      }
+   });
+
+   let { start, end, dayAmount, userId } = req.query;
+   let totalAmount = 0;
+   await Promise.all(transactions.map(async (transaction) => {
+      const wallet = await Wallet.findByPk(transaction.WalletId);
+      let resultFlag = true;
+      if (userId) {
+         if (wallet.UserId != userId) {
+            resultFlag = false;
+         }
+      }
+      if (start && end) {
+         const date = moment(transaction.CreatedAt).format("YYYY-MM-DD");
+         start = moment(start).format("YYYY-MM-DD");
+         end = moment(end).format("YYYY-MM-DD");
+         if (date < start || date > end) {
+            resultFlag = false;
+         }
+      } 
+      if (dayAmount) {
+         const date = moment(transaction.CreatedAt).format("YYYY-MM-DD");
+         const dateBefore = moment().subtract(dayAmount, "days").format("YYYY-MM-DD");
+         if (date < dateBefore) {
+            resultFlag = false;
+         }
+      }
+
+      totalAmount += (resultFlag) ? transaction.Amount : 0;
+   }));
+
+   res.status(200).json({ TotalAmount: totalAmount });
+}
+
 module.exports = {
    deposit,
    payment,
@@ -603,4 +660,5 @@ module.exports = {
    withdraw,
    payout,
    updateUserWithdrawStatusById,
+   getStatisticsTransactionHistory,
 };

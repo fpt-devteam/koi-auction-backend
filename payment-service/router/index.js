@@ -34,4 +34,6 @@ router.get("/internal/get-transaction-history/:UserId", authenticate, internalRo
 
 router.post('/internal/payment/:UserId', authenticate, internalRole, controller.internalPayment);
 
+router.get("/statistics/transaction-history", authenticate, adminOnly, controller.getStatisticsTransactionHistory);
+
 module.exports = router;
