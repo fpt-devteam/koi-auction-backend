@@ -8,6 +8,7 @@ const highRole = verifyRole(["Admin", "Staff"]);
 const breederRole = verifyRole(["Breeder"]);
 const internalRole = verifyRole(["Internal"]);
 const externalRole = verifyRole(["Admin", "Staff", "Breeder", "Member"]);
+const breederAndAdminRole = verifyRole(["Admin", "Breeder"]);
 
 router.get("/get-wallet-balance", authenticate, externalRole, controller.getWalletBalance);
 router.get("/get-transaction-history", authenticate, externalRole, controller.getTransactionHistory);
@@ -35,5 +36,6 @@ router.get("/internal/get-transaction-history/:UserId", authenticate, internalRo
 router.post('/internal/payment/:UserId', authenticate, internalRole, controller.internalPayment);
 
 router.get("/statistics/transaction-history", authenticate, adminOnly, controller.getStatisticsTransactionHistory);
+router.get("/breeder/statistics/transaction-history", authenticate, breederRole, controller.getBreederStatisticsTransactionHistory);
 
 module.exports = router;

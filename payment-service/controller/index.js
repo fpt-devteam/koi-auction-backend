@@ -646,6 +646,44 @@ const getStatisticsTransactionHistory = async (req, res) => {
    res.status(200).json({ TotalAmount: totalAmount });
 }
 
+const getBreederStatisticsTransactionHistory = async (req, res) => {
+   const { UserId } = req.user;
+   const { Status, TransType } = req.body;
+   let { dayAmount } = req.query;
+   // return a list each day with total amount 
+   const transactionTypes = await TransactionType.findAll();
+   const transactionStatus = await TransactionStatus.findAll();
+
+   const wallet = await Wallet.findOne({ where: { UserId: UserId } });
+   let transactions = await Transaction.findAll({
+      where: {
+         WalletId: wallet.WalletId,
+      },
+   });
+   transactions.map((transaction) => {
+      transaction.TransType = transactionTypes.find((type) => type.TransTypeId == transaction.TransTypeId).TransTypeName;
+      transaction.Status = transactionStatus.find((status) => status.TransStatusId == transaction.StatusId).TransStatusName;
+   });
+   transactions = transactions.filter((transaction) => {
+      if (TransType && transaction.TransType != TransType) return false;
+      if (Status && transaction.Status != Status) return false;
+      const date = moment(transaction.CreatedAt).format("YYYY-MM-DD");
+      const dateBefore = moment().subtract(dayAmount, "days").format("YYYY-MM-DD");
+      return date >= dateBefore;
+   });
+   let result = [];
+   transactions.forEach((transaction) => {
+      const date = moment(transaction.CreatedAt).format("YYYY-MM-DD");
+      const index = result.findIndex((item) => item.date == date);
+      if (index == -1) {
+         result.push({ date: date, totalAmount: transaction.Amount });
+      } else {
+         result[index].totalAmount += transaction.Amount;
+      }
+   });
+   res.status(200).json(result);
+}
+
 module.exports = {
    deposit,
    payment,
@@ -661,4 +699,5 @@ module.exports = {
    payout,
    updateUserWithdrawStatusById,
    getStatisticsTransactionHistory,
+   getBreederStatisticsTransactionHistory
 };
