@@ -71,7 +71,7 @@ const deposit = async (req, res) => {
          StatusId: 1,
          TransTypeId: 3,
          AppTransId: app_trans_id,
-         BalanceAfter: wallet.Balance + Amount,
+         BalanceBefore: wallet.Balance,
          Description: "Nạp tiền vào ví",
          CreatedAt: Date.now(),
       });
@@ -127,7 +127,7 @@ const callback = async (req, res) => {
                   { where: { AppTransId: appTransId } }
                );
                await Wallet.update(
-                  { Balance: transaction.BalanceAfter },
+                  { Balance: transaction.BalanceBefore + transaction.Amount },
                   { where: { WalletId: transaction.WalletId } }
                );
             } catch (err) {
@@ -265,6 +265,7 @@ const getTransactionHistory = async (req, res) => {
             WalletId: transaction.WalletId,
             Status: transactionStatus.find((status) => status.TransStatusId == transaction.StatusId).TransStatusName,
             TransType: transactionTypes.find((type) => type.TransTypeId == transaction.TransTypeId).TransTypeName,
+            BalanceBefore: transaction.BalanceBefore,
             BalanceAfter: transaction.BalanceAfter,
             Description: transaction.Description,
          });
@@ -300,7 +301,7 @@ const payment = async (req, res) => {
          StatusId: 2,
          TransTypeId: 2,
          SoldLotId: SoldLotId,
-         BalanceAfter: wallet.Balance - Amount,
+         BalanceBefore: wallet.Balance,
          Description: "Thanh toán hóa đơn",
          CreatedAt: Date.now(),
       });
@@ -373,6 +374,7 @@ const getAllTransactionHistory = async (req, res) => {
          WalletId: transaction.WalletId,
          Status: transactionStatus.find((status) => status.TransStatusId == transaction.StatusId).TransStatusName,
          TransType: transactionTypes.find((type) => type.TransTypeId == transaction.TransTypeId).TransTypeName,
+         BalanceBefore: transaction.BalanceBefore,
          BalanceAfter: transaction.BalanceAfter,
          Description: transaction.Description,
       });
@@ -416,7 +418,7 @@ const getTransactionHistoryByUserId = async (req, res) => {
             WalletId: transaction.WalletId,
             Status: transactionStatus.find((status) => status.TransStatusId == transaction.StatusId).TransStatusName,
             TransType: transactionTypes.find((type) => type.TransTypeId == transaction.TransTypeId).TransTypeName,
-            BalanceAfter: transaction.BalanceAfter,
+            BalanceBefore: transaction.BalanceBefore,
             Description: transaction.Description,
          });
       }));
@@ -456,7 +458,7 @@ const internalPayment = async (req, res) => {
          WalletId: wallet.WalletId,
          StatusId: 2,
          TransTypeId: 2,
-         BalanceAfter: wallet.Balance - Amount,
+         BalanceBefore: wallet.Balance,
          SoldLotId: soldLotId,
          Description: "Thanh toán hóa đơn",
          CreatedAt: Date.now(),
@@ -493,7 +495,7 @@ const withdraw = async (req, res) => {
          WalletId: wallet.WalletId,
          StatusId: 1,
          TransTypeId: 1,
-         BalanceAfter: wallet.Balance - Amount,
+         BalanceBefore: wallet.Balance,
          Description: `Bank Account: ${BankAccount}, Bank Name: ${BankName}, Account Holder: ${AccountHolder}`,
          CreatedAt: Date.now(),
       });
@@ -529,7 +531,7 @@ const payout = async (req, res) => {
             WalletId: wallet.WalletId,
             StatusId: 2,
             TransTypeId: 4,
-            BalanceAfter: wallet.Balance + transferAmount,
+            BalanceBefore: wallet.Balance,
             Description: "Thanh toán hóa đơn",
             CreatedAt: Date.now(),
          }),
@@ -576,7 +578,7 @@ const updateUserWithdrawStatusById = async (req, res) => {
       );
 
       await Transaction.update(
-         { StatusId: StatusId, BalanceAfter: (StatusId == 2) ? wallet.Balance - transaction.Amount : wallet.Balance },
+         { StatusId: StatusId, BalanceBefore: wallet.Balance },
          { where: { WalletId: wallet.WalletId, TransTypeId: 1, TransId: Id } }
       );
 

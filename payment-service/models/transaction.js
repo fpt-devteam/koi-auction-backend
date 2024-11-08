@@ -44,6 +44,9 @@ const Transaction = sequelize.define('Transaction', {
    BalanceAfter: {
       type: DataTypes.DECIMAL(10, 2)
    },
+   BalanceBefore: {
+      type: DataTypes.DECIMAL(10, 2)
+   },
    Description: {
       type: DataTypes.STRING
    },

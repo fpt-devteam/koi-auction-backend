@@ -51,6 +51,9 @@ const User = sequelize.define('User', {
    WardCode: {
       type: DataTypes.STRING
    },
+   Address: {
+      type: DataTypes.STRING
+   },
    CreatedAt: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW
