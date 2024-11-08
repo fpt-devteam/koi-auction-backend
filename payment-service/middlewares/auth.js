@@ -6,9 +6,9 @@ const authenticate = (req, res, next) => {
    if (req.headers["authorization"]) {
       console.log(req.headers["authorization"]);
       const serviceToken = req.headers["authorization"].split(' ')[1];
-      if (serviceToken !== process.env.SERVICE_TOKEN) {
-         return res.status(401).json({ message: 'Unauthorized' });
-      }
+      // if (serviceToken !== process.env.SERVICE_TOKEN) {
+      //    return res.status(401).json({ message: 'Unauthorized' });
+      // }
       try {
          const decoded = verify(serviceToken, process.env.JWT_SECRET);
          console.log(decoded);

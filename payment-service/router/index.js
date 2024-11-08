@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const { authenticate, verifyRole } = require("../middlewares/auth");
 const controller = require("../controller");
+const User = require("../models/user");
 
 const adminOnly = verifyRole(["Admin"]);
 const highRole = verifyRole(["Admin", "Staff"]);
