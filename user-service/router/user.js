@@ -40,8 +40,4 @@ router.get("/manage/breeder/profile", controller.getAllBreederProfiles);
 router.get("/manage/breeder/profile/:id", controller.getBreederProfileById);
 router.delete("/manage/breeder/profile/:id", authenticate, highRole, controller.manageDeleteBreederProfile);
 
-// router.get("/manage/withdraw", authenticate, adminOnly, controller.getAllWithdrawHistory);
-// router.get("/manage/withdraw/:id", authenticate, adminOnly, controller.getWithdrawHistoryById);
-// router.patch("/manage/withdraw/:id", authenticate, adminOnly, controller.updateWithdrawStatus);
-
 module.exports = router;

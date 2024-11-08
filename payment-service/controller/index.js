@@ -8,6 +8,7 @@ const Transaction = require('../models/transaction');
 const Wallet = require('../models/wallet');
 const TransactionType = require('../models/transaction-type');
 const TransactionStatus = require('../models/transaction-status');
+const BreederDetail = require('../../user-service/models/breeder');
 
 const deposit = async (req, res) => {
    const { Amount } = req.body;
@@ -465,6 +466,48 @@ const withdraw = async (req, res) => {
    res.status(200).json({ message: "Withdraw post successfully" });
 };
 
+const payout = async (req, res) => {
+   const { BreederId, Amount } = req.body;
+
+   if (!BreederId) return res.status(400).json({ message: "BreederId is required" });
+   if (!Amount) return res.status(400).json({ message: "Amount is required" });
+   if (isNaN(Amount)) return res.status(400).json({ message: "Amount must be a number" });
+   if (Amount <= 0) return res.status(400).json({ message: "Amount must be greater than 0" });
+
+   const breeder = await BreederDetail.findByPk(BreederId);
+   if (!breeder) return res.status(404).json({ message: "Breeder not found" });
+
+   const wallet = await Wallet.findOne({ where: { UserId: BreederId } });
+   if (!wallet) return res.status(404).json({ message: "Breeder wallet not found" });
+
+   const transferAmount = Amount * 0.9;
+
+   try {
+      await Promise.all([
+         await Transaction.create({
+            UserId: BreederId,
+            Amount: transferAmount,
+            WalletId: wallet.WalletId,
+            StatusId: 2,
+            TransTypeId: 4,
+            BalanceAfter: wallet.Balance + transferAmount,
+            Description: "Thanh toán hóa đơn",
+            CreatedAt: Date.now(),
+         }),
+         await Wallet.update(
+            { Balance: wallet.Balance + transferAmount },
+            { where: { WalletId: wallet.WalletId } }
+         )
+      ]);
+
+   } catch (err) {
+      console.log(err);
+      return res.status(500).json({ message: "Internal Server Error" });
+   }
+
+   res.status(200).json({ message: "Payout successfully" });
+}
+
 const updateUserWithdrawStatusById = async (req, res) => {
    const { UserId, Id } = req.params;
    const { Status } = req.body;
@@ -517,5 +560,6 @@ module.exports = {
    getAllTransactionHistory,
    internalPayment,
    withdraw,
+   payout,
    updateUserWithdrawStatusById,
 };

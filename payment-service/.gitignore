@@ -10,7 +10,7 @@ dist/
 build/
 
 # Environment variables
-# .env
+.env
 
 # IDE files
 .vscode/
@@ -20,3 +20,4 @@ build/
 .DS_Store
 Thumbs.db
 .vercel
+
