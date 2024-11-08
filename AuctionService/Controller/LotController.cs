@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using AuctionService.Dto.AuctionMethod;
 using AuctionService.Dto.BreederDetail;
+using AuctionService.Dto.Dashboard;
 using AuctionService.Dto.KoiFish;
 using AuctionService.Dto.Lot;
 using AuctionService.Dto.LotRequestForm;
@@ -84,6 +85,19 @@ namespace AuctionService.Controller
 
             var result = await _lotService.GetLotSearchResults(id);
             return Ok(result);
+        }
+
+        [HttpGet("last7days")]
+        public async Task<ActionResult<List<DailyRevenueDto>>> GetRevenueForLast7DaysWithOffset([FromQuery] int offsetWeeks = 0)
+        {
+            var revenueData = await _lotService.GetLast7DaysRevenue(offsetWeeks);
+
+            if (revenueData == null || revenueData.Count == 0)
+            {
+                return NotFound("No revenue data found for the specified period.");
+            }
+
+            return Ok(revenueData);
         }
 
         [HttpPost]
