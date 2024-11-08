@@ -31,6 +31,6 @@ router.get("/internal/get-wallet-balance/:UserId", authenticate, internalRole, c
 router.get("/internal/get-transaction-history", authenticate, internalRole, controller.getAllTransactionHistory);
 router.get("/internal/get-transaction-history/:UserId", authenticate, internalRole, controller.getTransactionHistoryByUserId);
 
-router.post('/internal/payment/:UserId', controller.internalPayment);
+router.post('/internal/payment/:UserId', authenticate, internalRole, controller.internalPayment);
 
 module.exports = router;
