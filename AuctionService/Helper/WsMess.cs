@@ -12,10 +12,12 @@ namespace AuctionService.Helper
         public static string ReceivePredictEndTime = "ReceivePredictEndTime";
         public static string ReceiveFetchBidLog = "ReceiveFetchBidLog";
         public static string ReceiveFetchAuctionLot = "ReceiveFetchAuctionLot";
+        public static string ReceiveFetchWinnerPrice = "ReceiveFetchWinnerPrice";
         public static string ReceiveExceptionMessage = "ReceiveExceptionMessage";
         public static string ReceiveStartAuctionLot = "ReceiveStartAuctionLot";
         public static string ReceiveEndAuctionLot = "ReceiveEndAuctionLot";
         public static string ReceivePriceDesc = "ReceivePriceDesc";
         public static string ReceiveSuccessPayment = "ReceiveSuccessPayment";
+        public static string ReceiveLoading = "ReceiveLoading";
     }
 }

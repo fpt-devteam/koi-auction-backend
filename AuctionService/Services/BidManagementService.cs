@@ -67,12 +67,9 @@ namespace AuctionService.Services
             }
             var winner = _bidService!.GetWinner();
 
-            await _bidHub.Clients.All.SendAsync(WsMess.ReceiveWinner, winner);
-            await _bidHub.Clients.All.SendAsync(WsMess.ReceiveEndAuctionLot);
-            await _bidHub.Clients.All.SendAsync(WsMess.ReceiveFetchAuctionLot);
-            await _bidHub.Clients.All.SendAsync(WsMess.ReceiveFetchBidLog);
+            //send loading
+            await _bidHub.Clients.All.SendAsync(WsMess.ReceiveLoading);
 
-            //test only
             if (winner == null) System.Console.WriteLine("No winner");
             else
                 System.Console.WriteLine($"winner = {winner!.BidderId}");
@@ -83,12 +80,10 @@ namespace AuctionService.Services
                 using (var scope = _serviceScopeFactory.CreateScope())
                 {
                     var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
-                    // var lot = await unitOfWork.Lots.GetLotByIdAsync(_bidService.AuctionLotBidDto!.AuctionLotId);
-                    // lot.LotStatusId = winner == null ? (int)Enums.LotStatus.UnSold : (int)Enums.LotStatus.ToShip;
-                    //move to the bot to save change one time
+                    var lot = await unitOfWork.Lots.GetLotByIdAsync(_bidService.AuctionLotBidDto!.AuctionLotId);
+                    lot.LotStatusId = winner == null ? (int)Enums.LotStatus.UnSold : (int)Enums.LotStatus.ToShip;
                     if (winner != null)
                     {
-                        System.Console.WriteLine($"Winner : {winner.BidderId}");
                         var soldLot = new Models.SoldLot
                         {
                             WinnerId = winner.BidderId,
@@ -97,11 +92,13 @@ namespace AuctionService.Services
                         };
                         await unitOfWork.SoldLot.CreateSoldLot(soldLot);
 
-                        await _bidService.PaymentAsync(new PaymentDto
-                        {
-                            UserId = winner.BidderId,
-                            Amount = winner.BidAmount
-                        });
+                        System.Console.WriteLine($"Payment payment {winner.BidderId} {winner.BidAmount}");
+                        // await _bidService.PaymentAsync(new PaymentDto
+                        // {
+                        //     UserId = winner.BidderId,
+                        //     Amount = winner.BidAmount
+                        // });
+
                         //send message to winner
                         var connection = _connections.FirstOrDefault(x => x.Value.UserId == winner.BidderId);
                         if (connection.Value != null)
@@ -113,9 +110,11 @@ namespace AuctionService.Services
                             });
                         }
                     }
-                    var lot = await unitOfWork.Lots.GetLotByIdAsync(_bidService.AuctionLotBidDto!.AuctionLotId);
-                    lot.LotStatusId = winner == null ? (int)Enums.LotStatus.UnSold : (int)Enums.LotStatus.ToShip;
                     await unitOfWork.SaveChangesAsync();
+                    await _bidHub.Clients.All.SendAsync(WsMess.ReceiveWinner, winner);
+                    await _bidHub.Clients.All.SendAsync(WsMess.ReceiveFetchAuctionLot);
+                    await _bidHub.Clients.All.SendAsync(WsMess.ReceiveFetchBidLog);
+                    await _bidHub.Clients.All.SendAsync(WsMess.ReceiveEndAuctionLot);
                 }
             }
             catch (Exception e)
