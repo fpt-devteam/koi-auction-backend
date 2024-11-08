@@ -1,7 +1,9 @@
+using AuctionService.Dto.Dashboard;
 using AuctionService.Dto.Lot;
 using AuctionService.Helper;
 using AuctionService.IRepository;
 using AuctionService.IServices;
+using AuctionService.Models;
 
 namespace AuctionService.Services
 {
@@ -150,5 +152,18 @@ namespace AuctionService.Services
             var result = await _unitOfWork.Lots.GetLotSearchResults(breederId) ?? throw new InvalidOperationException("Not lot search existed");
             return result;
         }
+
+        public async Task<List<DailyRevenueDto>> GetLast7DaysRevenue(int offsetWeeks)
+        {
+            var result = await _unitOfWork.Lots.GetLast7DaysRevenue(offsetWeeks);
+            return result;
+        }
+
+        // public async Task<List<DailyRevenueDto>> GetWeeklyRevenueOfBreeders(int year, int month, int weekOfMonth)
+        // {
+        //     var revenue = await _unitOfWork.Lots.GetWeeklyRevenueOfBreeders(year, month, weekOfMonth);
+        //     return revenue;
+        // }
+
     }
 }

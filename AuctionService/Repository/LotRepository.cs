@@ -11,11 +11,13 @@ using AuctionService.Helper;
 using AuctionService.Data;
 using AuctionService.Mapper;
 using AuctionService.Dto.KoiMedia;
+using AuctionService.Dto.Dashboard;
 
 namespace AuctionService.Repository
 {
     public class LotRepository : ILotRepository
     {
+        private readonly int COMPLETED = 8;
         private readonly AuctionManagementDbContext _context;
 
         public LotRepository(AuctionManagementDbContext context)
@@ -253,6 +255,118 @@ namespace AuctionService.Repository
 
                          };
             return await result.ToListAsync();
+        }
+
+
+
+        // public async Task<List<DailyRevenueDto>> GetMonthlyRevenue(int number)
+        // {
+        //     var monthlyRevenue = await (from lot in _context.Lots
+        //                                 join soldLot in _context.SoldLots on lot.LotId equals soldLot.SoldLotId
+        //                                 where lot.LotStatusId == COMPLETED && lot.UpdatedAt.Year == number
+        //                                 group soldLot by lot.UpdatedAt.Month into monthGroup
+        //                                 select new DailyRevenueDto
+        //                                 {
+        //                                     Month = monthGroup.Key,
+        //                                     Revenue = monthGroup.Sum(soldLot => soldLot.FinalPrice)
+        //                                 })
+        //                                 .OrderBy(result => result.Month)
+        //                                 .ToListAsync();
+
+        //     return monthlyRevenue;
+
+        // }
+        // public async Task<List<DailyRevenueDto>> GetWeeklyRevenueOfBreeders(int year, int month, int weekOfMonth)
+        // {
+
+        //     // Bước 1: Lấy khoảng thời gian cho tuần cụ thể trong tháng
+        //     var (startOfWeek, endOfWeek) = GetDateRangeForWeek(year, month, weekOfMonth);
+
+        //     // Bước 2: Truy vấn cơ sở dữ liệu để lấy dữ liệu trong khoảng thời gian
+        //     var lotsInRange = await (from lot in _context.Lots
+        //                              join soldLot in _context.SoldLots on lot.LotId equals soldLot.SoldLotId
+        //                              where lot.LotStatusId == COMPLETED &&
+        //                                    lot.UpdatedAt >= startOfWeek &&
+        //                                    lot.UpdatedAt <= endOfWeek
+        //                              select new
+        //                              {
+        //                                  lot.UpdatedAt,
+        //                                  soldLot.FinalPrice
+        //                              })
+        //                              .ToListAsync(); // Thực thi truy vấn và lấy dữ liệu vào bộ nhớ
+
+        //     // Bước 3: Thực hiện nhóm và tính tổng trên phía client
+        //     var dailyRevenue = lotsInRange
+        //         .GroupBy(x => x.UpdatedAt.DayOfWeek)
+        //         .Select(dayGroup => new DailyRevenueDto
+        //         {
+        //             Day = dayGroup.Key,
+        //             DayName = dayGroup.Key.ToString(), // Chuyển đổi DayOfWeek thành tên thứ
+        //             Revenue = dayGroup.Sum(x => x.FinalPrice)
+        //         })
+        //         .OrderBy(result => result.Day) // Sắp xếp các ngày từ Chủ nhật đến Thứ Bảy
+        //         .ToList();
+
+        //     return dailyRevenue;
+        // }
+
+
+        // private (DateTime start, DateTime end) GetDateRangeForWeek(int year, int month, int weekOfMonth)
+        // {
+        //     DateTime firstDayOfMonth = new DateTime(year, month, 1);
+        //     DateTime firstDayOfWeek = firstDayOfMonth;
+
+        //     // Find the first day of the specified week
+        //     int daysToAdd = (weekOfMonth - 1) * 7;
+        //     firstDayOfWeek = firstDayOfMonth.AddDays(daysToAdd);
+
+        //     // If the first day of the week is still within the same month, it’s valid; otherwise, adjust
+        //     if (firstDayOfWeek.Month != month)
+        //     {
+        //         throw new ArgumentException("Invalid week number for the specified month.");
+        //     }
+
+        //     // Calculate the end of the week
+        //     DateTime endDayOfWeek = firstDayOfWeek.AddDays(6);
+        //     if (endDayOfWeek.Month != month) endDayOfWeek = new DateTime(year, month, DateTime.DaysInMonth(year, month));
+
+        //     return (firstDayOfWeek, endDayOfWeek);
+        // }
+
+        public async Task<List<DailyRevenueDto>> GetLast7DaysRevenue(int offsetWeeks)
+        {
+            // Xác định khoảng thời gian 7 ngày trước đó theo offsetWeeks
+            DateTime endOfPeriod = DateTime.Today.AddDays(-7 * offsetWeeks); // Lùi về 7 * offsetWeeks ngày
+            DateTime startOfPeriod = endOfPeriod.AddDays(-6); // Lấy 6 ngày trước ngày kết thúc để có 7 ngày
+
+            // Truy vấn cơ sở dữ liệu trong khoảng thời gian đã xác định
+            var lotsInRange = await (from lot in _context.Lots
+                                     join soldLot in _context.SoldLots on lot.LotId equals soldLot.SoldLotId
+                                     where lot.LotStatusId == COMPLETED &&
+                                           lot.UpdatedAt >= startOfPeriod &&
+                                           lot.UpdatedAt <= endOfPeriod
+                                     select new
+                                     {
+                                         lot.UpdatedAt,
+                                         soldLot.FinalPrice
+                                     })
+                                     .ToListAsync(); // Lấy dữ liệu vào bộ nhớ
+
+            // Nhóm và tính tổng doanh thu theo từng ngày
+            var dailyRevenue = Enumerable.Range(0, 7)
+                .Select(i => startOfPeriod.AddDays(i))
+                .GroupJoin(lotsInRange,
+                           date => date.Date,
+                           lot => lot.UpdatedAt.Date,
+                           (date, lotGroup) => new DailyRevenueDto
+                           {
+                               DayName = date.ToString("MMM dd"), // Hiển thị ngày và tháng
+                               Revenue = lotGroup.Sum(x => x.FinalPrice)
+                           })
+                .OrderBy(result => result.DayName)
+                .ToList();
+
+            return dailyRevenue;
         }
     }
 }
