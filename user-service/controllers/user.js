@@ -396,6 +396,11 @@ const manageCreateProfile = async (req, res) => {
    try {
       const { Username, Password, FirstName, LastName, Phone, Email, UserRoleId, Active } =
          req.body;
+
+      if (!Username || !Password || !FirstName || !LastName || !Phone || !Email) {
+         return res.status(400).json({ message: "All fields are required" });
+      }
+
       const existUser = await User.findOne({
          where: {
             [Op.or]: [{ Username: Username }, { Email: Email }, { Phone: Phone }],

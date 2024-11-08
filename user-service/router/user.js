@@ -30,7 +30,7 @@ router.get("/address/ward/:districtId", controller.getWardByDistrictId);
 router.get("/breeder/profile", authenticate, breederRole, controller.getBreederProfile);
 
 router.get("/manage/profile", authenticate, highRole, controller.getAllProfiles);
-router.post("/manage/profile", authenticate, adminOnly, controller.manageCreateProfile);
+router.post("/manage/profile", controller.manageCreateProfile);
 router.get("/manage/profile/:id", authenticate, highRole, controller.getProfileById);
 router.patch("/manage/profile/:id", authenticate, highRole, controller.manageUpdateProfile);
 router.delete("/manage/profile/:id", authenticate, highRole, controller.manageDeleteProfile);
