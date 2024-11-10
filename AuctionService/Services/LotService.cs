@@ -96,7 +96,7 @@ namespace AuctionService.Services
                     });
                 }
             }
-            return statistics.OrderBy(s => s.Priority).ToList();
+            return statistics.OrderByDescending(s => s.PercentSuccess).ToList();
         }
 
         private double CalculatePercentage(int part, int total)
@@ -120,18 +120,54 @@ namespace AuctionService.Services
         {
             var lots = await _unitOfWork.Lots.GetAllAsync(lotQuery);
             var total = lots.Count;
-            var completedLots = lots.Count(l =>
-                        l.LotStatus.LotStatusId == COMPLETED &&
-                        l.AuctionLot != null &&
-                        l.AuctionLot.SoldLot != null);
-            var unsoldLots = lots.Count(l => l.LotStatus.LotStatusId == UNSOLD);
-            var cancelledSoldLots = lots.Count(l =>
-                        l.LotStatus.LotStatusId == CANCELED &&
-                        l.AuctionLot != null &&
-                        l.AuctionLot.SoldLot != null);
-            var rejectLot = lots.Count(l =>
-                        l.LotStatus.LotStatusId == REJECT);
+            // var completedLots = lots.Count(l =>
+            //             l.LotStatus.LotStatusId == COMPLETED &&
+            //             l.AuctionLot != null &&
+            //             l.AuctionLot.SoldLot != null);
+            // var unsoldLots = lots.Count(l => l.LotStatus.LotStatusId == UNSOLD);
+            // var cancelledSoldLots = lots.Count(l =>
+            //             l.LotStatus.LotStatusId == CANCELED &&
+            //             l.AuctionLot != null &&
+            //             l.AuctionLot.SoldLot != null);
+            // var rejectLot = lots.Count(l =>
+            //             l.LotStatus.LotStatusId == REJECT);
 
+            var completedLots = lots.Count(l =>
+                                            l.LotStatus != null &&
+                                            l.LotStatus.LotStatusId == COMPLETED &&
+                                            l.AuctionLot != null &&
+                                            l.AuctionLot.SoldLot != null);
+
+            var unsoldLots = lots.Count(l =>
+                l.LotStatus != null &&
+                l.LotStatus.LotStatusId == UNSOLD);
+
+            var cancelledSoldLots = lots.Count(l =>
+                l.LotStatus != null &&
+                l.LotStatus.LotStatusId == CANCELED &&
+                l.AuctionLot != null &&
+                l.AuctionLot.SoldLot != null);
+
+            var rejectLot = lots.Count(l =>
+                l.LotStatus != null &&
+                l.LotStatus.LotStatusId == REJECT);
+
+
+            // foreach (var lot in lots)
+            // {
+            //     var lotStatus = lot.LotStatusId;
+            //     var auctionLot = lot.AuctionLot;
+            //     if (auctionLot != null && auctionLot.SoldLot != null)
+            //     {
+            //         var soldLot = auctionLot.SoldLot;
+            //         System.Console.WriteLine($"lotStatus hihi {lotStatus}");
+            //     }
+            // }
+
+            // System.Console.WriteLine($"completed {completedLots}");
+            // System.Console.WriteLine($"2 {unsoldLots}");
+            // System.Console.WriteLine($"3 {cancelledSoldLots}");
+            // System.Console.WriteLine($"rejectLot {rejectLot}");
             var result = new TotalDto
             {
                 Total = total,
@@ -140,6 +176,7 @@ namespace AuctionService.Services
                 CanceledSoldLots = cancelledSoldLots > 0 ? cancelledSoldLots : 0,
                 RejectedLots = rejectLot > 0 ? rejectLot : 0
             };
+
             if (result == null)
             {
                 throw new InvalidOperationException("Total Statistics Fail");
