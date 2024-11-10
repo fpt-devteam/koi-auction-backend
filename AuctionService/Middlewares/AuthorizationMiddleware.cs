@@ -42,9 +42,16 @@ namespace AuctionService.Middlewares
             {
                 "/api/lots/total-statistics", new Dictionary<string, UserRole[]>
                 {
+                    { HttpMethods.Get, new[] { UserRole.Admin, UserRole.Breeder }}
+                }
+            },
+            {
+                "/api/lots/last7days", new Dictionary<string, UserRole[]>
+                {
                     { HttpMethods.Get, new[] { UserRole.Admin }}
                 }
-            },{
+            },
+            {
                 "/api/lots/breeder-statistics", new Dictionary<string, UserRole[]>
                 {
                     { HttpMethods.Get, new[] { UserRole.Admin }}
