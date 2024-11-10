@@ -10,6 +10,10 @@ const TransactionType = require('../models/transaction-type');
 const TransactionStatus = require('../models/transaction-status');
 const BreederDetail = require('../../user-service/models/breeder');
 
+const PAYOUT = 4;
+const WITHDRAW = 1;
+const SUCCESS = 2;
+
 const deposit = async (req, res) => {
    const { Amount } = req.body;
    const { UserId } = req.user;
@@ -684,6 +688,81 @@ const getBreederStatisticsTransactionHistory = async (req, res) => {
    res.status(200).json(result);
 }
 
+//get sum of payout of breeder by breederId each day in dayAmount
+//  SELECT * FROM [Transaction]
+// WHERE [TransTypeId] = 4 AND StatusId = 2 
+
+const getSumOfPayoutOfBreeder = async (req, res) => {
+   const { userId } = req.query;
+   let { dayAmount } = req.query;
+
+   try {
+      const wallet = await Wallet.findOne({ where: { UserId: userId } });
+
+      // Lấy danh sách các giao dịch của breeder dựa trên userId, loại giao dịch và trạng thái
+      let transactions = await Transaction.findAll({
+         where: {
+            WalletId: wallet.WalletId, // Sử dụng UserId thay vì WalletId
+            TransTypeId: 4, // Loại giao dịch là payout
+            StatusId: 2, // Trạng thái giao dịch
+         },
+         order: [['CreatedAt', 'DESC']], // Sắp xếp từ mới nhất đến cũ nhất
+      });
+
+      // Khởi tạo một mảng để lưu kết quả với kích thước dayAmount
+      console.log("wallet", wallet);
+      let result = [];
+      for (let i = 0; i <= dayAmount; i++) {
+         // Tính ngày cho từng phần tử
+         const date = moment().subtract(i, 'days').format('YYYY-MM-DD');
+         // Tính tổng payout cho ngày đó
+         const totalAmount = transactions
+            .filter((transaction) => moment(transaction.CreatedAt).format('YYYY-MM-DD') === date)
+            .reduce((sum, transaction) => sum + transaction.Amount, 0);
+         
+         // Thêm đối tượng với ngày và tổng số tiền vào mảng kết quả
+         const dateFormatted = moment(date).format('MMM DD');
+         result.push({ dateFormatted, totalAmount });
+      }
+
+      res.status(200).json(result);
+   } catch (error) {
+      console.error("Error fetching payout data:", error);
+      res.status(500).json({ message: "Internal Server Error" });
+   }
+};
+
+const getSumOfSuccessTransactionByTransTypeId = async (req, res) => {
+   let { dayAmount } = req.query;
+   let { transTypeId } = req.query;
+
+   try {
+
+      // Lấy danh sách các giao dịch của breeder dựa trên userId, loại giao dịch và trạng thái
+      let transactions = await Transaction.findAll({
+         where: {
+            TransTypeId: transTypeId, // Loại giao dịch là payout
+            StatusId: 2, // Trạng thái giao dịch
+         },
+         order: [['CreatedAt', 'DESC']], // Sắp xếp từ mới nhất đến cũ nhất
+      });
+
+      // sum of all transaction with tran type and day amount
+      let result = 0;
+      let dayBegin = moment().subtract(dayAmount, 'days');
+      transactions.forEach((transaction) => {
+         if (moment(transaction.CreatedAt).isAfter(dayBegin)) {
+            result += transaction.Amount;
+         }
+      });
+      res.status(200).json({ totalAmount: result, transTypeId: transTypeId, dayAmount: dayAmount });
+   } catch (error) {
+      console.error("Error fetching payout data:", error);
+      res.status(500).json({ message: "Internal Server Error" });
+   }
+}
+
+
 module.exports = {
    deposit,
    payment,
@@ -699,5 +778,7 @@ module.exports = {
    payout,
    updateUserWithdrawStatusById,
    getStatisticsTransactionHistory,
-   getBreederStatisticsTransactionHistory
+   getBreederStatisticsTransactionHistory,
+   getSumOfPayoutOfBreeder,
+   getSumOfSuccessTransactionByTransTypeId
 };

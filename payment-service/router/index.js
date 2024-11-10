@@ -37,5 +37,7 @@ router.post('/internal/payment/:UserId', authenticate, internalRole, controller.
 
 router.get("/statistics/transaction-history", authenticate, adminOnly, controller.getStatisticsTransactionHistory);
 router.get("/breeder/statistics/transaction-history", authenticate, breederRole, controller.getBreederStatisticsTransactionHistory);
+router.get("/breeder/statistics/get-sum-of-payout", controller.getSumOfPayoutOfBreeder);
+router.get("/admin/statistics/get-sum-of-success-trans-by-type",authenticate, adminOnly, controller.getSumOfSuccessTransactionByTransTypeId);
 
 module.exports = router;
