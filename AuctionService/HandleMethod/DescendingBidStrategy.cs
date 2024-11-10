@@ -12,6 +12,7 @@ namespace AuctionService.HandleMethod
 {
     public class DescendingBidStrategy : ABidStrategyService
     {
+        private decimal? _softCap;
         private HighestBidLog? _winner = null;
         private readonly Timer _timer;
         private IHubContext<BidHub> _bidHub;
@@ -38,6 +39,7 @@ namespace AuctionService.HandleMethod
             System.Console.WriteLine($"SetUp called");
             _auctionLotBidDto = auctionLotBidDto;
             _currentPrice = auctionLotBidDto.StartPrice;
+            _softCap = _currentPrice / 2;
             _stepPrice = auctionLotBidDto.StepPercent * auctionLotBidDto.StartPrice / 100;
         }
 
@@ -59,14 +61,12 @@ namespace AuctionService.HandleMethod
             if (bid.BidAmount == _currentPrice && bid.BidAmount <= balance)
             {
                 _winner = bid.ToHighestBidLogFromCreateBidLogDto(); // Cập nhật người thắng cuộc là người đầu tiên chấp nhận giá hiện tại
-                System.Console.WriteLine("61");
                 if (CountdownFinished == null)
                 {
                     System.Console.WriteLine("dmm");
                 }
                 _timer.Dispose();
                 Task.Run(() => CountdownFinished!.Invoke(auctionLotBidDto.AuctionLotId)); // Kết thúc phiên đấu giá
-                System.Console.WriteLine("63");
                 return true;
             }
 
@@ -82,12 +82,10 @@ namespace AuctionService.HandleMethod
                 _auctionLotBidDto.RemainingTime -= TimeSpan.FromSeconds(_decreaseInterval);
                 _currentPrice -= _stepPrice;
 
-                if (_auctionLotBidDto.RemainingTime.TotalSeconds <= 0 || _currentPrice <= 0)
+                if (_auctionLotBidDto.RemainingTime.TotalSeconds <= 0 || _currentPrice <= _softCap)
                 {
-                    System.Console.WriteLine("cheets de");
                     _timer.Dispose();
                     Task.Run(() => CountdownFinished!.Invoke(_auctionLotBidDto.AuctionLotId));
-                    System.Console.WriteLine("chet khong");
                 }
                 _bidHub.Clients.All.SendAsync(WsMess.ReceivePriceDesc, _currentPrice);
             }

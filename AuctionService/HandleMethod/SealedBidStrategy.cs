@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using AuctionService.Dto.AuctionLot;
 using AuctionService.Dto.BidLog;
 using AuctionService.IServices;
@@ -9,11 +10,14 @@ namespace AuctionService.HandleMethod
     public class SealedBidStrategy : ABidStrategyService
     {
         private readonly List<CreateBidLogDto> _bids;
+        private readonly ConcurrentDictionary<int, bool> _isPlacedBid; // list de chon winner
+
         private decimal? _highestBid;
         public SealedBidStrategy()
         : base() // Truyền bidService đến constructor của lớp cha
         {
             _bids = new();
+            _isPlacedBid = new();
         }
         public override HighestBidLog? GetWinner()
         {
@@ -33,7 +37,9 @@ namespace AuctionService.HandleMethod
         public override bool IsBidValid(CreateBidLogDto bid, AuctionLotBidDto? auctionLotBidDto, decimal balance)
         {
             // Kiểm tra điều kiện cơ bản về AuctionLot và số dư trước
-            if (auctionLotBidDto == null || auctionLotBidDto.AuctionLotId != bid.AuctionLotId || bid.BidAmount > balance || bid.BidAmount < auctionLotBidDto.StartPrice)
+            if (auctionLotBidDto == null || auctionLotBidDto.AuctionLotId != bid.AuctionLotId
+                || bid.BidAmount > balance || bid.BidAmount < auctionLotBidDto.StartPrice
+                || _isPlacedBid.ContainsKey(bid.BidderId))
             {
                 return false;
             }
@@ -44,10 +50,12 @@ namespace AuctionService.HandleMethod
                 _highestBid = bid.BidAmount;
                 _bids.Clear(); // Xóa các bid có cùng giá trị với _highestBid trước đó
                 _bids.Add(bid);
+                _isPlacedBid.TryAdd(bid.BidderId, true);
             }
             else if (bid.BidAmount == _highestBid)
             {
                 _bids.Add(bid);
+                _isPlacedBid.TryAdd(bid.BidderId, true);
             }
 
             return true;
