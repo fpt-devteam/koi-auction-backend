@@ -47,10 +47,7 @@ namespace AuctionService.Controller
             }
             var lotStatus = lotStatusDto.ToLotStatusFromCreateLotStatusDto();
             var newLotStatus = await _unitOfWork.LotStatuses.CreateLotStatusAsync(lotStatus);
-            if (!await _unitOfWork.SaveChangesAsync())
-            {
-                return BadRequest("An error occurred while saving the data");
-            }
+            await _unitOfWork.SaveChangesAsync();
             return CreatedAtAction(nameof(GetLotStatusById), new { id = newLotStatus.LotStatusId }, newLotStatus);
         }
 
@@ -63,10 +60,7 @@ namespace AuctionService.Controller
                 return BadRequest(ModelState);
             }
             var updateLotStatus = await _unitOfWork.LotStatuses.UpdateLotStatusAsync(id, lotStatusDto);
-            if (!await _unitOfWork.SaveChangesAsync())
-            {
-                return BadRequest("An error occurred while saving the data");
-            }
+            await _unitOfWork.SaveChangesAsync();
             return Ok(updateLotStatus);
         }
 
@@ -83,10 +77,7 @@ namespace AuctionService.Controller
             {
                 NotFound();
             }
-            if (!await _unitOfWork.SaveChangesAsync())
-            {
-                return BadRequest("An error occurred while saving the data");
-            }
+            await _unitOfWork.SaveChangesAsync();
             return NoContent();
         }
     }

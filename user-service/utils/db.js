@@ -1,14 +1,17 @@
 const { Sequelize } = require("sequelize");
 
-const sequelize = new Sequelize("KoiAuctionDB", "fptdevteam", "12345Fpt", {
-  host: "fpt-koi.database.windows.net",
+const sequelize = new Sequelize("KoiAuctionDB", "sqlserver", "sa123456!", {
+  host: "35.247.172.255",
   dialect: "mssql",
   port: 1433,
   dialectOptions: {
     options: {
       encrypt: true,
-      trustServerCertificate: false,
+      trustServerCertificate: true,
       enableArithAbort: true,
+    },
+    ssl: {
+      rejectUnauthorized: false, // Bỏ qua xác thực chứng chỉ
     },
   },
   pool: {

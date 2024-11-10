@@ -14,5 +14,18 @@ namespace AuctionService.Mapper
                 FinalPrice = createSoldLotDto.FinalPrice
             };
         }
+
+        public static SoldLotDto ToSoldLotDtoFromSoldLot(this SoldLot soldLot)
+        {
+            return new SoldLotDto
+            {
+                SoldLotId = soldLot.SoldLotId,
+                WinnerId = soldLot.WinnerId,
+                FinalPrice = soldLot.FinalPrice,
+                CreatedAt = soldLot.CreatedAt,
+                UpdatedAt = soldLot.UpdatedAt,
+                KoiFish = soldLot!.SoldLotNavigation!.AuctionLotNavigation!.KoiFish!.ToKoiFishDtoFromKoiFish()
+            };
+        }
     }
 }

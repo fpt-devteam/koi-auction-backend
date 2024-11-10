@@ -33,6 +33,30 @@ namespace AuctionService.Middlewares
                     { HttpMethods.Put, new[] { UserRole.Staff,  UserRole.Admin } }, // PUT cho Breeder và Staff
                 }
             },
+            {
+                "/api/lots/auction-method-statistics", new Dictionary<string, UserRole[]>
+                {
+                    { HttpMethods.Get, new[] { UserRole.Admin }}
+                }
+            },
+            {
+                "/api/lots/total-statistics", new Dictionary<string, UserRole[]>
+                {
+                    { HttpMethods.Get, new[] { UserRole.Admin, UserRole.Breeder }}
+                }
+            },
+            {
+                "/api/lots/last7days", new Dictionary<string, UserRole[]>
+                {
+                    { HttpMethods.Get, new[] { UserRole.Admin }}
+                }
+            },
+            {
+                "/api/lots/breeder-statistics", new Dictionary<string, UserRole[]>
+                {
+                    { HttpMethods.Get, new[] { UserRole.Admin }}
+                }
+            },
             { "/api/auctions", new Dictionary<string, UserRole[]>
                 {
                     { HttpMethods.Post, new[] { UserRole.Staff,  UserRole.Admin } } // POST chỉ dành cho Staff
@@ -49,16 +73,23 @@ namespace AuctionService.Middlewares
                     { HttpMethods.Post, new[] { UserRole.Staff, UserRole.Admin } } // POST chỉ dành cho Staff
                 }
             },
+            { "/api/auction-lots/schedule-auction-lot", new Dictionary<string, UserRole[]>
+                {
+                    { HttpMethods.Post, new[] { UserRole.Staff, UserRole.Admin } } // POST chỉ dành cho Staff
+                }
+            },
             { "/api/auction-lots/{id}", new Dictionary<string, UserRole[]>
                 {
                     { HttpMethods.Put, new[] { UserRole.Staff,  UserRole.Admin } }, // PUT chỉ dành cho Staff
-                    { HttpMethods.Delete, new[] { UserRole.Staff,  UserRole.Admin } } // DELETE chỉ dành cho Staff
+                    { HttpMethods.Delete, new[] { UserRole.Staff,  UserRole.Admin } }, // DELETE chỉ dành cho Staff
+                    { HttpMethods.Patch, new[] { UserRole.Staff, UserRole.Admin } }
                 }
             },
             { "/api/auction-lots/listAuctionLot", new Dictionary<string, UserRole[]>
                 {
                     { HttpMethods.Put, new[] { UserRole.Staff,  UserRole.Admin } }, // PUT chỉ dành cho Staff
-                    { HttpMethods.Delete, new[] { UserRole.Staff,  UserRole.Admin } } // DELETE chỉ dành cho Staff
+                    { HttpMethods.Delete, new[] { UserRole.Staff,  UserRole.Admin } }, // DELETE chỉ dành cho Staff
+                    { HttpMethods.Post, new[] { UserRole.Staff, UserRole.Admin } }
                 }
             },
             { "/api/auction-methods", new Dictionary<string, UserRole[]>

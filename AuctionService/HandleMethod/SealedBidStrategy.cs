@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using AuctionService.Dto.AuctionLot;
 using AuctionService.Dto.BidLog;
 using AuctionService.IServices;
@@ -9,31 +10,32 @@ namespace AuctionService.HandleMethod
     public class SealedBidStrategy : ABidStrategyService
     {
         private readonly List<CreateBidLogDto> _bids;
+        private readonly ConcurrentDictionary<int, bool> _isPlacedBid; // list de chon winner
+
         private decimal? _highestBid;
         public SealedBidStrategy()
         : base() // Truyền bidService đến constructor của lớp cha
         {
             _bids = new();
+            _isPlacedBid = new();
         }
         public override HighestBidLog? GetWinner()
         {
             if (_bids == null || _bids.Count == 0)
                 return null;
-            else if (_bids.Count == 1)
-                return _bids[0].ToHighestBidLogFromCreateBidLogDto();
             else
-            {
-                Random random = new Random();
-                int randomIndex = random.Next(_bids.Count);
-                return _bids[randomIndex].ToHighestBidLogFromCreateBidLogDto();
-            }
+                return _bids[0].ToHighestBidLogFromCreateBidLogDto();
+
 
         }
 
         public override bool IsBidValid(CreateBidLogDto bid, AuctionLotBidDto? auctionLotBidDto, decimal balance)
         {
+            System.Console.WriteLine("so du: " + balance);
             // Kiểm tra điều kiện cơ bản về AuctionLot và số dư trước
-            if (auctionLotBidDto == null || auctionLotBidDto.AuctionLotId != bid.AuctionLotId || bid.BidAmount > balance)
+            if (auctionLotBidDto == null || auctionLotBidDto.AuctionLotId != bid.AuctionLotId
+                || bid.BidAmount > balance || bid.BidAmount < auctionLotBidDto.StartPrice
+                || _isPlacedBid.ContainsKey(bid.BidderId))
             {
                 return false;
             }
@@ -45,11 +47,8 @@ namespace AuctionService.HandleMethod
                 _bids.Clear(); // Xóa các bid có cùng giá trị với _highestBid trước đó
                 _bids.Add(bid);
             }
-            else if (bid.BidAmount == _highestBid)
-            {
-                _bids.Add(bid);
-            }
-
+            _isPlacedBid.TryAdd(bid.BidderId, true);
+            System.Console.WriteLine($"bid.BiddedId: {bid.BidderId} ok ok ok");
             return true;
         }
 

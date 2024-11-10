@@ -3,13 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using AuctionService.Dto.AuctionMethod;
 using AuctionService.Dto.BreederDetail;
+using AuctionService.Dto.Dashboard;
 using AuctionService.Dto.KoiFish;
 using AuctionService.Dto.Lot;
 using AuctionService.Dto.LotRequestForm;
 using AuctionService.Dto.LotStatus;
 using AuctionService.Helper;
 using AuctionService.IRepository;
+using AuctionService.IServices;
 using AuctionService.Mapper;
 using AuctionService.Models;
 using AuctionService.Services;
@@ -26,10 +29,12 @@ namespace AuctionService.Controller
         // private readonly BreederDetailController _breederDetailController;
 
         private readonly BreederDetailService _breederService;
-        public LotController(IUnitOfWork unitOfWork, BreederDetailService service)
+        private readonly ILotService _lotService;
+        public LotController(IUnitOfWork unitOfWork, BreederDetailService service, ILotService lotService)
         {
             _unitOfWork = unitOfWork;
             _breederService = service;
+            _lotService = lotService;
         }
 
         [HttpGet]
@@ -70,6 +75,30 @@ namespace AuctionService.Controller
             return Ok(lotDto);
         }
 
+        [HttpGet("search-koi")]
+        public async Task<IActionResult> GetLotSearchResult([FromQuery] int id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var result = await _lotService.GetLotSearchResults(id);
+            return Ok(result);
+        }
+
+        [HttpGet("last7days")]
+        public async Task<ActionResult<List<DailyRevenueDto>>> GetRevenueForLast7DaysWithOffset([FromQuery] int offsetWeeks = 0)
+        {
+            var revenueData = await _lotService.GetLast7DaysRevenue(offsetWeeks);
+
+            if (revenueData == null || revenueData.Count == 0)
+            {
+                return NotFound("No revenue data found for the specified period.");
+            }
+
+            return Ok(revenueData);
+        }
 
         [HttpPost]
         public async Task<IActionResult> CreateLot([FromBody] CreateLotRequestFormDto lotRequest)
@@ -96,10 +125,7 @@ namespace AuctionService.Controller
                 newKoiFish.KoiMedia.Add(media);
             }
 
-            if (!await _unitOfWork.SaveChangesAsync())
-            {
-                return BadRequest("An error occurred while saving the data");
-            }
+            await _unitOfWork.SaveChangesAsync();
             return CreatedAtAction(nameof(GetLotById), new { id = newLot.LotId }, newLot.ToLotDtoFromLot());
         }
 
@@ -132,10 +158,7 @@ namespace AuctionService.Controller
                 newMedia.KoiFishId = id;
                 await _unitOfWork.KoiMedia.CreateKoiMediaAsync(newMedia);
             }
-            if (!await _unitOfWork.SaveChangesAsync())
-            {
-                return BadRequest("An error occurred while saving the data");
-            }
+            await _unitOfWork.SaveChangesAsync();
             return Ok(updateLot.ToLotDtoFromLot());
         }
 
@@ -145,10 +168,7 @@ namespace AuctionService.Controller
             var updateLot = await _unitOfWork.Lots.UpdateLotStatusAsync(id, lotStatusDto);
             if (updateLot == null)
                 return BadRequest();
-            if (!await _unitOfWork.SaveChangesAsync())
-            {
-                return BadRequest("An error occurred while saving the data");
-            }
+            await _unitOfWork.SaveChangesAsync();
             return Ok(updateLot.ToLotDtoFromLot());
         }
 
@@ -163,11 +183,43 @@ namespace AuctionService.Controller
             var deleteLot = await _unitOfWork.Lots.DeleteLotAsync(id);
             if (deleteLot == null)
                 return NotFound();
-            if (!await _unitOfWork.SaveChangesAsync())
-            {
-                return BadRequest("An error occurred while saving the data");
-            }
+            await _unitOfWork.SaveChangesAsync();
             return NoContent();
+        }
+
+        [HttpGet("auction-method-statistics")]
+        public async Task<ActionResult<List<LotAuctionMethodStatisticDto>>> GetAuctionMethodStatistics()
+        {
+            try
+            {
+                var statistics = await _lotService.GetLotAuctionMethodStatisticAsync();
+                return Ok(statistics);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Error retrieving auction method statistics", error = ex.Message });
+            }
+        }
+
+        [HttpGet("breeder-statistics")]
+        public async Task<ActionResult<List<BreederStatisticDto>>> GetBreederStatistics()
+        {
+            try
+            {
+                var statistics = await _lotService.GetBreederStatisticsAsync();
+                return Ok(statistics);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Error retrieving breeder statistics", error = ex.Message });
+            }
+        }
+
+        [HttpGet("total-statistics")]
+        public async Task<ActionResult<TotalDto>> GetTotalLotsStatisticsAsync([FromQuery] LotQueryObject lotQuery)
+        {
+            var result = await _lotService.GetTotalLotsStatisticsAsync(lotQuery);
+            return Ok(result);
         }
     }
 }

@@ -34,6 +34,21 @@ namespace AuctionService.Services
 
             return breeder;
         }
+
+        public async Task<List<BreederDetailDto>> GetAllBreederAsync()
+        {
+            var breeders = new List<BreederDetailDto>();
+            var response = await _httpClient.GetAsync($"http://localhost:3000/user-service/manage/breeder/profile");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                breeders = JsonSerializer.Deserialize<List<BreederDetailDto>>(content); // Deserialize as a list of BreederDetailDto
+
+            }
+            if (breeders == null)
+                throw new Exception("No Breeders are existed");
+            return breeders;
+        }
     }
 }
 

@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using AuctionService.Dto.Wallet;
@@ -9,6 +10,8 @@ namespace AuctionService.Services
     {
         private readonly HttpClient _httpClient;
         private readonly Dictionary<int, WalletDto> _walletCache;
+
+        public Dictionary<int, WalletDto> WalletCache => _walletCache;
         private readonly IConfiguration _configuration;
 
         public WalletService(HttpClient httpClient, IConfiguration configuration)
@@ -16,7 +19,7 @@ namespace AuctionService.Services
             _httpClient = httpClient;
             _configuration = configuration;
             _httpClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
-            _walletCache = new();
+            _walletCache = new Dictionary<int, WalletDto>();
         }
 
         // Phương thức lấy token sử dụng username và password từ appsettings
@@ -44,62 +47,54 @@ namespace AuctionService.Services
         // Phương thức lấy số dư ví và lưu vào cache nếu chưa có
         public async Task<WalletDto?> GetBalanceByIdAsync(int id)
         {
-            System.Console.WriteLine($"call api wallet {id}");
-            System.Console.WriteLine("call api wallet");
-            if (_walletCache.TryGetValue(id, out var wallet))
-            {
-                return wallet;
-            }
-
-            // var token = await GetTokenAsync();
-            // if (token == null)
+            // if (_walletCache.TryGetValue(id, out var wallet))
             // {
-            //     throw new Exception("Unable to retrieve token");
+            //     return wallet;
             // }
+            WalletDto? wallet = null;
+
+            var token = _configuration["AuctionService:ServiceToken"];
 
             // Thêm token vào header
-            //_httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             // await LoginAsync();
             // Gọi PaymentService để lấy thông tin ví
-            var response = await _httpClient.GetAsync($"http://localhost:3000/payment-service/internal/get-wallet-balance/{id}");
-            // var response = await _httpClient.GetAsync($"https://67035c76bd7c8c1ccd412a4e.mockapi.io/api/wallet/{id}");
-            System.Console.WriteLine("call api wallet 2");
-            System.Console.WriteLine(response.StatusCode);
+            var response = await _httpClient.GetAsync($"http://localhost:3004/api/internal/get-wallet-balance/{id}");
+            System.Console.WriteLine($"response: {response}");
+            System.Console.WriteLine($"response.IsSuccessStatusCode: {response.IsSuccessStatusCode}");
             if (response.IsSuccessStatusCode)
             {
-                System.Console.WriteLine("call api wallet 3");
                 var content = await response.Content.ReadAsStringAsync();
+                System.Console.WriteLine($"Get balance {content} 68");
                 wallet = JsonSerializer.Deserialize<WalletDto>(content);
+                System.Console.WriteLine("70");
+                if (_walletCache.ContainsKey(id))
+                {
+                    System.Console.WriteLine($"wallet cache id {_walletCache[id].Balance} before");
+                }
+                System.Console.WriteLine("75");
                 _walletCache[id] = wallet!; // Lưu vào cache tạm thời
+                System.Console.WriteLine($"wallet cache id {_walletCache[id].Balance} after");
             }
-
+            System.Console.WriteLine($"Get balance {wallet.Balance} 77");
+            System.Console.WriteLine($"Get wallet cachec 78 {_walletCache[id].Balance} 78");
             return wallet;
-        }
-
-
-        public async Task<bool> UpdateBalanceAsync(int id, int balance)
-        {
-            var wallet = await GetBalanceByIdAsync(id);
-            if (wallet == null)
-            {
-                return false;
-            }
-
-            wallet.Balance = balance;
-            _walletCache[id] = wallet;
-            return true;
         }
 
         public async Task PaymentAsync(PaymentDto paymentDto)
         {
+            var token = _configuration["AuctionService:ServiceToken"];
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
             //use httpClient to payment
             System.Console.WriteLine($"Payment {paymentDto.Amount} for user {paymentDto.UserId}");
             var response = await _httpClient.PostAsJsonAsync($"http://localhost:3004/api/internal/payment/{paymentDto.UserId}", new PaymentDto
             {
                 Amount = paymentDto.Amount,
+                SoldLotId = paymentDto.SoldLotId
             });
-            System.Console.WriteLine($"Payment response: {response.Content.ReadAsStringAsync()}");
+            System.Console.WriteLine($"Payment response: {await response.Content.ReadAsStringAsync()}");
         }
     }
 }

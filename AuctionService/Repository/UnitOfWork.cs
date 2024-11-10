@@ -22,9 +22,9 @@ namespace AuctionService.Repository
             LotStatuses = new LotStatusRepository(_context);
             AuctionLotStatuses = new AuctionLotStatusRepository(_context);
             AuctionStatuses = new AuctionStatusRepository(_context);
-            AuctionLotJobs = new AuctionLotJobRepository(_context);
             BidLog = new BidLogRepository(_context);
             SoldLot = new SoldLotRepository(_context);
+
         }
 
         public IAuctionLotRepository AuctionLots { get; private set; }
@@ -36,30 +36,16 @@ namespace AuctionService.Repository
         public ILotStatusRepository LotStatuses { get; private set; }
         public IAuctionStatusRepository AuctionStatuses { get; private set; }
         public IAuctionLotStatusRepository AuctionLotStatuses { get; private set; }
-        public IAuctionLotJobRepository AuctionLotJobs { get; private set; }
         public IBidLogRepository BidLog { get; private set; }
         public ISoldLotRepository SoldLot { get; private set; }
 
+
         public async Task<bool> SaveChangesAsync()
         {
-            try
-            {
-                await _context.SaveChangesAsync();
-                return true;
-            }
-            catch (DbUpdateException ex)
-            {
-                if (ex.InnerException is SqlException sqlEx && (sqlEx.Number == 547)) // 547 là mã lỗi khóa ngoại của SQL Server
-                {
-                    return false;
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
+            await _context.SaveChangesAsync();
+            return true;
         }
+
 
         public void Dispose()
         {

@@ -9,6 +9,7 @@ const passport = require("../utils/passport");
 const Province = require("../models/provinces");
 const District = require("../models/districts");
 const Ward = require("../models/wards");
+const moment = require("moment");
 
 const profile = async (req, res) => {
    try {
@@ -25,6 +26,7 @@ const profile = async (req, res) => {
          ProvinceCode: user.ProvinceCode,
          DistrictCode: user.DistrictCode,
          WardCode: user.WardCode,
+         Address: user.Address,
       });
    } catch (err) {
       console.log(err);
@@ -238,7 +240,7 @@ const register = async (req, res) => {
 
 const updateProfile = async (req, res) => {
    try {
-      const { Username, FirstName, LastName, Phone, Email, ProvinceCode, DistrictCode, WardCode } = req.body;
+      const { Username, FirstName, LastName, Phone, Email, ProvinceCode, DistrictCode, WardCode, Address } = req.body;
       await User.update(
          {
             Username: Username,
@@ -249,6 +251,7 @@ const updateProfile = async (req, res) => {
             ProvinceCode: ProvinceCode,
             DistrictCode: DistrictCode,
             WardCode: WardCode,
+            Address: Address,
             CreatedAt: new Date(),
             UpdatedAt: new Date(),
          },
@@ -396,6 +399,11 @@ const manageCreateProfile = async (req, res) => {
    try {
       const { Username, Password, FirstName, LastName, Phone, Email, UserRoleId, Active } =
          req.body;
+
+      if (!Username || !Password || !FirstName || !LastName || !Phone || !Email) {
+         return res.status(400).json({ message: "All fields are required" });
+      }
+
       const existUser = await User.findOne({
          where: {
             [Op.or]: [{ Username: Username }, { Email: Email }, { Phone: Phone }],
@@ -469,7 +477,26 @@ const getBreederProfile = async (req, res) => {
 
 const getAllBreederProfiles = async (req, res) => {
    try {
-      const breeders = await BreederDetail.findAll();
+      // const breeders = await BreederDetail.findAll();
+      User.hasOne(BreederDetail, { foreignKey: "BreederId" });
+      BreederDetail.belongsTo(User, { foreignKey: "BreederId" });
+      let breeders = await User.findAll({
+         where: { UserRoleId: 2 },
+         include: [{ model: BreederDetail }],
+      });
+      // only return breeder details and address
+      breeders = breeders.map((breeder) => {
+         return {
+            BreederId: breeder.UserId,
+            Address: breeder.Address,
+            DistrictCode: breeder.DistrictCode,
+            WardCode: breeder.WardCode,
+            ProvinceCode: breeder.ProvinceCode,
+            FarmName: breeder.BreederDetail?.FarmName,
+            Certificate: breeder.BreederDetail?.Certificate,
+            About: breeder.BreederDetail?.About,
+         };
+      });
       if (!breeders) {
          return res.status(404).json({ message: "Breeder Profiles not found" });
       }
@@ -482,11 +509,26 @@ const getAllBreederProfiles = async (req, res) => {
 
 const getBreederProfileById = async (req, res) => {
    try {
-      const breeder = await BreederDetail.findByPk(req.params.id);
+      User.hasOne(BreederDetail, { foreignKey: "BreederId" });
+      BreederDetail.belongsTo(User, { foreignKey: "BreederId" });
+      const breeder = await User.findOne({
+         where: { UserId: req.params.id },
+         include: [{ model: BreederDetail }],
+      });
+
       if (!breeder) {
          return res.status(404).json({ message: "Breeder Profile not found" });
       }
-      res.status(200).json(breeder);
+      res.status(200).json({
+         BreederId: breeder.UserId,
+         Address: breeder.Address,
+         DistrictCode: breeder.DistrictCode,
+         WardCode: breeder.WardCode,
+         ProvinceCode: breeder.ProvinceCode,
+         FarmName: breeder.BreederDetail?.FarmName,
+         Certificate: breeder.BreederDetail?.Certificate,
+         About: breeder.BreederDetail?.About,
+      });
    } catch (err) {
       console.log(err);
       res.status(500).json({ message: "Internal server error" });
@@ -656,6 +698,36 @@ const getWardByDistrictId = async (req, res) => {
    }
 }
 
+const getStatisticsUsers = async (req, res) => {
+   try {
+      let { start, end, dayAmount } = req.query;
+      if (dayAmount) {
+         start = moment().subtract(dayAmount, "days").format("YYYY-MM-DD");
+         end = moment().format("YYYY-MM-DD");
+      }
+      let users = await User.findAll();
+      if (start && end) {
+         start = moment(start).format("YYYY-MM-DD");
+         end = moment(end).format("YYYY-MM-DD");
+         users = users.filter((user) => {
+            const createdAt = moment(user.CreatedAt).format("YYYY-MM-DD");
+            return createdAt >= start && createdAt <= end;
+         });
+      }
+
+      const totalUsers = users.length;
+      const totalActiveUsers = users.filter((user) => user.Active).length;
+      const totalInactiveUsers = totalUsers - totalActiveUsers;
+      res.status(200).json({
+         totalUsers,
+         totalActiveUsers,
+         totalInactiveUsers,
+      });
+   } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Internal server error" });
+   }
+}
 
 module.exports = {
    profile,
@@ -686,4 +758,5 @@ module.exports = {
    getProvinceById,
    getDistrictByProvinceId,
    getWardByDistrictId,
+   getStatisticsUsers,
 };

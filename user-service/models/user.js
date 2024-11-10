@@ -54,6 +54,9 @@ const User = sequelize.define('User', {
    WardCode: {
       type: DataTypes.STRING
    },
+   Address: {
+      type: DataTypes.STRING
+   },
    CreatedAt: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW
@@ -67,7 +70,7 @@ const User = sequelize.define('User', {
    timestamps: false
 });
 
-User.sync({ force: false  }).then(() => {
+User.sync({ force: false }).then(() => {
    console.log('User table created');
 }).catch(err => {
    console.log(err);

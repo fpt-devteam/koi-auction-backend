@@ -67,11 +67,8 @@ namespace AuctionService.Services
             }
             var winner = _bidService!.GetWinner();
 
-            await _bidHub.Clients.All.SendAsync(WsMess.ReceiveWinner, winner);
-            await _bidHub.Clients.All.SendAsync(WsMess.ReceiveEndAuctionLot);
-            await _bidHub.Clients.All.SendAsync(WsMess.ReceiveFetchAuctionLot);
-            await _bidHub.Clients.All.SendAsync(WsMess.ReceiveFetchBidLog);
-
+            //send loading
+            await _bidHub.Clients.All.SendAsync(WsMess.ReceiveLoading);
 
             if (winner == null) System.Console.WriteLine("No winner");
             else
@@ -84,25 +81,25 @@ namespace AuctionService.Services
                 {
                     var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
                     var lot = await unitOfWork.Lots.GetLotByIdAsync(_bidService.AuctionLotBidDto!.AuctionLotId);
-                    // var winner1 = _bidService.GetWinner();
                     lot.LotStatusId = winner == null ? (int)Enums.LotStatus.UnSold : (int)Enums.LotStatus.ToShip;
                     if (winner != null)
                     {
-                        System.Console.WriteLine($"Winner : {winner.BidderId}");
                         var soldLot = new Models.SoldLot
                         {
                             WinnerId = winner.BidderId,
                             FinalPrice = winner.BidAmount,
-                            SoldLotId = _bidService.AuctionLotBidDto.AuctionLotId
+                            SoldLotId = _bidService.AuctionLotBidDto!.AuctionLotId
                         };
                         await unitOfWork.SoldLot.CreateSoldLot(soldLot);
-                        await unitOfWork.SaveChangesAsync();
 
+                        System.Console.WriteLine($"Payment payment {winner.BidderId} {winner.BidAmount}");
                         await _bidService.PaymentAsync(new PaymentDto
                         {
                             UserId = winner.BidderId,
-                            Amount = winner.BidAmount
+                            Amount = winner.BidAmount,
+                            SoldLotId = _bidService.AuctionLotBidDto!.AuctionLotId
                         });
+
                         //send message to winner
                         var connection = _connections.FirstOrDefault(x => x.Value.UserId == winner.BidderId);
                         if (connection.Value != null)
@@ -110,10 +107,17 @@ namespace AuctionService.Services
                             await _bidHub.Clients.Client(connection.Key).SendAsync(WsMess.ReceiveSuccessPayment, new PaymentDto
                             {
                                 UserId = winner.BidderId,
-                                Amount = winner.BidAmount
+                                Amount = winner.BidAmount,
+                                SoldLotId = _bidService.AuctionLotBidDto!.AuctionLotId
                             });
                         }
                     }
+                    await unitOfWork.SaveChangesAsync();
+                    await _bidHub.Clients.All.SendAsync(WsMess.ReceiveWinner, winner);
+                    await _bidHub.Clients.All.SendAsync(WsMess.ReceiveFetchAuctionLot);
+                    await _bidHub.Clients.All.SendAsync(WsMess.ReceiveFetchBidLog);
+                    await _bidHub.Clients.All.SendAsync(WsMess.ReceiveFetchWinnerPrice);
+                    await _bidHub.Clients.All.SendAsync(WsMess.ReceiveEndAuctionLot);
                 }
             }
             catch (Exception e)

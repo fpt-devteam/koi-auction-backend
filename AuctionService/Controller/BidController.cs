@@ -41,7 +41,18 @@ namespace AuctionService.Controllers
             return Ok();
         }
 
-
-
+        [HttpPost("update-balance")]
+        public async Task<IActionResult> UpdateBalance([FromBody] WalletDto walletDto)
+        {
+            try
+            {
+                var balance = await _walletService.GetBalanceByIdAsync(walletDto.BidderId);
+                return Ok(balance);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

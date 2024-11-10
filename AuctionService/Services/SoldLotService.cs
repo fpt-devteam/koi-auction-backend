@@ -1,5 +1,6 @@
 using AuctionService.Dto.BidLog;
 using AuctionService.Dto.SoldLot;
+using AuctionService.Helper;
 using AuctionService.IRepository;
 using AuctionService.IServices;
 using AuctionService.Mapper;
@@ -24,14 +25,17 @@ namespace AuctionService.Services
             return soldLot;
         }
 
-        public async Task<List<SoldLot>> GetAllAsync()
+        public async Task<List<SoldLotDto>> GetAllAsync(SoldLotQueryObject queryObject)
         {
-            return await _unitOfWork.SoldLot.GetAllAsync();
+            var soldLots = await _unitOfWork.SoldLot.GetAllAsync(queryObject);
+            var soldLotDto = soldLots.Select(s => s.ToSoldLotDtoFromSoldLot());
+            return soldLotDto.ToList();
         }
 
-        public async Task<SoldLot> GetSoldLotById(int id)
+        public async Task<SoldLotDto> GetSoldLotById(int id)
         {
-            return await _unitOfWork.SoldLot.GetSoldLotById(id);
+            var soldLot = await _unitOfWork.SoldLot.GetSoldLotById(id);
+            return soldLot.ToSoldLotDtoFromSoldLot();
         }
     }
 }
