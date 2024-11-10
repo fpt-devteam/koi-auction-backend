@@ -234,14 +234,14 @@ const getWalletBalance = async (req, res) => {
       return res.status(500).json({ message: "Internal Server Error" });
    }
 
-   try {
-      await axios.post("http://localhost:3002/api/bid/update-balance", {
-         Amount: refresh.Balance,
-         BidderId: UserId,
-      });
-   } catch (err) {
-      console.log(err);
-   }
+   // try {
+   //    await axios.post("http://localhost:3002/api/bid/update-balance", {
+   //       Amount: refresh.Balance,
+   //       BidderId: UserId,
+   //    });
+   // } catch (err) {
+   //    console.log(err);
+   // }
 
    res.status(200).json({ balance: refresh.Balance });
 };
@@ -344,13 +344,14 @@ const getAllWalletBalance = async (req, res) => {
 
 const getWalletBalanceByUserId = async (req, res) => {
    const { UserId } = req.params;
-
+   console.log("UserId = ", UserId);
    try {
       // const wallet = await Wallet.findOne({ where: { UserId: UserId } });
       const refresh = await refreshWallet(UserId);
 
       res.status(200).json({
-         UserId: UserId,
+         UserId: Number(UserId),
+         BidderId: Number(UserId),
          WalletId: refresh.WalletId,
          Balance: refresh.Balance,
          Currency: refresh.Currency,
@@ -446,7 +447,8 @@ const internalPayment = async (req, res) => {
    console.log(`req.body = ${JSON.stringify(req.body)}`);
    const { amount, soldLotId } = req.body;
    const Amount = Number(amount);
-   const { UserId } = req.params;
+   let { UserId } = req.params;
+   UserId = Number(UserId);
    console.log("amount = ", amount);
    console.warn("UserId = ", UserId);
    console.warn("Amount = ", Amount);

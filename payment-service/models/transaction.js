@@ -18,8 +18,7 @@ const Transaction = sequelize.define('Transaction', {
       }
    },
    Amount: {
-      type: DataTypes.DECIMAL(10, 2),
-      defaultValue: 0,
+      type: DataTypes.DECIMAL(18, 2)
    },
    TransTypeId: {
       type: DataTypes.INTEGER,
@@ -42,10 +41,10 @@ const Transaction = sequelize.define('Transaction', {
       type: DataTypes.INTEGER
    },
    BalanceAfter: {
-      type: DataTypes.DECIMAL(10, 2)
+      type: DataTypes.DECIMAL(18, 2)
    },
    BalanceBefore: {
-      type: DataTypes.DECIMAL(10, 2)
+      type: DataTypes.DECIMAL(18, 2)
    },
    Description: {
       type: DataTypes.STRING

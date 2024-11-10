@@ -263,6 +263,7 @@ namespace AuctionService.Repository
         {
             // Xác định khoảng thời gian 7 ngày trước đó theo offsetWeeks
             DateTime endOfPeriod = DateTime.Today.AddDays(-7 * offsetWeeks); // Lùi về 7 * offsetWeeks ngày
+            endOfPeriod = endOfPeriod.AddDays(1).AddSeconds(-1); // Đến cuối ngày
             DateTime startOfPeriod = endOfPeriod.AddDays(-6); // Lấy 6 ngày trước ngày kết thúc để có 7 ngày
 
             // Truy vấn cơ sở dữ liệu trong khoảng thời gian đã xác định

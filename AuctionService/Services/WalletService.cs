@@ -10,6 +10,8 @@ namespace AuctionService.Services
     {
         private readonly HttpClient _httpClient;
         private readonly Dictionary<int, WalletDto> _walletCache;
+
+        public Dictionary<int, WalletDto> WalletCache => _walletCache;
         private readonly IConfiguration _configuration;
 
         public WalletService(HttpClient httpClient, IConfiguration configuration)
@@ -17,7 +19,7 @@ namespace AuctionService.Services
             _httpClient = httpClient;
             _configuration = configuration;
             _httpClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
-            _walletCache = new();
+            _walletCache = new Dictionary<int, WalletDto>();
         }
 
         // Phương thức lấy token sử dụng username và password từ appsettings
@@ -45,10 +47,11 @@ namespace AuctionService.Services
         // Phương thức lấy số dư ví và lưu vào cache nếu chưa có
         public async Task<WalletDto?> GetBalanceByIdAsync(int id)
         {
-            if (_walletCache.TryGetValue(id, out var wallet))
-            {
-                return wallet;
-            }
+            // if (_walletCache.TryGetValue(id, out var wallet))
+            // {
+            //     return wallet;
+            // }
+            WalletDto? wallet = null;
 
             var token = _configuration["AuctionService:ServiceToken"];
 
@@ -58,13 +61,24 @@ namespace AuctionService.Services
             // await LoginAsync();
             // Gọi PaymentService để lấy thông tin ví
             var response = await _httpClient.GetAsync($"http://localhost:3004/api/internal/get-wallet-balance/{id}");
+            System.Console.WriteLine($"response: {response}");
+            System.Console.WriteLine($"response.IsSuccessStatusCode: {response.IsSuccessStatusCode}");
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
+                System.Console.WriteLine($"Get balance {content} 68");
                 wallet = JsonSerializer.Deserialize<WalletDto>(content);
+                System.Console.WriteLine("70");
+                if (_walletCache.ContainsKey(id))
+                {
+                    System.Console.WriteLine($"wallet cache id {_walletCache[id].Balance} before");
+                }
+                System.Console.WriteLine("75");
                 _walletCache[id] = wallet!; // Lưu vào cache tạm thời
+                System.Console.WriteLine($"wallet cache id {_walletCache[id].Balance} after");
             }
-            System.Console.WriteLine($"Get balance {wallet.Balance} success");
+            System.Console.WriteLine($"Get balance {wallet.Balance} 77");
+            System.Console.WriteLine($"Get wallet cachec 78 {_walletCache[id].Balance} 78");
             return wallet;
         }
 

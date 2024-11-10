@@ -23,19 +23,15 @@ namespace AuctionService.HandleMethod
         {
             if (_bids == null || _bids.Count == 0)
                 return null;
-            else if (_bids.Count == 1)
-                return _bids[0].ToHighestBidLogFromCreateBidLogDto();
             else
-            {
-                Random random = new Random();
-                int randomIndex = random.Next(_bids.Count);
-                return _bids[randomIndex].ToHighestBidLogFromCreateBidLogDto();
-            }
+                return _bids[0].ToHighestBidLogFromCreateBidLogDto();
+
 
         }
 
         public override bool IsBidValid(CreateBidLogDto bid, AuctionLotBidDto? auctionLotBidDto, decimal balance)
         {
+            System.Console.WriteLine("so du: " + balance);
             // Kiểm tra điều kiện cơ bản về AuctionLot và số dư trước
             if (auctionLotBidDto == null || auctionLotBidDto.AuctionLotId != bid.AuctionLotId
                 || bid.BidAmount > balance || bid.BidAmount < auctionLotBidDto.StartPrice
@@ -50,14 +46,9 @@ namespace AuctionService.HandleMethod
                 _highestBid = bid.BidAmount;
                 _bids.Clear(); // Xóa các bid có cùng giá trị với _highestBid trước đó
                 _bids.Add(bid);
-                _isPlacedBid.TryAdd(bid.BidderId, true);
             }
-            else if (bid.BidAmount == _highestBid)
-            {
-                _bids.Add(bid);
-                _isPlacedBid.TryAdd(bid.BidderId, true);
-            }
-
+            _isPlacedBid.TryAdd(bid.BidderId, true);
+            System.Console.WriteLine($"bid.BiddedId: {bid.BidderId} ok ok ok");
             return true;
         }
 

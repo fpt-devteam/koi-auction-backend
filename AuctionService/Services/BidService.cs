@@ -282,14 +282,16 @@ namespace AuctionService.Services
             System.Console.WriteLine("BidService: IsBidValid");
             if (_currentStrategy == null)
                 throw new InvalidOperationException("Strategy has not been set");
-            if (!_userBalance.TryGetValue(bid.BidderId, out var balance))
-            {
-                var wallet = await _walletService!.GetBalanceByIdAsync(bid.BidderId);
-                balance = wallet!.Balance;
-                System.Console.WriteLine("Balance: " + balance);
-                // Thêm balance vào Dictionary _userBalance
-                _userBalance[bid.BidderId] = balance;
-            }
+            // if (!_userBalance.TryGetValue(bid.BidderId, out var balance))
+            // {
+            var wallet = await _walletService!.GetBalanceByIdAsync(bid.BidderId);
+            _userBalance[bid.BidderId] = wallet!.Balance;
+            System.Console.WriteLine("Balance: 289" + _userBalance[bid.BidderId]);
+            // Thêm balance vào Dictionary _userBalance
+            // _userBalance[bid.BidderId] = balance;
+            // }
+            // _userBalance[bid.BidderId] = _walletService!.WalletCache[bid.BidderId].Balance;
+            // System.Console.WriteLine($"BidService: BidderId: {bid.BidderId}, Balance: {_userBalance[bid.BidderId]}");
 
             if (!_currentStrategy.IsBidValid(bid, _auctionLotBidDto, _userBalance[bid.BidderId]))
             {
