@@ -191,7 +191,7 @@ const login = async (req, res) => {
 
 const register = async (req, res) => {
    try {
-      const { Username, Password, FirstName, LastName, Phone, Email } = req.body;
+      const { Username, Password, FirstName, LastName, Phone, Email, IsBreeder } = req.body;
       const existUser = await User.findOne({
          where: {
             [Op.or]: [{ Username: Username }, { Email: Email }, { Phone: Phone }],
@@ -216,8 +216,8 @@ const register = async (req, res) => {
          LastName: LastName,
          Phone: Phone,
          Email: Email,
-         Active: true,
-         UserRoleId: 1,
+         Active: IsBreeder ? false : true,
+         UserRoleId: IsBreeder ? 2 : 1,
          CreatedAt: new Date(),
          UpdatedAt: new Date(),
       }).then((user) => {
