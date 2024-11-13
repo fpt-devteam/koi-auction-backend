@@ -18,6 +18,8 @@ public partial class AuctionManagementDbContext : DbContext
 
     public virtual DbSet<Auction> Auctions { get; set; }
 
+    public virtual DbSet<AuctionDeposit> AuctionDeposits { get; set; }
+
     public virtual DbSet<AuctionLot> AuctionLots { get; set; }
 
     public virtual DbSet<AuctionLotStatus> AuctionLotStatuses { get; set; }
@@ -38,13 +40,17 @@ public partial class AuctionManagementDbContext : DbContext
 
     public virtual DbSet<SoldLot> SoldLots { get; set; }
 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Server=35.247.172.255;Initial Catalog=KoiAuctionDB;User ID=sqlserver;Password=sa123456!;TrustServerCertificate=True;Connection Timeout=30;");
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Auction>(entity =>
         {
             entity.HasKey(e => e.AuctionId).HasName("PK__Auction__51004A4C41F9D350");
 
-            entity.ToTable("Auction");
+            entity.ToTable("Auction", tb => tb.HasTrigger("trg_UpdateTimestamp_Auction"));
 
             entity.HasIndex(e => e.AuctionName, "UQ_Auction_AuctionName").IsUnique();
 
@@ -65,22 +71,39 @@ public partial class AuctionManagementDbContext : DbContext
                 .HasConstraintName("FK_Auction_AuctionStatus");
         });
 
+        modelBuilder.Entity<AuctionDeposit>(entity =>
+        {
+            entity.HasKey(e => e.AuctionDepositId).HasName("PK__AuctionD__5BDF0B615851EA3A");
+
+            entity.ToTable("AuctionDeposit", tb => tb.HasTrigger("trg_UpdateTimestamp_AuctionDeposit"));
+
+            entity.Property(e => e.Amount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.AuctionDepositStatus).HasMaxLength(100);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("((sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time'))");
+            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("((sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time'))");
+
+            entity.HasOne(d => d.AuctionLot).WithMany(p => p.AuctionDeposits)
+                .HasForeignKey(d => d.AuctionLotId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__AuctionDe__Aucti__503BEA1C");
+        });
+
         modelBuilder.Entity<AuctionLot>(entity =>
         {
             entity.HasKey(e => e.AuctionLotId).HasName("PK__AuctionL__8A0269CF6F45A3A7");
 
-            entity.ToTable("AuctionLot");
+            entity.ToTable("AuctionLot", tb => tb.HasTrigger("trg_UpdateTimestamp_AuctionLot"));
 
             entity.Property(e => e.AuctionLotId).ValueGeneratedNever();
             entity.Property(e => e.AuctionLotStatusId).HasDefaultValue(1);
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
+                .HasDefaultValueSql("((sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time'))")
                 .HasColumnType("datetime");
             entity.Property(e => e.EndTime).HasColumnType("datetime");
             entity.Property(e => e.StartTime).HasColumnType("datetime");
             entity.Property(e => e.StepPercent).HasDefaultValue(0);
             entity.Property(e => e.UpdatedAt)
-                .HasDefaultValueSql("(getdate())")
+                .HasDefaultValueSql("((sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time'))")
                 .HasColumnType("datetime");
 
             entity.HasOne(d => d.Auction).WithMany(p => p.AuctionLots)
@@ -106,11 +129,11 @@ public partial class AuctionManagementDbContext : DbContext
             entity.ToTable("AuctionLotStatus");
 
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
+                .HasDefaultValueSql("((sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time'))")
                 .HasColumnType("datetime");
             entity.Property(e => e.StatusName).HasMaxLength(100);
             entity.Property(e => e.UpdatedAt)
-                .HasDefaultValueSql("(getdate())")
+                .HasDefaultValueSql("((sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time'))")
                 .HasColumnType("datetime");
         });
 
@@ -122,11 +145,11 @@ public partial class AuctionManagementDbContext : DbContext
 
             entity.Property(e => e.AuctionMethodName).HasMaxLength(100);
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
+                .HasDefaultValueSql("((sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time'))")
                 .HasColumnType("datetime");
             entity.Property(e => e.Description).HasMaxLength(500);
             entity.Property(e => e.UpdatedAt)
-                .HasDefaultValueSql("(getdate())")
+                .HasDefaultValueSql("((sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time'))")
                 .HasColumnType("datetime");
         });
 
@@ -138,10 +161,10 @@ public partial class AuctionManagementDbContext : DbContext
 
             entity.Property(e => e.AuctionStatusName).HasMaxLength(50);
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
+                .HasDefaultValueSql("((sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time'))")
                 .HasColumnType("datetime");
             entity.Property(e => e.UpdatedAt)
-                .HasDefaultValueSql("(getdate())")
+                .HasDefaultValueSql("((sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time'))")
                 .HasColumnType("datetime");
         });
 
@@ -153,7 +176,7 @@ public partial class AuctionManagementDbContext : DbContext
 
             entity.Property(e => e.BidAmount).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.BidTime)
-                .HasDefaultValueSql("(getdate())")
+                .HasDefaultValueSql("((sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time'))")
                 .HasColumnType("datetime");
 
             entity.HasOne(d => d.AuctionLot).WithMany(p => p.BidLogs)
@@ -190,7 +213,7 @@ public partial class AuctionManagementDbContext : DbContext
             entity.HasIndex(e => e.FilePath, "UQ_KoiMedia_FilePath").IsUnique();
 
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
+                .HasDefaultValueSql("((sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time'))")
                 .HasColumnType("datetime");
             entity.Property(e => e.FilePath).HasMaxLength(500);
 
@@ -204,10 +227,10 @@ public partial class AuctionManagementDbContext : DbContext
         {
             entity.HasKey(e => e.LotId).HasName("PK__Lot__4160EFADFD0A2547");
 
-            entity.ToTable("Lot");
+            entity.ToTable("Lot", tb => tb.HasTrigger("trg_UpdateTimestamp_Lot"));
 
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
+                .HasDefaultValueSql("((sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time'))")
                 .HasColumnType("datetime");
             entity.Property(e => e.LotStatusId).HasDefaultValue(1);
             entity.Property(e => e.Sku)
@@ -216,11 +239,12 @@ public partial class AuctionManagementDbContext : DbContext
                 .HasColumnName("SKU");
             entity.Property(e => e.StartingPrice).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.UpdatedAt)
-                .HasDefaultValueSql("(getdate())")
+                .HasDefaultValueSql("((sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time'))")
                 .HasColumnType("datetime");
 
             entity.HasOne(d => d.AuctionMethod).WithMany(p => p.Lots)
                 .HasForeignKey(d => d.AuctionMethodId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Lot_AuctionMethod");
 
             entity.HasOne(d => d.LotStatus).WithMany(p => p.Lots)
@@ -236,11 +260,11 @@ public partial class AuctionManagementDbContext : DbContext
             entity.ToTable("LotStatus");
 
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
+                .HasDefaultValueSql("((sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time'))")
                 .HasColumnType("datetime");
             entity.Property(e => e.LotStatusName).HasMaxLength(50);
             entity.Property(e => e.UpdatedAt)
-                .HasDefaultValueSql("(getdate())")
+                .HasDefaultValueSql("((sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time'))")
                 .HasColumnType("datetime");
         });
 
@@ -248,15 +272,17 @@ public partial class AuctionManagementDbContext : DbContext
         {
             entity.HasKey(e => e.SoldLotId).HasName("PK__SoldLot__A006956D74F831B3");
 
-            entity.ToTable("SoldLot");
+            entity.ToTable("SoldLot", tb => tb.HasTrigger("trg_UpdateTimestamp_SoldLot"));
 
             entity.Property(e => e.SoldLotId).ValueGeneratedNever();
+            entity.Property(e => e.Address).HasMaxLength(500);
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
+                .HasDefaultValueSql("((sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time'))")
                 .HasColumnType("datetime");
+            entity.Property(e => e.ExpTime).HasColumnType("datetime");
             entity.Property(e => e.FinalPrice).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.UpdatedAt)
-                .HasDefaultValueSql("(getdate())")
+                .HasDefaultValueSql("((sysdatetimeoffset() AT TIME ZONE 'SE Asia Standard Time'))")
                 .HasColumnType("datetime");
 
             entity.HasOne(d => d.SoldLotNavigation).WithOne(p => p.SoldLot)

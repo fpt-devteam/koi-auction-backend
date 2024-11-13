@@ -27,6 +27,8 @@ public partial class AuctionLot
 
     public virtual Auction Auction { get; set; } = null!;
 
+    public virtual ICollection<AuctionDeposit> AuctionDeposits { get; set; } = new List<AuctionDeposit>();
+
     public virtual Lot AuctionLotNavigation { get; set; } = null!;
 
     public virtual AuctionLotStatus AuctionLotStatus { get; set; } = null!;

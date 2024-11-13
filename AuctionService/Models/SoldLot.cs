@@ -15,5 +15,11 @@ public partial class SoldLot
 
     public DateTime UpdatedAt { get; set; }
 
+    public int BreederId { get; set; }
+
+    public string? Address { get; set; }
+
+    public DateTime ExpTime { get; set; }
+
     public virtual AuctionLot SoldLotNavigation { get; set; } = null!;
 }
