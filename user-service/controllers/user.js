@@ -10,6 +10,12 @@ const Province = require("../models/provinces");
 const District = require("../models/districts");
 const Ward = require("../models/wards");
 const moment = require("moment");
+const axios = require("axios");
+const session = require("express-session");
+
+const mailAPI = axios.create({
+   baseURL: "http://localhost:3005",
+});
 
 const profile = async (req, res) => {
    try {
@@ -146,23 +152,14 @@ const googleFailure = async (req, res) => {
 const login = async (req, res) => {
    try {
       const reqBody = req.body;
-      if (!reqBody.Username || !reqBody.Password) {
-         return res.status(400).json({ message: "All fields are required" });
-      }
+      if (!reqBody.Username || !reqBody.Password) return res.status(400).json({ message: "All fields are required" });
 
       const user = await User.findOne({ where: { Username: reqBody.Username } });
 
-      if (!user) {
-         return res.status(401).json({ message: "Username or Password is incorrect" });
-      }
-
-      if (user.GoogleId) {
-         return res.status(401).json({ message: "Please login with Google" });
-      }
-
-      if (!user.Active) {
-         return res.status(401).json({ message: "User is not available" });
-      }
+      if (!user) return res.status(401).json({ message: "Username or Password is incorrect" });
+      if (user.GoogleId) return res.status(401).json({ message: "Please login with Google" });
+      if (!user.Active) return res.status(401).json({ message: "User is not available" });
+      if (!user.Verified) return res.status(401).json({ message: "User is not verified" });
 
       const match = await argon2.verify(user.Password, reqBody.Password);
 
@@ -191,12 +188,14 @@ const login = async (req, res) => {
 
 const register = async (req, res) => {
    try {
-      const { Username, Password, FirstName, LastName, Phone, Email } = req.body;
+      const { Username, Password, FirstName, LastName, Phone, Email, IsBreeder, EmailToken } = req.body;
       const existUser = await User.findOne({
          where: {
             [Op.or]: [{ Username: Username }, { Email: Email }, { Phone: Phone }],
          },
       });
+
+      if (!EmailToken) return res.status(400).json({ message: "Email verification code is required" }); 
 
       if (!Username || !Password || !FirstName || !LastName || !Phone || !Email) {
          return res.status(400).json({ message: "All fields are required" });
@@ -206,6 +205,9 @@ const register = async (req, res) => {
       if (existUser?.Email == Email) return res.status(400).json({ message: "Email already exists" });
       if (existUser?.Phone == Phone) return res.status(400).json({ message: "Phone already exists" });
 
+      const emailToken = req.session.emailToken;
+      req.session.emailToken = null;
+      if (EmailToken != emailToken) return res.status(400).json({ message: "Invalid email verification code" });
       const hashedPassword = await argon2.hash(Password, 10);
 
       let userId;
@@ -217,7 +219,8 @@ const register = async (req, res) => {
          Phone: Phone,
          Email: Email,
          Active: true,
-         UserRoleId: 1,
+         UserRoleId: IsBreeder ? 2 : 1,
+         Verified: IsBreeder ? false : true,
          CreatedAt: new Date(),
          UpdatedAt: new Date(),
       }).then((user) => {
@@ -237,6 +240,51 @@ const register = async (req, res) => {
       res.status(500).json({ message: "Internal server error" });
    }
 };
+
+const getUnverifiedBreeders = async (req, res) => {
+   try {
+      const breeders = await User.findAll({
+         where: { UserRoleId: 2, Verified: false },
+      });
+      if (!breeders) {
+         return res.status(404).json({ message: "Breeder not found" });
+      }
+      res.status(200).json(breeders);
+   } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Internal server error" });
+   }
+}
+
+const verifyBreeder = async (req, res) => {
+   try {
+      const { UserId } = req.body;
+      await User.update(
+         { Verified: true },
+         { where: { UserId: UserId } }
+      );
+      res.status(201).json({ message: "Breeder Verified" });
+   } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Internal server error" });
+   }
+}
+
+const emailVerification = async (req, res) => {
+   try {
+      const { Email } = req.body;
+      const sixDigitCode = Math.floor(100000 + Math.random() * 900000);
+      req.session.emailToken = sixDigitCode;
+      req.session.cookie.maxAge = 15 * 60 * 1000;
+      const subject = "Email Verification Code";
+      const text = `Your verification code is: ${sixDigitCode}`;
+      await sendEmail(Email, subject, text);
+      res.status(200).json({ message: "Verification code sent to your Email", token: sixDigitCode }); 
+   } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Internal server error" });
+   }
+}
 
 const updateProfile = async (req, res) => {
    try {
@@ -736,6 +784,9 @@ module.exports = {
    googleSuccess,
    googleFailure,
    register,
+   getUnverifiedBreeders,
+   verifyBreeder,
+   emailVerification,
    updateProfile,
    updatePassword,
    forgotPassword,

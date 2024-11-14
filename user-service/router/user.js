@@ -10,6 +10,7 @@ const breederRole = verifyRole(["Breeder"]);
 
 router.get("/profile", authenticate, controller.profile);
 router.post("/register", controller.register);
+router.post("/verify-email", controller.emailVerification);
 router.post("/login", controller.login);
 router.post("/logout", authenticate, controller.logout);
 router.post("/forgot-password", controller.forgotPassword);
@@ -26,6 +27,9 @@ router.get("/address/district", controller.getDistricts);
 router.get("/address/district/:provinceId", controller.getDistrictByProvinceId);
 router.get("/address/ward", controller.getWards);
 router.get("/address/ward/:districtId", controller.getWardByDistrictId);
+
+router.get("/unverified-breeders", authenticate, highRole, controller.getUnverifiedBreeders);
+router.patch("/verify-breeder/:id", authenticate, highRole, controller.verifyBreeder);
 
 router.get("/breeder/profile", authenticate, breederRole, controller.getBreederProfile);
 
