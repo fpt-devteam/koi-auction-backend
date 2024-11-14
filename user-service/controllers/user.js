@@ -188,18 +188,25 @@ const login = async (req, res) => {
 
 const register = async (req, res) => {
    try {
-      const { Username, Password, FirstName, LastName, Phone, Email, IsBreeder, EmailToken } = req.body;
+      const { Username, Password, FirstName, LastName, Phone, Email, IsBreeder, EmailToken, ProvinceCode, DistrictCode, WardCode, Address } = req.body;
       const existUser = await User.findOne({
          where: {
             [Op.or]: [{ Username: Username }, { Email: Email }, { Phone: Phone }],
          },
       });
 
-      if (!EmailToken) return res.status(400).json({ message: "Email verification code is required" }); 
-
-      if (!Username || !Password || !FirstName || !LastName || !Phone || !Email) {
-         return res.status(400).json({ message: "All fields are required" });
-      }
+      if (!EmailToken) return res.status(400).json({ message: "Email verification code is required" })
+      if (!Username) return res.status(400).json({ message: "Username is required" });
+      if (!Password) return res.status(400).json({ message: "Password is required" });
+      if (!FirstName) return res.status(400).json({ message: "First name is required" });
+      if (!LastName) return res.status(400).json({ message: "Last name is required" });
+      if (!Phone) return res.status(400).json({ message: "Phone is required" });
+      if (!Email) return res.status(400).json({ message: "Email is required" });
+      if (!ProvinceCode) return res.status(400).json({ message: "Province code is required" });
+      if (!DistrictCode) return res.status(400).json({ message: "District code is required" });
+      if (!WardCode) return res.status(400).json({ message: "Ward code is required" });
+      if (!Address) return res.status(400).json({ message: "Address is required" });
+      
 
       if (existUser?.Username == Username) return res.status(400).json({ message: "Username already exists" });
       if (existUser?.Email == Email) return res.status(400).json({ message: "Email already exists" });
@@ -208,6 +215,7 @@ const register = async (req, res) => {
       const emailToken = req.session.emailToken;
       req.session.emailToken = null;
       if (EmailToken != emailToken) return res.status(400).json({ message: "Invalid email verification code" });
+
       const hashedPassword = await argon2.hash(Password, 10);
 
       let userId;
@@ -221,6 +229,10 @@ const register = async (req, res) => {
          Active: true,
          UserRoleId: IsBreeder ? 2 : 1,
          Verified: IsBreeder ? false : true,
+         ProvinceCode: ProvinceCode,
+         DistrictCode: DistrictCode,
+         WardCode: WardCode,
+         Address: Address,
          CreatedAt: new Date(),
          UpdatedAt: new Date(),
       }).then((user) => {
@@ -288,7 +300,13 @@ const emailVerification = async (req, res) => {
 
 const updateProfile = async (req, res) => {
    try {
-      const { Username, FirstName, LastName, Phone, Email, ProvinceCode, DistrictCode, WardCode, Address } = req.body;
+      const { Username, FirstName, LastName, Phone, Email, ProvinceCode, DistrictCode, WardCode, Address, EmailToken } = req.body;
+      if (Email) {
+         if (!EmailToken) return res.status(400).json({ message: "Email verification code is required" });
+         const emailToken = req.session.emailToken;
+         req.session.emailToken = null;
+         if (EmailToken != emailToken) return res.status(400).json({ message: "Invalid email verification code" });
+      }
       await User.update(
          {
             Username: Username,
