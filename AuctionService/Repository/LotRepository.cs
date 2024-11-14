@@ -53,7 +53,7 @@ namespace AuctionService.Repository
         public async Task<List<Lot>> GetAllAsync(LotQueryObject query)
         {
             var lots = _context.Lots.Include(l => l.KoiFish).ThenInclude(m => m!.KoiMedia).
-                                        Include(l => l.LotStatus).Include(l => l.AuctionLot).Include(l => l.AuctionLot.SoldLot)
+                                        Include(l => l.LotStatus).Include(l => l.AuctionLot).Include(l => l.AuctionLot!.SoldLot)
                                         .Include(l => l.AuctionMethod).AsQueryable();
 
             // Kiểm tra BreederId

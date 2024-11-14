@@ -28,17 +28,18 @@ namespace AuctionService.Controllers
         {
             if (paymentDto == null)
             {
-                return BadRequest();
+                return BadRequest("Payment data is required");
             }
+            string result = "";
             try
             {
-                await _walletService.PaymentAsync(paymentDto);
+                result = await _walletService.PaymentAsync(paymentDto);
             }
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
-            return Ok();
+            return Ok(result);
         }
 
         [HttpPost("update-balance")]

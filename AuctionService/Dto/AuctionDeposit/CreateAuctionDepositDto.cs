@@ -8,7 +8,6 @@ namespace AuctionService.Dto.AuctionDeposit
     public class CreateAuctionDepositDto
     {
         public int AucitonLotId { get; set; }
-        public int UserId { get; set; }
         public decimal Amount { get; set; }
     }
 }

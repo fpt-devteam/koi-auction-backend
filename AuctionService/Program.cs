@@ -49,6 +49,7 @@ builder.Services.AddScoped<IAuctionLotRepository, AuctionLotRepository>();
 builder.Services.AddScoped<IBidLogRepository, BidLogRepository>();
 builder.Services.AddScoped<ISoldLotRepository, SoldLotRepository>();
 builder.Services.AddScoped<IAuctionDepositRepository, AuctionDepositRepository>();
+builder.Services.AddScoped<IAuctionDepositService, AuctionDepositService>();
 
 builder.Services.AddScoped<ISoldLotService, SoldLotService>();
 builder.Services.AddScoped<IBidLogService, BidLogService>();
