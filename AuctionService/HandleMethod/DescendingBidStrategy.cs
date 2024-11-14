@@ -22,7 +22,7 @@ namespace AuctionService.HandleMethod
         private decimal? _stepPrice;
         public event Func<int, Task>? CountdownFinished;
 
-        private const int _decreaseInterval = 10;
+        private const int _decreaseInterval = 20;
 
         public DescendingBidStrategy(IHubContext<BidHub> bidHub)
         : base() // Truyền bidService đến constructor của lớp cha
@@ -48,7 +48,7 @@ namespace AuctionService.HandleMethod
             return _winner;
         }
 
-        public override bool IsBidValid(CreateBidLogDto bid, AuctionLotBidDto? auctionLotBidDto, decimal balance)
+        public override bool IsBidValid(CreateBidLogDto bid, AuctionLotBidDto? auctionLotBidDto)
         {
             if (auctionLotBidDto == null || auctionLotBidDto.AuctionLotId != bid.AuctionLotId)
             {
@@ -58,13 +58,9 @@ namespace AuctionService.HandleMethod
             System.Console.WriteLine($"currentPrice = {_currentPrice}");
 
             // Kiểm tra nếu BidAmount đạt các tiêu chí và người mua có đủ số dư
-            if (bid.BidAmount == _currentPrice && bid.BidAmount <= balance)
+            if (bid.BidAmount == _currentPrice)
             {
                 _winner = bid.ToHighestBidLogFromCreateBidLogDto(); // Cập nhật người thắng cuộc là người đầu tiên chấp nhận giá hiện tại
-                if (CountdownFinished == null)
-                {
-                    System.Console.WriteLine("dmm");
-                }
                 _timer.Dispose();
                 Task.Run(() => CountdownFinished!.Invoke(auctionLotBidDto.AuctionLotId)); // Kết thúc phiên đấu giá
                 return true;
@@ -75,7 +71,6 @@ namespace AuctionService.HandleMethod
 
         private void DecreasePrice(object? state)
         {
-            System.Console.WriteLine($"DecreasePrice called");
             if (_auctionLotBidDto != null)
             {
                 System.Console.WriteLine($"Remaining time = {_auctionLotBidDto.RemainingTime}");
@@ -87,7 +82,8 @@ namespace AuctionService.HandleMethod
                     _timer.Dispose();
                     Task.Run(() => CountdownFinished!.Invoke(_auctionLotBidDto.AuctionLotId));
                 }
-                _bidHub.Clients.All.SendAsync(WsMess.ReceivePriceDesc, _currentPrice);
+                // _bidHub.Clients.All.SendAsync(WsMess.ReceivePriceDesc, _currentPrice);
+                _bidHub.Clients.Group(_auctionLotBidDto.AuctionLotId.ToString()).SendAsync(WsMess.ReceivePriceDesc, _currentPrice);
             }
             System.Console.WriteLine($"Updated currentPrice = {_currentPrice}");
         }

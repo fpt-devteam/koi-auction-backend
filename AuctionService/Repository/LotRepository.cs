@@ -185,9 +185,22 @@ namespace AuctionService.Repository
                                             Include(l => l.AuctionMethod).FirstOrDefaultAsync(l => l.LotId == id);
             if (lot == null)
                 throw new KeyNotFoundException($" Lot {id} was not found");
+
             var status = await _context.LotStatuses.FirstOrDefaultAsync(x => x.LotStatusName == updateLot.LotStatusName);
             lot.LotStatusId = status!.LotStatusId;
             return lot;
+        }
+
+        //update status of a list of lots to InAuction
+        public async Task<List<Lot>> UpdateLotsStatusToInAuctionAsync(List<int> lotIds)
+        {
+            var lots = await _context.Lots.Where(l => lotIds.Contains(l.LotId)).ToListAsync();
+            if (lots.Count == 0)
+                throw new KeyNotFoundException($" Lots were not found");
+
+            // var status = await _context.LotStatuses.FirstOrDefaultAsync(x => x.LotStatusName == "In Auction");
+            lots.ForEach(l => l.LotStatusId = (int)Enums.LotStatus.InAuction);
+            return lots;
         }
 
         public async Task<List<LotAuctionMethodStatisticDto>> GetLotAuctionMethodStatisticAsync()
@@ -256,8 +269,6 @@ namespace AuctionService.Repository
                          };
             return await result.ToListAsync();
         }
-
-
 
         public async Task<List<DailyRevenueDto>> GetLast7DaysRevenue(int offsetWeeks)
         {

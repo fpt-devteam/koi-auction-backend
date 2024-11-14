@@ -62,15 +62,21 @@ namespace AuctionService.Hubs
                 await Groups.AddToGroupAsync(Context.ConnectionId, userConnection.AuctionLotId.ToString());
                 _connections[Context.ConnectionId] = userConnection;
 
-                if (_bidManagementService != null && _bidManagementService.BidService != null)
+                BidService bidService = _bidManagementService.BidServices[userConnection.AuctionLotId];
+                string auctionLotId = userConnection.AuctionLotId.ToString();
+
+                if (_bidManagementService != null && bidService != null)
                 {
                     System.Console.WriteLine($"Join auction lot {userConnection.AuctionLotId}");
-                    await Clients.All.SendAsync(WsMess.ReceivePredictEndTime, _bidManagementService.BidService.GetPredictEndTime());
+                    // await Clients.All.SendAsync(WsMess.ReceivePredictEndTime, bidService.GetPredictEndTime());
+                    await Clients.Group(auctionLotId).SendAsync(WsMess.ReceivePredictEndTime, bidService.GetPredictEndTime());
+                    System.Console.Error.WriteLine($"Send Predict End Time: {bidService.GetPredictEndTime()}");
 
-                    System.Console.Error.WriteLine($"Send Predict End Time: {_bidManagementService.BidService.GetPredictEndTime()}");
-
-                    if (_bidManagementService.BidService.AuctionLotBidDto!.AuctionMethodId == (int)Enums.BidMethodType.AscendingBid)
-                        await Clients.All.SendAsync(WsMess.ReceiveWinner, _bidManagementService.BidService.GetWinner());
+                    if (bidService.AuctionLotBidDto!.AuctionMethodId == (int)Enums.BidMethodType.AscendingBid)
+                    {
+                        // await Clients.All.SendAsync(WsMess.ReceiveWinner, bidService.GetWinner());
+                        await Clients.Group(auctionLotId).SendAsync(WsMess.ReceiveWinner, bidService.GetWinner());
+                    }
                 }
             }
             catch (Exception e)
@@ -83,22 +89,33 @@ namespace AuctionService.Hubs
             System.Console.WriteLine($"User {bid.BidderId} placed bid {bid.BidAmount}");
             try
             {
-                if (await _bidManagementService!.BidService!.IsBidValid(bid))
+                BidService bidService = _bidManagementService.BidServices[bid.AuctionLotId];
+                string auctionLotId = bid.AuctionLotId.ToString();
+                if (bidService.IsBidValid(bid))
                 {
                     await Clients.Caller.SendAsync(WsMess.ReceiveSuccessBid, bid.BidAmount);
-                    await Clients.All.SendAsync(WsMess.ReceivePredictEndTime, _bidManagementService.BidService.GetPredictEndTime());
-                    if (_bidManagementService.BidService.AuctionLotBidDto!.AuctionMethodId == (int)Enums.BidMethodType.AscendingBid)
-                        await Clients.All.SendAsync(WsMess.ReceiveWinner, _bidManagementService.BidService.GetWinner());
-                    if (_bidManagementService.BidService.AuctionLotBidDto!.AuctionMethodId == (int)Enums.BidMethodType.DescendingBid)
-                        await Clients.All.SendAsync(WsMess.ReceivePriceDesc, _bidManagementService.BidService.GetPriceDesc());
+                    // await Clients.All.SendAsync(WsMess.ReceivePredictEndTime, bidService.GetPredictEndTime());
+                    await Clients.Group(auctionLotId).SendAsync(WsMess.ReceivePredictEndTime, bidService.GetPredictEndTime());
 
-                    await _bidManagementService.BidService.AddBidLog(bid);
+                    if (bidService.AuctionLotBidDto!.AuctionMethodId == (int)Enums.BidMethodType.AscendingBid)
+                    {
+                        // await Clients.All.SendAsync(WsMess.ReceiveWinner, bidService.GetWinner());
+                        await Clients.Group(auctionLotId).SendAsync(WsMess.ReceiveWinner, bidService.GetWinner());
+                    }
+                    if (bidService.AuctionLotBidDto!.AuctionMethodId == (int)Enums.BidMethodType.DescendingBid)
+                    {
+                        // await Clients.All.SendAsync(WsMess.ReceivePriceDesc, bidService.GetPriceDesc());
+                        await Clients.Group(auctionLotId).SendAsync(WsMess.ReceivePriceDesc, bidService.GetPriceDesc());
+                    }
 
-                    await Clients.All.SendAsync(WsMess.ReceiveFetchBidLog);
+                    await bidService.AddBidLog(bid);
+
+                    // await Clients.All.SendAsync(WsMess.ReceiveFetchBidLog);
+                    await Clients.Group(auctionLotId).SendAsync(WsMess.ReceiveFetchBidLog);
                 }
                 else
                 {
-                    await Clients.Caller.SendAsync(WsMess.ReceiveExceptionMessage, "Bid is invalid! Please check your balance and bid amount!");
+                    await Clients.Caller.SendAsync(WsMess.ReceiveExceptionMessage, "Bid is invalid!");
                 }
 
             }

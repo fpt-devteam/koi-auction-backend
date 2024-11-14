@@ -50,7 +50,6 @@ builder.Services.AddScoped<IBidLogRepository, BidLogRepository>();
 builder.Services.AddScoped<ISoldLotRepository, SoldLotRepository>();
 builder.Services.AddScoped<IAuctionDepositRepository, AuctionDepositRepository>();
 
-
 builder.Services.AddScoped<ISoldLotService, SoldLotService>();
 builder.Services.AddScoped<IBidLogService, BidLogService>();
 builder.Services.AddScoped<BidService>();

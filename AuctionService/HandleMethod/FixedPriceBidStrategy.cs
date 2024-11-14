@@ -33,26 +33,19 @@ namespace AuctionService.HandleMethod
         }
 
 
-        public override bool IsBidValid(CreateBidLogDto bid, AuctionLotBidDto? auctionLotBidDto, decimal balance)
+        public override bool IsBidValid(CreateBidLogDto bid, AuctionLotBidDto? auctionLotBidDto)
         {
             // System.Console.WriteLine($"bid {auctionLotBidDto!.AuctionLotId} = {bid.AuctionLotId} start price = {auctionLotBidDto.StartPrice}");
             //kiểm tra AuctionLotStaus
             if (auctionLotBidDto != null
                     && auctionLotBidDto!.AuctionLotId == bid.AuctionLotId
                     && bid.BidAmount == auctionLotBidDto.StartPrice
-                    && bid.BidAmount <= balance
                     && _isPlacedBid.ContainsKey(bid.BidderId) == false)
             {
-                // System.Console.WriteLine($"Fixed: 54 {balance}");
 
-                // if (bid.BidAmount <= balance)
-                // {
                 _bids.Add(bid);
                 _isPlacedBid.TryAdd(bid.BidderId, true);
-                //PrintAllBids();
                 return true;
-                // }
-
             }
             return false;
         }

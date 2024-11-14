@@ -139,44 +139,27 @@ namespace AuctionService.Controller
                 return BadRequest(ModelState);
             }
 
-            // print listAuctionLotDto và 
             //print all list
+            // foreach (var auctionLot in listAuctionLotDto)
+            // {
+            //     System.Console.WriteLine($"Auction Id: {auctionLot.AuctionId}");
+            //     System.Console.WriteLine($"Auction Lot: {auctionLot.AuctionLotId}");
+            //     System.Console.WriteLine($"Order in Auction: {auctionLot.OrderInAuction}");
+            //     System.Console.WriteLine($"Duration: {auctionLot.Duration}");
+            //     System.Console.WriteLine($"Step Percent: {auctionLot.StepPercent}");
+            // }
+
+            //create auction lot list    
+            await _auctionLotService.CreateListAsync(listAuctionLotDto);
+
+            //schedule auction lot list
+            int auctionId = listAuctionLotDto.First().AuctionId;
+            Auction auction = await _unitOfWork.Auctions.GetByIdAsync(auctionId);
+            DateTime startTime = auction.StartTime;
             foreach (var auctionLot in listAuctionLotDto)
             {
-                System.Console.WriteLine($"Auction Id: {auctionLot.AuctionId}");
-                System.Console.WriteLine($"Auction Lot: {auctionLot.AuctionLotId}");
-                System.Console.WriteLine($"Order in Auction: {auctionLot.OrderInAuction}");
-                System.Console.WriteLine($"Duration: {auctionLot.Duration}");
-                System.Console.WriteLine($"Step Percent: {auctionLot.StepPercent}");
+                await _auctionLotService.ScheduleAuctionLotAsync(auctionLot.AuctionLotId, DateTime.Now.AddSeconds(30));
             }
-
-            var auctionLots = listAuctionLotDto.Select(dto => dto.ToAuctionLotFromCreateAuctionLotDto()).ToList();
-            System.Console.WriteLine($"List Auction Lot: {auctionLots.Count}");
-
-
-
-            int firstAuctionLotId = 1; // default first auction lot id is 1
-            int auctionId = auctionLots.First().AuctionId;
-            DateTime startTime = DateTime.Now; // default start time is now
-
-            System.Console.WriteLine($"Auction Id: {auctionId}");
-            // startTime = _unitOfWork.Auctions.GetByIdAsync(auctionId).Result.StartTime;
-            var auction = await _unitOfWork.Auctions.GetByIdAsync(auctionId);
-            startTime = auction.StartTime;
-
-            foreach (var auctionLot in auctionLots)
-            {
-                if (auctionLot.OrderInAuction == 1)
-                {
-                    firstAuctionLotId = auctionLot.AuctionLotId;
-                }
-                await _unitOfWork.Lots.UpdateLotStatusAsync(auctionLot.AuctionLotId, new Dto.Lot.UpdateLotStatusDto
-                {
-                    LotStatusName = "In auction"
-                });
-            }
-            await _auctionLotService.CreateListAsync(listAuctionLotDto);
-            await _auctionLotService.ScheduleAuctionLotAsync(firstAuctionLotId, startTime.AddSeconds(10));
             return StatusCode(201);
         }
 
