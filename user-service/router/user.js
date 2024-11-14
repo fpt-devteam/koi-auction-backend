@@ -33,9 +33,9 @@ router.patch("/verify-breeder/:id", authenticate, highRole, controller.verifyBre
 
 router.get("/breeder/profile", authenticate, breederRole, controller.getBreederProfile);
 
-router.get("/manage/profile", authenticate, highRole, controller.getAllProfiles);
+router.get("/manage/profile", controller.getAllProfiles);
 router.post("/manage/profile", controller.manageCreateProfile);
-router.get("/manage/profile/:id", authenticate, highRole, controller.getProfileById);
+router.get("/manage/profile/:id", controller.getProfileById);
 router.patch("/manage/profile/:id", authenticate, highRole, controller.manageUpdateProfile);
 router.delete("/manage/profile/:id", authenticate, highRole, controller.manageDeleteProfile);
 router.get("/manage/detail-profile/:id", authenticate, highRole, controller.manageGetDetailProfile);
