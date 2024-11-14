@@ -24,6 +24,8 @@ namespace AuctionService.Mapper
                 FinalPrice = soldLot.FinalPrice,
                 CreatedAt = soldLot.CreatedAt,
                 UpdatedAt = soldLot.UpdatedAt,
+                BreederId = soldLot.BreederId,
+                Address = soldLot.Address,
                 KoiFish = soldLot!.SoldLotNavigation!.AuctionLotNavigation!.KoiFish!.ToKoiFishDtoFromKoiFish()
             };
         }

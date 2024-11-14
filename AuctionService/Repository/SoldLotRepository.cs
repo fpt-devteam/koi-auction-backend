@@ -30,6 +30,8 @@ namespace AuctionService.Repository
 
             if (query.UserID.HasValue)
                 soldLots = soldLots.Where(x => x.WinnerId == query.UserID.Value);
+            if (query.BreederID.HasValue)
+                soldLots = soldLots.Where(x => x.BreederId == query.BreederID.Value);
             return await soldLots.ToListAsync();
         }
 
