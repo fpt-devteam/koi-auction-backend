@@ -57,6 +57,9 @@ const User = sequelize.define('User', {
    Address: {
       type: DataTypes.STRING
    },
+   Verified: {
+      type: DataTypes.BOOLEAN
+   },
    CreatedAt: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW
