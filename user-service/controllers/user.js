@@ -189,6 +189,7 @@ const login = async (req, res) => {
 const register = async (req, res) => {
    try {
       const { Username, Password, FirstName, LastName, Phone, Email, IsBreeder, EmailToken, ProvinceCode, DistrictCode, WardCode, Address } = req.body;
+      const { FarmName, Certificate, About } = req.body;
       const existUser = await User.findOne({
          where: {
             [Op.or]: [{ Username: Username }, { Email: Email }, { Phone: Phone }],
@@ -207,7 +208,6 @@ const register = async (req, res) => {
       if (!WardCode) return res.status(400).json({ message: "Ward code is required" });
       if (!Address) return res.status(400).json({ message: "Address is required" });
       
-
       if (existUser?.Username == Username) return res.status(400).json({ message: "Username already exists" });
       if (existUser?.Email == Email) return res.status(400).json({ message: "Email already exists" });
       if (existUser?.Phone == Phone) return res.status(400).json({ message: "Phone already exists" });
@@ -238,6 +238,17 @@ const register = async (req, res) => {
       }).then((user) => {
          userId = user.UserId;
       });
+
+      if (IsBreeder) {
+         if (!FarmName || !Certificate) return res.status(400).json({ message: "All fields are required" });
+         
+         await BreederDetail.create({
+            BreederId: userId,
+            FarmName: FarmName,
+            Certificate: Certificate,
+            About: About,
+         });
+      }
 
       await Wallet.create({
          UserId: userId,
