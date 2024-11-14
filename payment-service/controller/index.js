@@ -15,7 +15,7 @@ const WITHDRAW = 1;
 const SUCCESS = 2;
 
 const deposit = async (req, res) => {
-   const { Amount } = req.body;
+   const { Amount, Description } = req.body;
    const { UserId } = req.user;
 
    if (!Amount) return res.status(400).json({ message: "Amount is required" });
@@ -50,7 +50,7 @@ const deposit = async (req, res) => {
       item: JSON.stringify(items),
       embed_data: JSON.stringify(embed_data),
       amount: Amount,
-      description: "Thanh toán hóa đơn",
+      description: Description,
       bank_code: "zalopayapp",
       callback_url:
          "https://4514-118-71-221-28.ngrok-free.app/payment-service/callback",
@@ -85,7 +85,7 @@ const deposit = async (req, res) => {
          TransTypeId: 3,
          AppTransId: app_trans_id,
          BalanceBefore: wallet.Balance,
-         Description: "Nạp tiền vào ví",
+         Description: Description,
          CreatedAt: Date.now(),
       });
    } catch (err) {
@@ -292,7 +292,7 @@ const getTransactionHistory = async (req, res) => {
 }
 
 const payment = async (req, res) => {
-   const { Amount, SoldLotId } = req.body;
+   const { Amount, SoldLotId, Description } = req.body;
    const { UserId } = req.user;
 
    if (!Amount) return res.status(400).json({ message: "Amount is required" });
@@ -315,7 +315,7 @@ const payment = async (req, res) => {
          TransTypeId: 2,
          SoldLotId: SoldLotId,
          BalanceBefore: wallet.Balance,
-         Description: "Thanh toán hóa đơn",
+         Description: Description,
          CreatedAt: Date.now(),
       });
 
@@ -523,7 +523,7 @@ const withdraw = async (req, res) => {
 };
 
 const payout = async (req, res) => {
-   const { BreederId, Amount } = req.body;
+   const { BreederId, Amount, Description } = req.body;
 
    if (!BreederId) return res.status(400).json({ message: "BreederId is required" });
    if (!Amount) return res.status(400).json({ message: "Amount is required" });
@@ -547,7 +547,7 @@ const payout = async (req, res) => {
             StatusId: 2,
             TransTypeId: 4,
             BalanceBefore: wallet.Balance,
-            Description: "Thanh toán hóa đơn",
+            Description: Description,
             CreatedAt: Date.now(),
          }),
          await Wallet.update(
