@@ -27,6 +27,7 @@ router.get("/internal/get-transaction-history", authenticate, internalRole, cont
 router.get("/internal/get-transaction-history/:UserId", authenticate, internalRole, controller.getTransactionHistoryByUserId);
 
 router.post('/internal/payment/:UserId', authenticate, internalRole, controller.internalPayment);
+router.post('/internal/refund-many', authenticate, internalRole, controller.internalRefundMany);
 
 router.get("/statistics/transaction-history", authenticate, adminOnly, controller.getStatisticsTransactionHistory);
 router.get("/breeder/statistics/transaction-history", authenticate, breederRole, controller.getBreederStatisticsTransactionHistory);
