@@ -2,6 +2,7 @@ const express = require('express');
 const sendEmail = require('./utils/sendEmail');
 const app = express();
 const cors = require('cors');
+const User = require('./models/user');
 
 require("dotenv").config();
 
@@ -19,12 +20,18 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.post("/api/send-email", async (req, res) => {
+   const { userId, subject, text } = req.body;
    const { Email, Subject, Text } = req.body;
-   if (!Email || !Subject || !Text) {
-      return res.status(400).send("Missing required fields");
+   if (Email && Subject && Text) {
+      await sendEmail(Email, Subject, Text);
+      res.send("Email sent successfully");
    }
-   await sendEmail(Email, Subject, Text);
-   res.send("Email sent successfully");
+   else if (userId && subject && text) {
+      const user = await User.findOne({ where: { UserId: userId } });
+      const email = user.Email;
+      await sendEmail(email, subject, text);
+   }
+   return res.status(400).send("Missing required fields");
 });
 
 const port = process.env.PORT || 3005;
