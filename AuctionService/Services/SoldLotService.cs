@@ -49,6 +49,7 @@ namespace AuctionService.Services
                 soldLotDto.WinnerDto = winner;
                 soldLotDto.AuctionDepositDto = depositDto;
                 soldLotDto.LotStatus = status!.ToLotStatusDtoFromLotStatus();
+                soldLotDto.ExpTime = s.ExpTime;
                 soldLotDtos.Add(soldLotDto);
             }
 
