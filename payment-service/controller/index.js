@@ -291,6 +291,41 @@ const getTransactionHistory = async (req, res) => {
    }
 }
 
+const refund = async (req, res) => {
+   const { UserId, SoldLotId, Description, Amount } = req.body;
+   if (!UserId) return res.status(400).json({ message: "UserId is required" });
+   if (!Amount) return res.status(400).json({ message: "Amount is required" });
+   if (isNaN(Amount)) return res.status(400).json({ message: "Amount must be a number" });
+   if (Amount <= 0) return res.status(400).json({ message: "Amount must be greater than 0" });
+
+   const wallet = await Wallet.findOne({ where: { UserId: UserId } });
+   if (!wallet) return res.status(404).json({ message: "User not found" });
+
+   try {
+      await Transaction.create({
+         UserId: UserId,
+         Amount: Amount,
+         WalletId: wallet.WalletId,
+         StatusId: 2,
+         TransTypeId: 5,
+         SoldLotId: SoldLotId,
+         BalanceBefore: wallet.Balance,
+         Description: Description,
+         CreatedAt: Date.now(),
+      });
+
+      await Wallet.update(
+         { Balance: wallet.Balance + Amount },
+         { where: { WalletId: wallet.WalletId } }
+      );
+   }
+   catch (err) {
+      console.log(err);
+      return res.status(500).json({ message: "Internal Server Error" });
+   }
+}
+
+
 const payment = async (req, res) => {
    const { Amount, SoldLotId, Description } = req.body;
    const { UserId } = req.user;
@@ -768,6 +803,7 @@ const getSumOfSuccessTransactionByTransTypeId = async (req, res) => {
 module.exports = {
    deposit,
    payment,
+   refund,
    callback,
    getWalletBalance,
    getTransactionHistory,
