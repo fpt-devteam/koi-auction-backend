@@ -259,19 +259,19 @@ namespace AuctionService.Repository
 
 
 
-        public async Task<List<DailyRevenueDto>> GetLast7DaysRevenue(int offsetWeeks)
+        public async Task<List<DailyRevenueDto>> GetStatisticsRevenue(DateTime startDateTime, DateTime endDateTime)
         {
             // Xác định khoảng thời gian 7 ngày trước đó theo offsetWeeks
-            DateTime endOfPeriod = DateTime.Today.AddDays(-7 * offsetWeeks); // Lùi về 7 * offsetWeeks ngày
-            endOfPeriod = endOfPeriod.AddDays(1).AddSeconds(-1); // Đến cuối ngày
-            DateTime startOfPeriod = endOfPeriod.AddDays(-6); // Lấy 6 ngày trước ngày kết thúc để có 7 ngày
-
+            // DateTime endDateTime = DateTime.Today.AddDays(-7 * offsetWeeks); // Lùi về 7 * offsetWeeks ngày
+            // endDateTime = endDateTime.AddDays(1).AddSeconds(-1); // Đến cuối ngày
+            // DateTime startDateTime = endDateTime.AddDays(-6); // Lấy 6 ngày trước ngày kết thúc để có 7 ngày
+            endDateTime = endDateTime.AddDays(1).AddSeconds(-1);
             // Truy vấn cơ sở dữ liệu trong khoảng thời gian đã xác định
             var lotsInRange = await (from lot in _context.Lots
                                      join soldLot in _context.SoldLots on lot.LotId equals soldLot.SoldLotId
                                      where lot.LotStatusId == COMPLETED &&
-                                           lot.UpdatedAt >= startOfPeriod &&
-                                           lot.UpdatedAt <= endOfPeriod
+                                           lot.UpdatedAt >= startDateTime &&
+                                           lot.UpdatedAt <= endDateTime
                                      select new
                                      {
                                          lot.UpdatedAt,
@@ -279,9 +279,10 @@ namespace AuctionService.Repository
                                      })
                                      .ToListAsync(); // Lấy dữ liệu vào bộ nhớ
 
+            int totalDays = (endDateTime - startDateTime).Days + 1;
             // Nhóm và tính tổng doanh thu theo từng ngày
-            var dailyRevenue = Enumerable.Range(0, 7)
-                .Select(i => startOfPeriod.AddDays(i))
+            var dailyRevenue = Enumerable.Range(0, totalDays)
+                .Select(i => startDateTime.AddDays(i))
                 .GroupJoin(lotsInRange,
                            date => date.Date,
                            lot => lot.UpdatedAt.Date,

@@ -22,6 +22,6 @@ namespace AuctionService.IRepository
         Task<List<Lot>> GetBreederLotsStatisticsAsync();
         Task<List<LotSearchResultDto>> GetLotSearchResults(int breederId);
         // Task<List<DailyRevenueDto>> GetWeeklyRevenueOfBreeders(int year, int month, int weekOfMonth);
-        Task<List<DailyRevenueDto>> GetLast7DaysRevenue(int offsetWeeks);
+        Task<List<DailyRevenueDto>> GetStatisticsRevenue(DateTime startDateTime, DateTime endDateTime);
     }
 }

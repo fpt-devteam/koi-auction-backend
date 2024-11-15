@@ -27,5 +27,5 @@ public partial class Lot
 
     public virtual KoiFish? KoiFish { get; set; }
 
-    public virtual LotStatus LotStatus { get; set; } = null!;
+    public virtual LotStatus? LotStatus { get; set; }
 }
