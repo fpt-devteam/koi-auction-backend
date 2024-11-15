@@ -27,6 +27,7 @@ namespace AuctionService.Dto.SoldLot
         public LotStatusDto? LotStatus { get; set; }
         public string? SKU { get; set; }
         // public LotDto? Lot { get; set; }
+        public DateTime? ExpTime { get; set; }
 
 
     }
