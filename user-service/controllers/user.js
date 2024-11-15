@@ -312,7 +312,8 @@ const emailVerification = async (req, res) => {
 const updateProfile = async (req, res) => {
    try {
       const { Username, FirstName, LastName, Phone, Email, ProvinceCode, DistrictCode, WardCode, Address, EmailToken } = req.body;
-      if (Email) {
+      const user = await User.findByPk(req.user.UserId);
+      if (Email != user.Email) {
          if (!EmailToken) return res.status(400).json({ message: "Email verification code is required" });
          const emailToken = req.session.emailToken;
          req.session.emailToken = null;
