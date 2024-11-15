@@ -15,7 +15,7 @@ const WITHDRAW = 1;
 const SUCCESS = 2;
 
 const deposit = async (req, res) => {
-   const { Amount } = req.body;
+   const { Amount, Description } = req.body;
    const { UserId } = req.user;
 
    if (!Amount) return res.status(400).json({ message: "Amount is required" });
@@ -50,7 +50,7 @@ const deposit = async (req, res) => {
       item: JSON.stringify(items),
       embed_data: JSON.stringify(embed_data),
       amount: Amount,
-      description: "Thanh toán hóa đơn",
+      description: Description,
       bank_code: "zalopayapp",
       callback_url:
          "https://4514-118-71-221-28.ngrok-free.app/payment-service/callback",
@@ -85,7 +85,7 @@ const deposit = async (req, res) => {
          TransTypeId: 3,
          AppTransId: app_trans_id,
          BalanceBefore: wallet.Balance,
-         Description: "Nạp tiền vào ví",
+         Description: Description,
          CreatedAt: Date.now(),
       });
    } catch (err) {
@@ -291,8 +291,43 @@ const getTransactionHistory = async (req, res) => {
    }
 }
 
+const refund = async (req, res) => {
+   const { UserId, SoldLotId, Description, Amount } = req.body;
+   if (!UserId) return res.status(400).json({ message: "UserId is required" });
+   if (!Amount) return res.status(400).json({ message: "Amount is required" });
+   if (isNaN(Amount)) return res.status(400).json({ message: "Amount must be a number" });
+   if (Amount <= 0) return res.status(400).json({ message: "Amount must be greater than 0" });
+
+   const wallet = await Wallet.findOne({ where: { UserId: UserId } });
+   if (!wallet) return res.status(404).json({ message: "User not found" });
+
+   try {
+      await Transaction.create({
+         UserId: UserId,
+         Amount: Amount,
+         WalletId: wallet.WalletId,
+         StatusId: 2,
+         TransTypeId: 5,
+         SoldLotId: SoldLotId,
+         BalanceBefore: wallet.Balance,
+         Description: Description,
+         CreatedAt: Date.now(),
+      });
+
+      await Wallet.update(
+         { Balance: wallet.Balance + Amount },
+         { where: { WalletId: wallet.WalletId } }
+      );
+   }
+   catch (err) {
+      console.log(err);
+      return res.status(500).json({ message: "Internal Server Error" });
+   }
+}
+
+
 const payment = async (req, res) => {
-   const { Amount, SoldLotId } = req.body;
+   const { Amount, SoldLotId, Description } = req.body;
    const { UserId } = req.user;
 
    if (!Amount) return res.status(400).json({ message: "Amount is required" });
@@ -315,7 +350,7 @@ const payment = async (req, res) => {
          TransTypeId: 2,
          SoldLotId: SoldLotId,
          BalanceBefore: wallet.Balance,
-         Description: "Thanh toán hóa đơn",
+         Description: Description,
          CreatedAt: Date.now(),
       });
 
@@ -490,6 +525,41 @@ const internalPayment = async (req, res) => {
    }
 }
 
+const internalRefundMany = async (req, res) => {
+   let { ListRefund } = req.body;
+   if (!ListRefund) return res.status(400).json({ message: "ListRefund is required" });
+   await Promise.all(ListRefund.map(async (refund) => {
+      const { UserId, Amount, Description } = refund;
+      const wallet = walletList.find((wallet) => wallet.UserId == UserId);
+      if (!wallet) return res.status(404).json({ message: "User not found" });
+      if (!Amount) return res.status(400).json({ message: "Amount is required" });
+      if (isNaN(Amount)) return res.status(400).json({ message: "Amount must be a number" });
+      if (Amount <= 0) return res.status(400).json({ message: "Amount must be greater than 0" });
+
+      try {
+         await Transaction.create({
+            UserId: UserId,
+            Amount: Amount,
+            WalletId: wallet.WalletId,
+            StatusId: 2,
+            TransTypeId: 5,
+            BalanceBefore: wallet.Balance,
+            Description: Description,
+            CreatedAt: Date.now(),
+         });
+
+         await Wallet.update(
+            { Balance: wallet.Balance + Amount },
+            { where: { WalletId: wallet.WalletId } }
+         );
+      } catch (err) {
+         console.log(err);
+         return res.status(500).json({ message: "Internal Server Error" });
+      }
+   }));
+   return res.status(200).json({ message: "Refund successfully" });
+}
+
 const withdraw = async (req, res) => {
    const { Amount, BankAccount, BankName, AccountHolder } = req.body;
    const { UserId } = req.user;
@@ -522,7 +592,7 @@ const withdraw = async (req, res) => {
 };
 
 const payout = async (req, res) => {
-   const { BreederId, Amount } = req.body;
+   const { BreederId, Amount, Description } = req.body;
 
    if (!BreederId) return res.status(400).json({ message: "BreederId is required" });
    if (!Amount) return res.status(400).json({ message: "Amount is required" });
@@ -546,7 +616,7 @@ const payout = async (req, res) => {
             StatusId: 2,
             TransTypeId: 4,
             BalanceBefore: wallet.Balance,
-            Description: "Thanh toán hóa đơn",
+            Description: Description,
             CreatedAt: Date.now(),
          }),
          await Wallet.update(
@@ -636,7 +706,7 @@ const getStatisticsTransactionHistory = async (req, res) => {
          if (date < start || date > end) {
             resultFlag = false;
          }
-      } 
+      }
       if (dayAmount) {
          const date = moment(transaction.CreatedAt).format("YYYY-MM-DD");
          const dateBefore = moment().subtract(dayAmount, "days").format("YYYY-MM-DD");
@@ -720,7 +790,7 @@ const getSumOfPayoutOfBreeder = async (req, res) => {
          const totalAmount = transactions
             .filter((transaction) => moment(transaction.CreatedAt).format('YYYY-MM-DD') === date)
             .reduce((sum, transaction) => sum + transaction.Amount, 0);
-         
+
          // Thêm đối tượng với ngày và tổng số tiền vào mảng kết quả
          const dateFormatted = moment(date).format('MMM DD');
          result.push({ dateFormatted, totalAmount });
@@ -767,6 +837,7 @@ const getSumOfSuccessTransactionByTransTypeId = async (req, res) => {
 module.exports = {
    deposit,
    payment,
+   refund,
    callback,
    getWalletBalance,
    getTransactionHistory,
@@ -775,6 +846,7 @@ module.exports = {
    getTransactionHistoryByUserId,
    getAllTransactionHistory,
    internalPayment,
+   internalRefundMany,
    withdraw,
    payout,
    updateUserWithdrawStatusById,
@@ -783,3 +855,4 @@ module.exports = {
    getSumOfPayoutOfBreeder,
    getSumOfSuccessTransactionByTransTypeId
 };
+

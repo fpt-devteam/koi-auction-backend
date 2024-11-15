@@ -8,10 +8,10 @@ namespace AuctionService.IServices
   {
     Task<List<LotAuctionMethodStatisticDto>> GetLotAuctionMethodStatisticAsync();
     Task<List<BreederStatisticDto>> GetBreederStatisticsAsync();
-    Task<TotalDto> GetTotalLotsStatisticsAsync(LotQueryObject lotQuery);
+    Task<TotalDto> GetTotalLotsStatisticsAsync(int? breederId, DateTime startDateTime, DateTime endDateTime);
     Task<List<LotSearchResultDto>> GetLotSearchResults(int breederId);
     // Task<List<DailyRevenueDto>> GetWeeklyRevenueOfBreeders(int year, int month, int weekOfMonth);
-    Task<List<DailyRevenueDto>> GetLast7DaysRevenue(int offsetWeeks);
+    Task<List<DailyRevenueDto>> GetStatisticsRevenue(DateTime startDateTime, DateTime endDateTime);
 
   }
 }

@@ -7,9 +7,11 @@ namespace AuctionService.Enums
         Rejected = 3,
         InAuction = 4,
         UnSold = 5,
-        ToShip = 6,
-        ToReceive = 7,
-        Completed = 8,
-        Canceled = 9
+        ToPay = 6,
+        ToShip = 7,
+        ToReceive = 8,
+        Completed = 9,
+        Canceled = 10,
+        PaymentOverdue = 11
     }
 }

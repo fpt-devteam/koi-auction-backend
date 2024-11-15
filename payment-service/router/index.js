@@ -18,6 +18,7 @@ router.get("/manage/get-wallet-balance", authenticate, highRole, controller.getA
 router.get("/manage/get-wallet-balance/:UserId", authenticate, highRole, controller.getWalletBalanceByUserId);
 router.get("/manage/get-transaction-history", authenticate, highRole, controller.getAllTransactionHistory);
 router.get("/manage/get-transaction-history/:UserId", authenticate, highRole, controller.getTransactionHistoryByUserId);
+router.post("/manage/refund", authenticate, highRole, controller.refund);
 
 // Role-based access control for Internal Service
 router.get("/internal/get-wallet-balance", authenticate, internalRole, controller.getAllWalletBalance);
@@ -26,6 +27,7 @@ router.get("/internal/get-transaction-history", authenticate, internalRole, cont
 router.get("/internal/get-transaction-history/:UserId", authenticate, internalRole, controller.getTransactionHistoryByUserId);
 
 router.post('/internal/payment', authenticate, internalRole, controller.internalPayment);
+router.post('/internal/refund-many', authenticate, internalRole, controller.internalRefundMany);
 
 router.get("/statistics/transaction-history", authenticate, adminOnly, controller.getStatisticsTransactionHistory);
 router.get("/breeder/statistics/transaction-history", authenticate, breederRole, controller.getBreederStatisticsTransactionHistory);

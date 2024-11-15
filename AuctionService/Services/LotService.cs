@@ -11,8 +11,10 @@ namespace AuctionService.Services
     {
         private readonly int REJECT = 3;
         private readonly int UNSOLD = 5;
-        private readonly int COMPLETED = 8;
-        private readonly int CANCELED = 9;
+        private readonly int TOSHIP = 7;
+        private readonly int TORECEIVE = 8;
+        private readonly int COMPLETED = 9;
+        private readonly int CANCELED = 10;
         private readonly IUnitOfWork _unitOfWork;
         private readonly BreederDetailService _breederService;
 
@@ -116,63 +118,69 @@ namespace AuctionService.Services
                 return 3;
         }
 
-        public async Task<TotalDto> GetTotalLotsStatisticsAsync(LotQueryObject lotQuery)
+        // fixed -- trả về 6 ô thông tin cho FE
+        // thống kê tình hình tổng số lượng của auctionLot theo khoảng thời gian
+        public async Task<TotalDto> GetTotalLotsStatisticsAsync(int? breederId, DateTime startDateTime, DateTime endDateTime)
         {
-            var lots = await _unitOfWork.Lots.GetAllAsync(lotQuery);
-            var total = lots.Count;
-            // var completedLots = lots.Count(l =>
-            //             l.LotStatus.LotStatusId == COMPLETED &&
-            //             l.AuctionLot != null &&
-            //             l.AuctionLot.SoldLot != null);
-            // var unsoldLots = lots.Count(l => l.LotStatus.LotStatusId == UNSOLD);
-            // var cancelledSoldLots = lots.Count(l =>
-            //             l.LotStatus.LotStatusId == CANCELED &&
-            //             l.AuctionLot != null &&
-            //             l.AuctionLot.SoldLot != null);
-            // var rejectLot = lots.Count(l =>
-            //             l.LotStatus.LotStatusId == REJECT);
+            // Tạo điều kiện lọc Lot theo breederId
+            var queryObject = new LotQueryObject { BreederId = breederId };
+            var lots = await _unitOfWork.Lots.GetAllAsync(queryObject);
 
-            var completedLots = lots.Count(l =>
-                                            l.LotStatus != null &&
-                                            l.LotStatus.LotStatusId == COMPLETED &&
-                                            l.AuctionLot != null &&
-                                            l.AuctionLot.SoldLot != null);
+            endDateTime = endDateTime.AddDays(1).AddSeconds(-1);
+            // Lọc Lot trong khoảng thời gian startDateTime và endDateTime
+            var filteredLots = lots.Where(l =>
+                l.UpdatedAt >= startDateTime &&
+                l.UpdatedAt <= endDateTime).ToList();
+            System.Console.WriteLine($"starttime {startDateTime}, endtime {endDateTime}");
+            System.Console.WriteLine($"filter {filteredLots.Count}");
+            var total = filteredLots.Count;
 
-            var unsoldLots = lots.Count(l =>
+            // Đếm số lượng completed lots
+            var completedLots = filteredLots.Count(l =>
+                l.LotStatus != null &&
+                l.LotStatus.LotStatusId == COMPLETED &&
+                l.AuctionLot != null &&
+                l.AuctionLot.SoldLot != null);
+
+            // Đếm số lượng toShipLots
+            var toShipLots = filteredLots.Count(l =>
+                l.LotStatus != null &&
+                l.LotStatus.LotStatusId == TOSHIP &&
+                l.AuctionLot != null &&
+                l.AuctionLot.SoldLot != null);
+
+            // Đếm số lượng toReceiveLots
+            var toReceiveLots = filteredLots.Count(l =>
+                l.LotStatus != null &&
+                l.LotStatus.LotStatusId == TORECEIVE &&
+                l.AuctionLot != null &&
+                l.AuctionLot.SoldLot != null);
+
+            // Đếm số lượng unsold lots
+            var unsoldLots = filteredLots.Count(l =>
                 l.LotStatus != null &&
                 l.LotStatus.LotStatusId == UNSOLD);
 
-            var cancelledSoldLots = lots.Count(l =>
+            // Đếm số lượng cancelled sold lots
+            var cancelledSoldLots = filteredLots.Count(l =>
                 l.LotStatus != null &&
                 l.LotStatus.LotStatusId == CANCELED &&
                 l.AuctionLot != null &&
                 l.AuctionLot.SoldLot != null);
 
-            var rejectLot = lots.Count(l =>
+            // Đếm số lượng rejected lots
+            var rejectLot = filteredLots.Count(l =>
                 l.LotStatus != null &&
                 l.LotStatus.LotStatusId == REJECT);
 
-
-            // foreach (var lot in lots)
-            // {
-            //     var lotStatus = lot.LotStatusId;
-            //     var auctionLot = lot.AuctionLot;
-            //     if (auctionLot != null && auctionLot.SoldLot != null)
-            //     {
-            //         var soldLot = auctionLot.SoldLot;
-            //         System.Console.WriteLine($"lotStatus hihi {lotStatus}");
-            //     }
-            // }
-
-            // System.Console.WriteLine($"completed {completedLots}");
-            // System.Console.WriteLine($"2 {unsoldLots}");
-            // System.Console.WriteLine($"3 {cancelledSoldLots}");
-            // System.Console.WriteLine($"rejectLot {rejectLot}");
+            // Tạo đối tượng TotalDto với kết quả
             var result = new TotalDto
             {
                 Total = total,
                 CompletedLots = completedLots > 0 ? completedLots : 0,
                 UnsoldLots = unsoldLots > 0 ? unsoldLots : 0,
+                ToShipLots = toShipLots > 0 ? toShipLots : 0,
+                ToReceiveLots = toReceiveLots > 0 ? toReceiveLots : 0,
                 CanceledSoldLots = cancelledSoldLots > 0 ? cancelledSoldLots : 0,
                 RejectedLots = rejectLot > 0 ? rejectLot : 0
             };
@@ -181,8 +189,10 @@ namespace AuctionService.Services
             {
                 throw new InvalidOperationException("Total Statistics Fail");
             }
+
             return result;
         }
+
 
         public async Task<List<LotSearchResultDto>> GetLotSearchResults(int breederId)
         {
@@ -190,9 +200,10 @@ namespace AuctionService.Services
             return result;
         }
 
-        public async Task<List<DailyRevenueDto>> GetLast7DaysRevenue(int offsetWeeks)
+        // fixed -- trả về biểu đồ đường
+        public async Task<List<DailyRevenueDto>> GetStatisticsRevenue(DateTime startDateTime, DateTime endDateTime)
         {
-            var result = await _unitOfWork.Lots.GetLast7DaysRevenue(offsetWeeks);
+            var result = await _unitOfWork.Lots.GetStatisticsRevenue(startDateTime, endDateTime);
             return result;
         }
 

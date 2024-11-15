@@ -87,10 +87,10 @@ namespace AuctionService.Controller
             return Ok(result);
         }
 
-        [HttpGet("last7days")]
-        public async Task<ActionResult<List<DailyRevenueDto>>> GetRevenueForLast7DaysWithOffset([FromQuery] int offsetWeeks = 0)
+        [HttpGet("revenue-statistics")]
+        public async Task<ActionResult<List<DailyRevenueDto>>> GetStatisticsRevenue([FromQuery] DateTime startDateTime, [FromQuery] DateTime endDateTime)
         {
-            var revenueData = await _lotService.GetLast7DaysRevenue(offsetWeeks);
+            var revenueData = await _lotService.GetStatisticsRevenue(startDateTime, endDateTime);
 
             if (revenueData == null || revenueData.Count == 0)
             {
@@ -216,9 +216,9 @@ namespace AuctionService.Controller
         }
 
         [HttpGet("total-statistics")]
-        public async Task<ActionResult<TotalDto>> GetTotalLotsStatisticsAsync([FromQuery] LotQueryObject lotQuery)
+        public async Task<ActionResult<TotalDto>> GetTotalLotsStatisticsAsync([FromQuery] int? breederId, [FromQuery] DateTime startDateTime, [FromQuery] DateTime endDateTime)
         {
-            var result = await _lotService.GetTotalLotsStatisticsAsync(lotQuery);
+            var result = await _lotService.GetTotalLotsStatisticsAsync(breederId, startDateTime, endDateTime);
             return Ok(result);
         }
     }

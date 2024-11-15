@@ -46,7 +46,7 @@ namespace AuctionService.Middlewares
                 }
             },
             {
-                "/api/lots/last7days", new Dictionary<string, UserRole[]>
+                "/api/lots/revenue-statistics", new Dictionary<string, UserRole[]>
                 {
                     { HttpMethods.Get, new[] { UserRole.Admin }}
                 }

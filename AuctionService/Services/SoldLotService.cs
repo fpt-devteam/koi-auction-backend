@@ -44,10 +44,11 @@ namespace AuctionService.Services
                 var depositDto = deposit?.ToAuctionDepositDto();
 
                 var soldLotDto = s.ToSoldLotDtoFromSoldLot();
+                var status = await _unitOfWork.LotStatuses.GetLotStatusByIdAsync(soldLotDto.LotStatusId);
                 soldLotDto.BreederDetailDto = breeder;
                 soldLotDto.WinnerDto = winner;
                 soldLotDto.AuctionDepositDto = depositDto;
-
+                soldLotDto.LotStatus = status!.ToLotStatusDtoFromLotStatus();
                 soldLotDtos.Add(soldLotDto);
             }
 

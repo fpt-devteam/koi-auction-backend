@@ -48,6 +48,12 @@ namespace AuctionService.Repository
             return status;
         }
 
+        // public async Task<LotStatus?> GetLotStatusByLotIdAsync(int lotId)
+        // {
+        //    var lot = await _context.Lots.FirstOrDefaultAsync(l => l.LotId == lotId);
+        //     var status = lot.
+        // }
+
         public async Task<LotStatus> UpdateLotStatusAsync(int id, UpdateStatusDto lotStatusDto)
         {
             var lotStatus = await _context.LotStatuses.FirstOrDefaultAsync(l => l.LotStatusId == id);
