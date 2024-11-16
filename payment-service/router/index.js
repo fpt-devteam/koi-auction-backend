@@ -41,6 +41,6 @@ router.post("/payment", authenticate, externalRole, controller.payment);
 router.post("/deposit", authenticate, externalRole, controller.deposit);
 router.post("/callback", controller.callback);
 router.post("/withdraw", authenticate, externalRole, controller.withdraw);
-router.post('/payout', authenticate, controller.payout);
+router.post('/payout', authenticate, highRole, controller.payout);
 
 module.exports = router;

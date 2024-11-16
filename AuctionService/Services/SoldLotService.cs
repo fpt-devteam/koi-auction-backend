@@ -1,5 +1,7 @@
 using AuctionService.Dto.BidLog;
+using AuctionService.Dto.BreederDetail;
 using AuctionService.Dto.SoldLot;
+using AuctionService.Dto.User;
 using AuctionService.Helper;
 using AuctionService.IRepository;
 using AuctionService.IServices;
@@ -34,12 +36,22 @@ namespace AuctionService.Services
         {
             var soldLots = await _unitOfWork.SoldLot.GetAllAsync(queryObject);
             var soldLotDtos = new List<SoldLotDto>();
+            var breeders = await _breederService.GetAllBreederAsync();
+            var users = await _userService.GetAllUserAsync();
+
+            Dictionary<int, BreederDetailDto> breederCache = new();
+            Dictionary<int, UserDto> userCache = new();
+            breeders.ForEach(b => breederCache[b.BreederId] = b);
+            users.ForEach(u => userCache[u.UserId] = u);
 
             // Sử dụng vòng lặp tuần tự để tránh truy cập đồng thời vào DbContext
             foreach (var s in soldLots)
             {
-                var breeder = await _breederService.GetBreederByIdAsync(s.BreederId);
-                var winner = await _userService.GetuserByIdAsync(s.WinnerId);
+                // var breeder = await _breederService.GetBreederByIdAsync(s.BreederId);
+                // var breeder = breeders.FirstOrDefault(b => b.BreederId == s.BreederId);
+                // var winner = users.FirstOrDefault(u => u.UserId == s.WinnerId);
+                var breeder = breederCache[s.BreederId];
+                var winner = userCache[s.WinnerId];
                 var deposit = await _unitOfWork.AuctionDeposits.GetAuctionDepositByAuctionLotIdAndUserId(s.WinnerId, s.SoldLotId);
                 var depositDto = deposit?.ToAuctionDepositDto();
 

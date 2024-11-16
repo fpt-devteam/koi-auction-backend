@@ -270,7 +270,6 @@ const getTransactionHistory = async (req, res) => {
 
       let result = [];
       await Promise.all(transactions.map(async (transaction) => {
-         const wallet = await Wallet.findByPk(transaction.WalletId);
          result.push({
             TransId: transaction.TransId,
             UserId: wallet.UserId,
@@ -281,6 +280,7 @@ const getTransactionHistory = async (req, res) => {
             BalanceBefore: transaction.BalanceBefore,
             BalanceAfter: transaction.BalanceAfter,
             Description: transaction.Description,
+            CreatedAt: transaction.CreatedAt,
          });
       }));
 
@@ -413,12 +413,17 @@ const getAllTransactionHistory = async (req, res) => {
       }
    });
 
+   let walletToUserId = {};
+   let walletList = await Wallet.findAll();
+   walletList.forEach((wallet) => {
+      walletToUserId[wallet.WalletId] = wallet.UserId;
+   });
+
    let result = [];
    await Promise.all(transactions.map(async (transaction) => {
-      const wallet = await Wallet.findByPk(transaction.WalletId);
       result.push({
          TransId: transaction.TransId,
-         UserId: wallet.UserId,
+         UserId: walletToUserId[transaction.WalletId],
          Amount: transaction.Amount,
          WalletId: transaction.WalletId,
          Status: transactionStatus.find((status) => status.TransStatusId == transaction.StatusId).TransStatusName,
@@ -426,6 +431,7 @@ const getAllTransactionHistory = async (req, res) => {
          BalanceBefore: transaction.BalanceBefore,
          BalanceAfter: transaction.BalanceAfter,
          Description: transaction.Description,
+         CreatedAt: transaction.CreatedAt
       });
    }));
 
@@ -459,10 +465,9 @@ const getTransactionHistoryByUserId = async (req, res) => {
 
       let result = [];
       await Promise.all(transactions.map(async (transaction) => {
-         const wallet = await Wallet.findByPk(transaction.WalletId);
          result.push({
             TransId: transaction.TransId,
-            UserId: wallet.UserId,
+            UserId: UserId,
             Amount: transaction.Amount,
             WalletId: transaction.WalletId,
             Status: transactionStatus.find((status) => status.TransStatusId == transaction.StatusId).TransStatusName,

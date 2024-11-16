@@ -39,7 +39,7 @@ namespace AuctionService.Services
             return user;
         }
 
-        public async Task<List<UserDto>> GetAlluserAsync()
+        public async Task<List<UserDto>> GetAllUserAsync()
         {
             var users = new List<UserDto>();
             var response = await _httpClient.GetAsync($"http://localhost:3000/user-service/manage/profile");
