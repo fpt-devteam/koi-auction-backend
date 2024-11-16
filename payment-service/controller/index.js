@@ -318,6 +318,8 @@ const refund = async (req, res) => {
          { Balance: wallet.Balance + Amount },
          { where: { WalletId: wallet.WalletId } }
       );
+      
+      return res.status(200).json({ message: "Refund successfully" });
    }
    catch (err) {
       console.log(err);
