@@ -9,6 +9,7 @@ const Wallet = require('../models/wallet');
 const TransactionType = require('../models/transaction-type');
 const TransactionStatus = require('../models/transaction-status');
 const BreederDetail = require('../../user-service/models/breeder');
+const { json } = require('body-parser');
 
 const PAYOUT = 4;
 const WITHDRAW = 1;
@@ -802,25 +803,20 @@ const getSumOfPayoutOfBreeder = async (req, res) => {
 
       // Khởi tạo một mảng để lưu kết quả với kích thước dayAmount
       let result = {};
-      const start = moment(startDate);
-      const end = moment(endDate);
-      console.log("start", start);
-      console.log("end", end);
-      for (let i = 1; i <= end.diff(start, 'days'); i++) {
-         // Tính ngày cho từng phần tử
-         const date = moment().subtract(i, 'days').format('YYYY-MM-DD');
-         // Tính tổng payout cho ngày đó
-         const totalAmount = transactions
-            .filter((transaction) => moment(transaction.CreatedAt).format('YYYY-MM-DD') === date)
-            .reduce((sum, transaction) => sum + transaction.Amount, 0);
-
-         // Thêm đối tượng với ngày và tổng số tiền vào mảng kết quả
-         const dateFormatted = moment(date).format('MMM DD');
-         result[dateFormatted] = totalAmount;
-      }
+      let start = moment(startDate).add(1, 'days').utcOffset(0).format("YYYY-MM-DDTHH:mm:ss.SSS[Z]");
+      let end = moment(endDate).add(2, 'days').utcOffset(0).format("YYYY-MM-DDTHH:mm:ss.SSS[Z]");
+      
+      let totalAmountInDate = {};
+      transactions.forEach((transaction) => {
+         const date = moment(transaction.CreatedAt).utcOffset(0).format("YYYY-MM-DDTHH:mm:ss.SSS[Z]");
+         if (start <= date && date <= end) {
+            const convertedDate = moment(date).utcOffset(0).format("MMM DD");
+            totalAmountInDate[convertedDate] = (totalAmountInDate[convertedDate] || 0) + transaction.Amount;
+         }
+      });
 
       const finalResult = [];
-      for (const [date, totalAmount] of Object.entries(result)) {
+      for (const [date, totalAmount] of Object.entries(totalAmountInDate)) {
          finalResult.push({
             date: date,
             totalAmount: totalAmount
