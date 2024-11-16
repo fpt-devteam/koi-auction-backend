@@ -29,12 +29,10 @@ namespace AuctionService.HandleMethod
 
         }
 
-        public override bool IsBidValid(CreateBidLogDto bid, AuctionLotBidDto? auctionLotBidDto, decimal balance)
+        public override bool IsBidValid(CreateBidLogDto bid, AuctionLotBidDto? auctionLotBidDto)
         {
-            System.Console.WriteLine("so du: " + balance);
-            // Kiểm tra điều kiện cơ bản về AuctionLot và số dư trước
             if (auctionLotBidDto == null || auctionLotBidDto.AuctionLotId != bid.AuctionLotId
-                || bid.BidAmount > balance || bid.BidAmount < auctionLotBidDto.StartPrice
+                || bid.BidAmount < auctionLotBidDto.StartPrice
                 || _isPlacedBid.ContainsKey(bid.BidderId))
             {
                 return false;
@@ -48,7 +46,7 @@ namespace AuctionService.HandleMethod
                 _bids.Add(bid);
             }
             _isPlacedBid.TryAdd(bid.BidderId, true);
-            System.Console.WriteLine($"bid.BiddedId: {bid.BidderId} ok ok ok");
+            System.Console.WriteLine($"bid.BiddedId: {bid.BidderId} method 2 -> bid oke {bid.BidAmount}");
             return true;
         }
 

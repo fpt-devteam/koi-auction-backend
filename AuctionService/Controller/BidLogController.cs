@@ -54,12 +54,18 @@ namespace AuctionService.Controllers
         [HttpGet("highest-bid/{auctionLotId:int}")]
         public async Task<IActionResult> GetHighestBidLogByAuctionLotId([FromRoute] int auctionLotId)
         {
+            try
+            {
+                var bidLog = await _service.GetHighestBidLogByAuctionLotId(auctionLotId);
+                if (bidLog == null)
+                    return NotFound($"No bid logs found for auction lot with ID {auctionLotId}.");
 
-            var bidLog = await _service.GetHighestBidLogByAuctionLotId(auctionLotId);
-            if (bidLog == null)
-                return NotFound($"No bid logs found for auction lot with ID {auctionLotId}.");
-
-            return Ok(bidLog.ToBidLogDtoFromBidLog());
+                return Ok(bidLog.ToBidLogDtoFromBidLog());
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
     }

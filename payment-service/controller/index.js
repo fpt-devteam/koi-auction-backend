@@ -487,10 +487,9 @@ const getTransactionHistoryByUserId = async (req, res) => {
 
 const internalPayment = async (req, res) => {
    console.log(`req.body = ${JSON.stringify(req.body)}`);
-   const { amount, soldLotId } = req.body;
+   const { userId, soldLotId, amount, description } = req.body;
    const Amount = Number(amount);
-   let { UserId } = req.params;
-   UserId = Number(UserId);
+   const UserId = Number(userId);
    console.log("amount = ", amount);
    console.warn("UserId = ", UserId);
    console.warn("Amount = ", Amount);
@@ -517,7 +516,7 @@ const internalPayment = async (req, res) => {
          TransTypeId: 2,
          BalanceBefore: wallet.Balance,
          SoldLotId: soldLotId,
-         Description: "Thanh toán hóa đơn",
+         Description: description,
          CreatedAt: Date.now(),
       });
 
@@ -534,15 +533,26 @@ const internalPayment = async (req, res) => {
 }
 
 const internalRefundMany = async (req, res) => {
-   let { ListRefund } = req.body;
+   let ListRefund = req.body;
+   console.log(req.body);
+   console.log(ListRefund);
    if (!ListRefund) return res.status(400).json({ message: "ListRefund is required" });
    await Promise.all(ListRefund.map(async (refund) => {
-      const { UserId, Amount, Description } = refund;
-      const wallet = walletList.find((wallet) => wallet.UserId == UserId);
+      const { userId, amount, description } = refund;
+      
+      if (!amount) return res.status(400).json({ message: "Amount is required" });
+      if (isNaN(amount)) return res.status(400).json({ message: "Amount must be a number" });
+      if (amount <= 0) return res.status(400).json({ message: "Amount must be greater than 0" });
+      
+      const Amount = Number(amount);
+      const UserId = Number(userId);
+      const Description = description || "Refund";
+      const wallet = await Wallet.findOne({ where: { UserId: UserId } });
       if (!wallet) return res.status(404).json({ message: "User not found" });
-      if (!Amount) return res.status(400).json({ message: "Amount is required" });
-      if (isNaN(Amount)) return res.status(400).json({ message: "Amount must be a number" });
-      if (Amount <= 0) return res.status(400).json({ message: "Amount must be greater than 0" });
+
+      console.log("Amount = ", Amount);
+      console.log("UserId = ", UserId);
+      console.log(wallet);
 
       try {
          await Transaction.create({

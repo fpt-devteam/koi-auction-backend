@@ -55,5 +55,20 @@ namespace AuctionService.Repository
             curAuctionDeposit.AuctionDepositStatus = updateAuctionDepositDto.Status;
             return curAuctionDeposit;
         }
+
+        public async Task<List<AuctionDeposit>> UpdateRefundedStatus(int auctionLotId, int exceptUserId)
+        {
+            var refundedList = await _context.AuctionDeposits.Where(a => a.AuctionLotId == auctionLotId &&
+                                                                    a.UserId != exceptUserId &&
+                                                                    a.AuctionDepositStatus == Enums.AuctionDepositStatus.PendingRefund).ToListAsync();
+            refundedList.ForEach(a => a.AuctionDepositStatus = Enums.AuctionDepositStatus.Refunded);
+            return refundedList;
+        }
+
+        public async Task<List<AuctionDeposit>> GetAuctionDepositByStatus(int auctionLotId, string status)
+        {
+            var list = await _context.AuctionDeposits.Where(a => a.AuctionLotId == auctionLotId && a.AuctionDepositStatus == status).ToListAsync();
+            return list;
+        }
     }
 }

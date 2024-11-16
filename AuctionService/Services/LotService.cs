@@ -52,17 +52,17 @@ namespace AuctionService.Services
                     );
 
                     // Unsold lots are those with "Unsold" status
-                    var unsoldLots = group.Count(l => l.LotStatus.LotStatusId == UNSOLD);
+                    var unsoldLots = group.Count(l => l.LotStatus!.LotStatusId == UNSOLD);
 
                     // Cancelled sold lots are those with "Canceled" status AND have a SoldLot record
                     var cancelledSoldLots = group.Count(l =>
-                        l.LotStatus.LotStatusId == CANCELED &&
+                        l.LotStatus!.LotStatusId == CANCELED &&
                         l.AuctionLot != null &&
                         l.AuctionLot.SoldLot != null);
 
                     // Completed lots are those with "Completed" status and have a SoldLot record
                     var completedLots = group.Count(l =>
-                        l.LotStatus.LotStatusId == COMPLETED &&
+                        l.LotStatus!.LotStatusId == COMPLETED &&
                         l.AuctionLot != null &&
                         l.AuctionLot.SoldLot != null);
 

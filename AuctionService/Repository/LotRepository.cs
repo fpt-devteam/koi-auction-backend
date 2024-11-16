@@ -53,7 +53,7 @@ namespace AuctionService.Repository
         public async Task<List<Lot>> GetAllAsync(LotQueryObject query)
         {
             var lots = _context.Lots.Include(l => l.KoiFish).ThenInclude(m => m!.KoiMedia).
-                                        Include(l => l.LotStatus).Include(l => l.AuctionLot).Include(l => l.AuctionLot.SoldLot)
+                                        Include(l => l.LotStatus).Include(l => l.AuctionLot).Include(l => l.AuctionLot!.SoldLot)
                                         .Include(l => l.AuctionMethod).AsQueryable();
 
             // Kiểm tra BreederId
@@ -185,9 +185,22 @@ namespace AuctionService.Repository
                                             Include(l => l.AuctionMethod).FirstOrDefaultAsync(l => l.LotId == id);
             if (lot == null)
                 throw new KeyNotFoundException($" Lot {id} was not found");
+
             var status = await _context.LotStatuses.FirstOrDefaultAsync(x => x.LotStatusName == updateLot.LotStatusName);
             lot.LotStatusId = status!.LotStatusId;
             return lot;
+        }
+
+        //update status of a list of lots to InAuction
+        public async Task<List<Lot>> UpdateLotsStatusToInAuctionAsync(List<int> lotIds)
+        {
+            var lots = await _context.Lots.Where(l => lotIds.Contains(l.LotId)).ToListAsync();
+            if (lots.Count == 0)
+                throw new KeyNotFoundException($" Lots were not found");
+
+            // var status = await _context.LotStatuses.FirstOrDefaultAsync(x => x.LotStatusName == "In Auction");
+            lots.ForEach(l => l.LotStatusId = (int)Enums.LotStatus.InAuction);
+            return lots;
         }
 
         public async Task<List<LotAuctionMethodStatisticDto>> GetLotAuctionMethodStatisticAsync()

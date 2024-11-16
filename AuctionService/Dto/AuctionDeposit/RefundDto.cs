@@ -5,9 +5,10 @@ using System.Threading.Tasks;
 
 namespace AuctionService.Dto.AuctionDeposit
 {
-    public class CreateAuctionDepositDto
+    public class RefundDto
     {
-        public int AucitonLotId { get; set; }
+        public int UserId { get; set; }
         public decimal Amount { get; set; }
+        public required string Description { get; set; }
     }
 }
