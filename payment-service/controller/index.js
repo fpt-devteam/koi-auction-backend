@@ -782,8 +782,10 @@ const getBreederStatisticsTransactionHistory = async (req, res) => {
 // WHERE [TransTypeId] = 4 AND StatusId = 2 
 
 const getSumOfPayoutOfBreeder = async (req, res) => {
-   const { userId } = req.query;
-   let { dayAmount } = req.query;
+   const { userId } = req.params;
+   let { startDate, endDate } = req.query;
+
+   if (!userId) return res.status(400).json({ message: "UserId is required" });
 
    try {
       const wallet = await Wallet.findOne({ where: { UserId: userId } });
@@ -799,9 +801,12 @@ const getSumOfPayoutOfBreeder = async (req, res) => {
       });
 
       // Khởi tạo một mảng để lưu kết quả với kích thước dayAmount
-      console.log("wallet", wallet);
-      let result = [];
-      for (let i = 0; i <= dayAmount; i++) {
+      let result = {};
+      const start = moment(startDate);
+      const end = moment(endDate);
+      console.log("start", start);
+      console.log("end", end);
+      for (let i = 1; i <= end.diff(start, 'days'); i++) {
          // Tính ngày cho từng phần tử
          const date = moment().subtract(i, 'days').format('YYYY-MM-DD');
          // Tính tổng payout cho ngày đó
@@ -811,10 +816,18 @@ const getSumOfPayoutOfBreeder = async (req, res) => {
 
          // Thêm đối tượng với ngày và tổng số tiền vào mảng kết quả
          const dateFormatted = moment(date).format('MMM DD');
-         result.push({ dateFormatted, totalAmount });
+         result[dateFormatted] = totalAmount;
       }
 
-      res.status(200).json(result);
+      const finalResult = [];
+      for (const [date, totalAmount] of Object.entries(result)) {
+         finalResult.push({
+            date: date,
+            totalAmount: totalAmount
+         });
+      }
+
+      res.status(200).json(finalResult);
    } catch (error) {
       console.error("Error fetching payout data:", error);
       res.status(500).json({ message: "Internal Server Error" });

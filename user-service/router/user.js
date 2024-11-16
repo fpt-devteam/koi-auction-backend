@@ -29,7 +29,7 @@ router.get("/address/ward", controller.getWards);
 router.get("/address/ward/:districtId", controller.getWardByDistrictId);
 
 router.get("/unverified-breeders", authenticate, highRole, controller.getUnverifiedBreeders);
-router.patch("/verify-breeder/:id", authenticate, highRole, controller.verifyBreeder);
+router.patch("/verify-breeder/:UserId", authenticate, highRole, controller.verifyBreeder);
 
 router.get("/breeder/profile", authenticate, breederRole, controller.getBreederProfile);
 
@@ -38,6 +38,7 @@ router.post("/manage/profile", controller.manageCreateProfile);
 router.get("/manage/profile/:id", controller.getProfileById);
 router.patch("/manage/profile/:id", authenticate, highRole, controller.manageUpdateProfile);
 router.delete("/manage/profile/:id", authenticate, highRole, controller.manageDeleteProfile);
+router.get("/manage/profile/address/:id", controller.getProfileAddressById);
 router.get("/manage/detail-profile/:id", authenticate, highRole, controller.manageGetDetailProfile);
 
 router.get("/manage/breeder/profile", controller.getAllBreederProfiles);
