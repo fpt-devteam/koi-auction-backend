@@ -802,11 +802,14 @@ const getSumOfPayoutOfBreeder = async (req, res) => {
       });
 
       // Khởi tạo một mảng để lưu kết quả với kích thước dayAmount
-      let result = {};
+      let totalAmountInDate = {};
       let start = moment(startDate).add(1, 'days').utcOffset(0).format("YYYY-MM-DDTHH:mm:ss.SSS[Z]");
       let end = moment(endDate).add(2, 'days').utcOffset(0).format("YYYY-MM-DDTHH:mm:ss.SSS[Z]");
+      for (let i =  0; i <= moment(endDate).diff(startDate, 'days'); i++) {
+         const date = moment(startDate).add(i + 1, 'days').utcOffset(0).format("MMM DD");
+         totalAmountInDate[date] = 0;
+      }
       
-      let totalAmountInDate = {};
       transactions.forEach((transaction) => {
          const date = moment(transaction.CreatedAt).utcOffset(0).format("YYYY-MM-DDTHH:mm:ss.SSS[Z]");
          if (start <= date && date <= end) {
