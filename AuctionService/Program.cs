@@ -55,6 +55,7 @@ builder.Services.AddScoped<ISoldLotService, SoldLotService>();
 builder.Services.AddScoped<IBidLogService, BidLogService>();
 builder.Services.AddScoped<BidService>();
 builder.Services.AddScoped<WalletService>();
+builder.Services.AddScoped<MailService>();
 builder.Services.AddScoped<ILotService, LotService>();
 
 builder.Services.AddSingleton<BidManagementService>();

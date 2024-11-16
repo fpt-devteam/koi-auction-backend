@@ -17,7 +17,7 @@ namespace AuctionService.Helper
         public static string ReceiveStartAuctionLot = "ReceiveStartAuctionLot";
         public static string ReceiveEndAuctionLot = "ReceiveEndAuctionLot";
         public static string ReceivePriceDesc = "ReceivePriceDesc";
-        public static string ReceiveSuccessPayment = "ReceiveSuccessPayment";
+        public static string ReceivePendingPayment = "ReceivePendingPayment";
         public static string ReceiveLoading = "ReceiveLoading";
     }
 }

@@ -158,7 +158,7 @@ namespace AuctionService.Controller
             DateTime startTime = auction.StartTime;
             foreach (var auctionLot in listAuctionLotDto)
             {
-                await _auctionLotService.ScheduleAuctionLotAsync(auctionLot.AuctionLotId, DateTime.Now.AddSeconds(30));
+                await _auctionLotService.ScheduleAuctionLotAsync(auctionLot.AuctionLotId, startTime);
             }
             return StatusCode(201);
         }

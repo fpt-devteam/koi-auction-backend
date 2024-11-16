@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using AuctionService.Dto.AuctionDeposit;
 using AuctionService.Dto.Wallet;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 
@@ -78,6 +79,28 @@ namespace AuctionService.Services
                 // var result = await response.Content.ReadAsStringAsync();
                 // Console.WriteLine(result);
                 throw new Exception("Payment failed! Not enough balance");
+            }
+        }
+
+        public async Task<string> RefundAsync(List<RefundDto> refundListDto)
+        {
+            var token = _configuration["AuctionService:ServiceToken"];
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            //use httpClient to refund
+            var response = await _httpClient.PostAsJsonAsync("http://localhost:3004/api/internal/refund-many", refundListDto);
+
+            //print response info
+            System.Console.WriteLine($"Refund response: {response.ReasonPhrase}");
+            if (response.IsSuccessStatusCode)
+            {
+                return "Refund success";
+            }
+            else
+            {
+                // var result = await response.Content.ReadAsStringAsync();
+                // Console.WriteLine(result);
+                throw new Exception("Refund failed!");
             }
         }
     }

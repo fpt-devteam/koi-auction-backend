@@ -1,6 +1,8 @@
 using System.Collections.Concurrent;
+using AuctionService.Dto.AuctionDeposit;
 using AuctionService.Dto.AuctionLot;
 using AuctionService.Dto.BidLog;
+using AuctionService.Dto.ScheduledTask;
 using AuctionService.Dto.SoldLot;
 using AuctionService.Dto.UserConnection;
 using AuctionService.Dto.Wallet;
@@ -26,6 +28,7 @@ namespace AuctionService.Services
         private readonly IDictionary<string, UserConnectionDto> _connections;
         private readonly IHubContext<BidHub> _bidHub;
         private readonly HttpClient _httpClient;
+        private const int EXP_TIME = 2;
 
         public BidManagementService(HttpClient httpClient, IServiceScopeFactory serviceScopeFactory, IHubContext<BidHub> bidHub, IDictionary<string, UserConnectionDto> connections)
         {
@@ -102,23 +105,55 @@ namespace AuctionService.Services
                 {
                     var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
                     var lot = await unitOfWork.Lots.GetLotByIdAsync(curBidService.AuctionLotBidDto!.AuctionLotId);
-                    lot.LotStatusId = winner == null ? (int)Enums.LotStatus.UnSold : (int)Enums.LotStatus.ToShip;
+                    lot.LotStatusId = winner == null ? (int)Enums.LotStatus.UnSold : (int)Enums.LotStatus.ToPay;
+
                     if (winner != null)
                     {
                         var soldLot = new Models.SoldLot
                         {
+                            SoldLotId = curBidService.AuctionLotBidDto!.AuctionLotId,
                             WinnerId = winner.BidderId,
                             FinalPrice = winner.BidAmount,
-                            SoldLotId = curBidService.AuctionLotBidDto!.AuctionLotId
+                            BreederId = lot.BreederId,
+                            // Address = winner.Address, get from user service
+                            ExpTime = DateTime.Now.AddMinutes(EXP_TIME)
                         };
                         await unitOfWork.SoldLot.CreateSoldLot(soldLot);
+
+                        var taskSchedulerService = scope.ServiceProvider.GetRequiredService<ITaskSchedulerService>();
+                        taskSchedulerService.ScheduleTask(new ScheduledTask
+                        {
+                            ExecuteAt = soldLot.ExpTime,
+                            Task = async () => await HandlePaymentOverdue(soldLot.SoldLotId, soldLot.WinnerId)
+                        });
+                        //send websocket to winner
+                        // 
+                        string winnerConnectionId = _connections.FirstOrDefault(x => x.Value.UserId == winner.BidderId).Key;
+                        await _bidHub.Clients.Client(winnerConnectionId).SendAsync(WsMess.ReceivePendingPayment, soldLot);
+
                     }
+
+                    var auctionDepositService = scope.ServiceProvider.GetRequiredService<IAuctionDepositService>();
+
+                    //call user service to update user wallet
+                    var penRefundList = await auctionDepositService.GetAuctionDepositByStatus(curBidService.AuctionLotBidDto!.AuctionLotId, Enums.AuctionDepositStatus.PendingRefund);
+                    penRefundList.RemoveAll(a => a.UserId == winner?.BidderId);
+                    List<RefundDto> refundList = new List<RefundDto>();
+                    foreach (var auctionDeposit in penRefundList)
+                    {
+                        refundList.Add(new RefundDto
+                        {
+                            UserId = auctionDeposit.UserId,
+                            Amount = auctionDeposit.Amount,
+                            Description = $"Refund for auction lot {auctionDeposit.AuctionLotId}"
+                        });
+                    }
+                    var walletService = scope.ServiceProvider.GetRequiredService<WalletService>();
+                    await walletService.RefundAsync(refundList);
+
+                    await auctionDepositService.UpdateRefundedStatus(curBidService.AuctionLotBidDto!.AuctionLotId, winner?.BidderId ?? -1);
+
                     await unitOfWork.SaveChangesAsync();
-                    // await _bidHub.Clients.All.SendAsync(WsMess.ReceiveWinner, winner);
-                    // await _bidHub.Clients.All.SendAsync(WsMess.ReceiveFetchAuctionLot);
-                    // await _bidHub.Clients.All.SendAsync(WsMess.ReceiveFetchBidLog);
-                    // await _bidHub.Clients.All.SendAsync(WsMess.ReceiveFetchWinnerPrice);
-                    // await _bidHub.Clients.All.SendAsync(WsMess.ReceiveEndAuctionLot);
                     await _bidHub.Clients.Group(auctionLotId.ToString()).SendAsync(WsMess.ReceiveWinner, winner);
                     await _bidHub.Clients.Group(auctionLotId.ToString()).SendAsync(WsMess.ReceiveFetchAuctionLot);
                     await _bidHub.Clients.Group(auctionLotId.ToString()).SendAsync(WsMess.ReceiveFetchBidLog);
@@ -131,12 +166,49 @@ namespace AuctionService.Services
                 System.Console.Error.WriteLine(e.Message);
             }
             // Dispose và reset các giá trị
-            // _serviceScope.Dispose();
-            // _serviceScope = null;
-            // _bidService = null;
             _auctionLotScopes[auctionLotId].Dispose();
             _auctionLotScopes.TryRemove(auctionLotId, out _);
             _bidServices.TryRemove(auctionLotId, out _);
         }
+
+
+        private async Task HandlePaymentOverdue(int soldLotId, int winnerId)
+        {
+            using (var scope = _serviceScopeFactory.CreateScope())
+            {
+                var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+                var lot = await unitOfWork.Lots.GetLotByIdAsync(soldLotId);
+                if (lot == null)
+                {
+                    System.Console.WriteLine($"Sold lot {soldLotId} not found");
+                    return;
+                }
+                if (lot.LotStatusId != (int)Enums.LotStatus.ToPay)
+                {
+                    System.Console.WriteLine($"Sold lot {soldLotId} is not in ToPay status");
+                    return;
+                }
+                lot.LotStatusId = (int)Enums.LotStatus.PaymentOverdue;
+
+                var auctionDeposit = await unitOfWork.AuctionDeposits.GetAuctionDepositByAuctionLotIdAndUserId(winnerId, soldLotId);
+                if (auctionDeposit == null)
+                {
+                    System.Console.WriteLine($"Auction deposit of user {winnerId} in sold lot {soldLotId} not found");
+                    return;
+                }
+                auctionDeposit.AuctionDepositStatus = Enums.AuctionDepositStatus.DepositForfeiture;
+                await unitOfWork.SaveChangesAsync();
+            }
+        }
     }
 }
+
+// await _bidHub.Clients.All.SendAsync(WsMess.ReceiveWinner, winner);
+// await _bidHub.Clients.All.SendAsync(WsMess.ReceiveFetchAuctionLot);
+// await _bidHub.Clients.All.SendAsync(WsMess.ReceiveFetchBidLog);
+// await _bidHub.Clients.All.SendAsync(WsMess.ReceiveFetchWinnerPrice);
+// await _bidHub.Clients.All.SendAsync(WsMess.ReceiveEndAuctionLot);
+
+// _serviceScope.Dispose();
+// _serviceScope = null;
+// _bidService = null;

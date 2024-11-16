@@ -270,7 +270,6 @@ const getTransactionHistory = async (req, res) => {
 
       let result = [];
       await Promise.all(transactions.map(async (transaction) => {
-         const wallet = await Wallet.findByPk(transaction.WalletId);
          result.push({
             TransId: transaction.TransId,
             UserId: wallet.UserId,
@@ -526,15 +525,26 @@ const internalPayment = async (req, res) => {
 }
 
 const internalRefundMany = async (req, res) => {
-   let { ListRefund } = req.body;
+   let ListRefund = req.body;
+   console.log(req.body);
+   console.log(ListRefund);
    if (!ListRefund) return res.status(400).json({ message: "ListRefund is required" });
    await Promise.all(ListRefund.map(async (refund) => {
-      const { UserId, Amount, Description } = refund;
-      const wallet = walletList.find((wallet) => wallet.UserId == UserId);
+      const { userId, amount, description } = refund;
+      
+      if (!amount) return res.status(400).json({ message: "Amount is required" });
+      if (isNaN(amount)) return res.status(400).json({ message: "Amount must be a number" });
+      if (amount <= 0) return res.status(400).json({ message: "Amount must be greater than 0" });
+      
+      const Amount = Number(amount);
+      const UserId = Number(userId);
+      const Description = description || "Refund";
+      const wallet = await Wallet.findOne({ where: { UserId: UserId } });
       if (!wallet) return res.status(404).json({ message: "User not found" });
-      if (!Amount) return res.status(400).json({ message: "Amount is required" });
-      if (isNaN(Amount)) return res.status(400).json({ message: "Amount must be a number" });
-      if (Amount <= 0) return res.status(400).json({ message: "Amount must be greater than 0" });
+
+      console.log("Amount = ", Amount);
+      console.log("UserId = ", UserId);
+      console.log(wallet);
 
       try {
          await Transaction.create({

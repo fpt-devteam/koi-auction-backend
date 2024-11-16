@@ -62,12 +62,16 @@ namespace AuctionService.Hubs
                 await Groups.AddToGroupAsync(Context.ConnectionId, userConnection.AuctionLotId.ToString());
                 _connections[Context.ConnectionId] = userConnection;
 
+                if (!_bidManagementService.BidServices.ContainsKey(userConnection.AuctionLotId))
+                {
+                    return;
+                }
                 BidService bidService = _bidManagementService.BidServices[userConnection.AuctionLotId];
-                string auctionLotId = userConnection.AuctionLotId.ToString();
-
                 if (_bidManagementService != null && bidService != null)
                 {
                     System.Console.WriteLine($"Join auction lot {userConnection.AuctionLotId}");
+                    string auctionLotId = userConnection.AuctionLotId.ToString();
+
                     // await Clients.All.SendAsync(WsMess.ReceivePredictEndTime, bidService.GetPredictEndTime());
                     await Clients.Group(auctionLotId).SendAsync(WsMess.ReceivePredictEndTime, bidService.GetPredictEndTime());
                     System.Console.Error.WriteLine($"Send Predict End Time: {bidService.GetPredictEndTime()}");

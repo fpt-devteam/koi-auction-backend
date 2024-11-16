@@ -13,6 +13,7 @@ namespace AuctionService.IServices
         Task<AuctionDeposit> CreateAuctionDepositAsync(AuctionDeposit auctionDeposit);
         Task<AuctionDeposit> UpdateAuctionDepositStatusAsync(UpdateAuctionDepositDto updateAuctionDepositDto);
         Task<AuctionDeposit> GetAuctionDepositByAuctionLotIdAndUserId(int userId, int auctionLotId);
-
+        Task<List<AuctionDeposit>> UpdateRefundedStatus(int auctionLotId, int exceptUserId);
+        Task<List<AuctionDeposit>> GetAuctionDepositByStatus(int auctionLotId, string status);
     }
 }

@@ -17,8 +17,6 @@ namespace AuctionService.Services
 {
     public class AuctionLotService : IAuctionLotService
     {
-        private const int BREAK_TIME = 1;
-
         private IAuctionService _auctionService;
         private readonly BidManagementService _bidManagementService;
         private readonly ITaskSchedulerService _taskSchedulerService;

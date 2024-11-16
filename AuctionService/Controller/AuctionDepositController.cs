@@ -7,6 +7,7 @@ using AuctionService.Models;
 using AuctionService.IServices;
 using AuctionService.Dto.AuctionDeposit;
 using AuctionService.Mapper;
+using AuctionService.Dto.Mail;
 
 namespace AuctionService.Controller
 {
