@@ -26,12 +26,12 @@ router.get("/internal/get-wallet-balance/:UserId", authenticate, internalRole, c
 router.get("/internal/get-transaction-history", authenticate, internalRole, controller.getAllTransactionHistory);
 router.get("/internal/get-transaction-history/:UserId", authenticate, internalRole, controller.getTransactionHistoryByUserId);
 
-router.post('/internal/payment/:UserId', authenticate, internalRole, controller.internalPayment);
+router.post('/internal/payment', authenticate, internalRole, controller.internalPayment);
 router.post('/internal/refund-many', authenticate, internalRole, controller.internalRefundMany);
 
 router.get("/statistics/transaction-history", authenticate, adminOnly, controller.getStatisticsTransactionHistory);
 router.get("/breeder/statistics/transaction-history", authenticate, breederRole, controller.getBreederStatisticsTransactionHistory);
-router.get("/breeder/statistics/get-sum-of-payout", controller.getSumOfPayoutOfBreeder);
+router.get("/breeder/statistics/get-sum-of-payout/:userId", controller.getSumOfPayoutOfBreeder);
 router.get("/admin/statistics/get-sum-of-success-trans-by-type",authenticate, adminOnly, controller.getSumOfSuccessTransactionByTransTypeId);
 
 router.get("/get-wallet-balance", authenticate, externalRole, controller.getWalletBalance);

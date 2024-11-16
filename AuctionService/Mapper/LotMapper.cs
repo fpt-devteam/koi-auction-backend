@@ -42,7 +42,7 @@ namespace AuctionService.Mapper
                 AuctionMethod = lot.AuctionMethod!.ToAuctionMethodDtoFromAuctionMethod(),
                 BreederId = lot.BreederId,
                 KoiFishDto = lot.KoiFish!.ToKoiFishDtoFromKoiFish(),
-                LotStatusDto = lot.LotStatus.ToLotStatusDtoFromLotStatus()
+                LotStatusDto = lot.LotStatus!.ToLotStatusDtoFromLotStatus()
             };
         }
     }

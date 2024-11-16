@@ -151,5 +151,13 @@ namespace AuctionService.Repository
             auctionLot.EndTime = endTime;
             return auctionLot;
         }
+
+        public async Task<bool> IsAuctionLotInAuction(int auctionId)
+        {
+            var auctionLot = await _context.AuctionLots.FirstOrDefaultAsync(a => a.AuctionId == auctionId
+                            && (a.AuctionLotStatusId == (int)Enums.AuctionLotStatus.Ongoing || a.AuctionLotStatusId == (int)Enums.AuctionLotStatus.Upcoming));
+            return auctionLot != null;
+        }
+
     }
 }

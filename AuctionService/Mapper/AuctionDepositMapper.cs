@@ -14,7 +14,6 @@ namespace AuctionService.Mapper
             return new AuctionDeposit
             {
                 AuctionLotId = createAuctionDepositDto.AucitonLotId,
-                UserId = createAuctionDepositDto.UserId,
                 Amount = createAuctionDepositDto.Amount
             };
         }

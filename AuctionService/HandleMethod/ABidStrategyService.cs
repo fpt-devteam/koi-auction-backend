@@ -12,7 +12,7 @@ namespace AuctionService.HandleMethod
         {
         }
 
-        public abstract bool IsBidValid(CreateBidLogDto bid, AuctionLotBidDto? auctionLotBidDto, decimal balance);
+        public abstract bool IsBidValid(CreateBidLogDto bid, AuctionLotBidDto? auctionLotBidDto);
 
         public abstract HighestBidLog? GetWinner();
 

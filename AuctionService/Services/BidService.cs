@@ -187,15 +187,13 @@ namespace AuctionService.Services
                 _auctionLotBidDto = value;
             }
         }
-        private ConcurrentDictionary<int, decimal> _userBalance; // balance
-        private readonly WalletService? _walletService; // call wallet neu ch co balance
+        private readonly WalletService? _walletService;
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly IHubContext<BidHub> _bidHub;
 
         public BidService(IServiceScopeFactory serviceScopeFactory, IHubContext<BidHub> bidHub)
         {
             _bidQueue = new ConcurrentQueue<CreateBidLogDto>();
-            _userBalance = new ConcurrentDictionary<int, decimal>();
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json")
@@ -208,7 +206,7 @@ namespace AuctionService.Services
         }
         public void SetStrategy(AuctionLotBidDto auctionLotBidDto)
         {
-            System.Console.WriteLine($"BidService: set strategy {auctionLotBidDto.AuctionMethodId}");
+            System.Console.WriteLine($"BidService: set strategy for {auctionLotBidDto.AuctionLotId} <-> {auctionLotBidDto.AuctionMethodId}");
             // Lấy chiến lược từ scope để đảm bảo mọi dịch vụ phụ thuộc được khởi tạo đúng
             switch (auctionLotBidDto.AuctionMethodId)
             {
@@ -277,28 +275,19 @@ namespace AuctionService.Services
             return 0;
         }
 
-        public async Task<bool> IsBidValid(CreateBidLogDto bid)
+        public bool IsBidValid(CreateBidLogDto bid)
         {
             System.Console.WriteLine("BidService: IsBidValid");
             if (_currentStrategy == null)
                 throw new InvalidOperationException("Strategy has not been set");
-            // if (!_userBalance.TryGetValue(bid.BidderId, out var balance))
-            // {
-            var wallet = await _walletService!.GetBalanceByIdAsync(bid.BidderId);
-            _userBalance[bid.BidderId] = wallet!.Balance;
-            System.Console.WriteLine("Balance: 289" + _userBalance[bid.BidderId]);
-            // Thêm balance vào Dictionary _userBalance
-            // _userBalance[bid.BidderId] = balance;
-            // }
-            // _userBalance[bid.BidderId] = _walletService!.WalletCache[bid.BidderId].Balance;
-            // System.Console.WriteLine($"BidService: BidderId: {bid.BidderId}, Balance: {_userBalance[bid.BidderId]}");
 
-            if (!_currentStrategy.IsBidValid(bid, _auctionLotBidDto, _userBalance[bid.BidderId]))
+
+            if (!_currentStrategy.IsBidValid(bid, _auctionLotBidDto))
             {
                 System.Console.WriteLine("BidServie: Bid not valid");
                 return false;
             }
-            System.Console.WriteLine($"BidServie: Bid valid, Amount: {bid.BidAmount}, Balance: {_userBalance[bid.BidderId]}");
+            System.Console.WriteLine($"BidServie: Bid valid, Amount: {bid.BidAmount}");
             return true;
         }
 
@@ -338,41 +327,3 @@ namespace AuctionService.Services
         }
     }
 }
-
-// public void StartExtendPhase()
-// {
-//     _auctionLotBidDto!.RemainingTime = _auctionLotBidDto!.PredictEndTime!.Value - DateTime.Now;
-//     _timer = new Timer(CountDown, null, 0, TURN);
-// }
-
-// private async void CountDown(object? state)
-// {
-//     if (_auctionLotBidDto!.RemainingTime <= TimeSpan.Zero)
-//     {
-//         //invoke end auction lot
-//         await CountdownFinished!.Invoke(_auctionLotBidDto!.AuctionLotId);
-//         _timer!.Dispose();
-//         _timer = null;
-//         return;
-//     }
-//     else
-//     {
-//         _auctionLotBidDto!.RemainingTime = _auctionLotBidDto!.RemainingTime.Subtract(TimeSpan.FromSeconds(1));
-//         System.Console.WriteLine($"Remaining time: {_auctionLotBidDto?.RemainingTime}");
-//     }
-// }
-
-// Phương thức xác định chiến lược đấu giá dựa trên loại đấu giá của AuctionLot
-// private IBidStrategy GetBidStrategy(IServiceScope scope, int auctionLotMethodId)
-// {
-//     // Lấy chiến lược từ scope để đảm bảo mọi dịch vụ phụ thuộc được khởi tạo đúng
-//     switch (auctionLotMethodId)
-//     {
-//         case (int)BidMethodType.FixedPrice:
-//             return scope.ServiceProvider.GetRequiredService<FixedPriceBidStrategy>();
-//         // case (int)BidMethodType.SingleBid:
-//         //     return scope.ServiceProvider.GetRequiredService<SealedBidStrategy>();
-//         default:
-//             throw new NotSupportedException($"Auction Method {auctionLotMethodId} invalid.");
-//     }
-// }

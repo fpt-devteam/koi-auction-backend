@@ -487,10 +487,9 @@ const getTransactionHistoryByUserId = async (req, res) => {
 
 const internalPayment = async (req, res) => {
    console.log(`req.body = ${JSON.stringify(req.body)}`);
-   const { amount, soldLotId } = req.body;
+   const { userId, soldLotId, amount, description } = req.body;
    const Amount = Number(amount);
-   let { UserId } = req.params;
-   UserId = Number(UserId);
+   const UserId = Number(userId);
    console.log("amount = ", amount);
    console.warn("UserId = ", UserId);
    console.warn("Amount = ", Amount);
@@ -517,7 +516,7 @@ const internalPayment = async (req, res) => {
          TransTypeId: 2,
          BalanceBefore: wallet.Balance,
          SoldLotId: soldLotId,
-         Description: "Thanh toán hóa đơn",
+         Description: description,
          CreatedAt: Date.now(),
       });
 
@@ -534,15 +533,26 @@ const internalPayment = async (req, res) => {
 }
 
 const internalRefundMany = async (req, res) => {
-   let { ListRefund } = req.body;
+   let ListRefund = req.body;
+   console.log(req.body);
+   console.log(ListRefund);
    if (!ListRefund) return res.status(400).json({ message: "ListRefund is required" });
    await Promise.all(ListRefund.map(async (refund) => {
-      const { UserId, Amount, Description } = refund;
-      const wallet = walletList.find((wallet) => wallet.UserId == UserId);
+      const { userId, amount, description } = refund;
+      
+      if (!amount) return res.status(400).json({ message: "Amount is required" });
+      if (isNaN(amount)) return res.status(400).json({ message: "Amount must be a number" });
+      if (amount <= 0) return res.status(400).json({ message: "Amount must be greater than 0" });
+      
+      const Amount = Number(amount);
+      const UserId = Number(userId);
+      const Description = description || "Refund";
+      const wallet = await Wallet.findOne({ where: { UserId: UserId } });
       if (!wallet) return res.status(404).json({ message: "User not found" });
-      if (!Amount) return res.status(400).json({ message: "Amount is required" });
-      if (isNaN(Amount)) return res.status(400).json({ message: "Amount must be a number" });
-      if (Amount <= 0) return res.status(400).json({ message: "Amount must be greater than 0" });
+
+      console.log("Amount = ", Amount);
+      console.log("UserId = ", UserId);
+      console.log(wallet);
 
       try {
          await Transaction.create({
@@ -772,8 +782,10 @@ const getBreederStatisticsTransactionHistory = async (req, res) => {
 // WHERE [TransTypeId] = 4 AND StatusId = 2 
 
 const getSumOfPayoutOfBreeder = async (req, res) => {
-   const { userId } = req.query;
-   let { dayAmount } = req.query;
+   const { userId } = req.params;
+   let { startDate, endDate } = req.query;
+
+   if (!userId) return res.status(400).json({ message: "UserId is required" });
 
    try {
       const wallet = await Wallet.findOne({ where: { UserId: userId } });
@@ -789,9 +801,12 @@ const getSumOfPayoutOfBreeder = async (req, res) => {
       });
 
       // Khởi tạo một mảng để lưu kết quả với kích thước dayAmount
-      console.log("wallet", wallet);
-      let result = [];
-      for (let i = 0; i <= dayAmount; i++) {
+      let result = {};
+      const start = moment(startDate);
+      const end = moment(endDate);
+      console.log("start", start);
+      console.log("end", end);
+      for (let i = 1; i <= end.diff(start, 'days'); i++) {
          // Tính ngày cho từng phần tử
          const date = moment().subtract(i, 'days').format('YYYY-MM-DD');
          // Tính tổng payout cho ngày đó
@@ -801,10 +816,18 @@ const getSumOfPayoutOfBreeder = async (req, res) => {
 
          // Thêm đối tượng với ngày và tổng số tiền vào mảng kết quả
          const dateFormatted = moment(date).format('MMM DD');
-         result.push({ dateFormatted, totalAmount });
+         result[dateFormatted] = totalAmount;
       }
 
-      res.status(200).json(result);
+      const finalResult = [];
+      for (const [date, totalAmount] of Object.entries(result)) {
+         finalResult.push({
+            date: date,
+            totalAmount: totalAmount
+         });
+      }
+
+      res.status(200).json(finalResult);
    } catch (error) {
       console.error("Error fetching payout data:", error);
       res.status(500).json({ message: "Internal Server Error" });
