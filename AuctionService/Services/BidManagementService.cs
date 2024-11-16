@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using AuctionService.Dto.Address;
 using AuctionService.Dto.AuctionDeposit;
 using AuctionService.Dto.AuctionLot;
 using AuctionService.Dto.BidLog;
@@ -109,12 +110,16 @@ namespace AuctionService.Services
 
                     if (winner != null)
                     {
+                        var winnerAddressResponse = await _httpClient.GetAsync($"https://localhost:3000/user-service/manage/profile/address/{winner.BidderId}");
+                        var addressDto = await winnerAddressResponse.Content.ReadFromJsonAsync<AddressDto>();
+
                         var soldLot = new Models.SoldLot
                         {
                             SoldLotId = curBidService.AuctionLotBidDto!.AuctionLotId,
                             WinnerId = winner.BidderId,
                             FinalPrice = winner.BidAmount,
                             BreederId = lot.BreederId,
+                            Address = addressDto?.Address,
                             // Address = winner.Address, get from user service
                             ExpTime = DateTime.Now.AddMinutes(EXP_TIME)
                         };

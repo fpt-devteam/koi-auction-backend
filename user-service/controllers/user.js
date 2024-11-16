@@ -12,6 +12,7 @@ const Ward = require("../models/wards");
 const moment = require("moment");
 const axios = require("axios");
 const session = require("express-session");
+const { getSumOfPayoutOfBreeder } = require("../../payment-service/controller");
 
 const mailAPI = axios.create({
    baseURL: "http://localhost:3005",
@@ -281,7 +282,7 @@ const getUnverifiedBreeders = async (req, res) => {
 
 const verifyBreeder = async (req, res) => {
    try {
-      const { UserId } = req.body;
+      const { UserId } = req.params;
       await User.update(
          { Verified: true },
          { where: { UserId: UserId } }
@@ -445,10 +446,42 @@ const getAllProfiles = async (req, res) => {
 const getProfileById = async (req, res) => {
    try {
       const user = await User.findByPk(req.params.id);
+      const province = await Province.findByPk(user?.ProvinceCode);
+      const district = await District.findByPk(user?.DistrictCode);
+      const ward = await Ward.findByPk(user?.WardCode);
       if (!user) {
          return res.status(404).json({ message: "User not found" });
       }
-      res.status(200).json(user);
+      res.status(200).json({
+         UserId: user.UserId,
+         Username: user.Username,
+         FirstName: user.FirstName,
+         LastName: user.LastName,
+         Phone: user.Phone,
+         Email: user.Email,
+         Active: user.Active,
+         UserRoleId: user.UserRoleId,
+         Address: `${user.Address}, ${ward?.name}, ${district?.name}, ${province?.name}`,
+         Verified: user.Verified,
+      });
+   } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Internal server error" });
+   }
+};
+
+const getProfileAddressById = async (req, res) => {
+   try {
+      const user = await User.findByPk(req.params.id);
+      const province = await Province.findByPk(user?.ProvinceCode);
+      const district = await District.findByPk(user?.DistrictCode);
+      const ward = await Ward.findByPk(user?.WardCode);
+      if (!user) {
+         return res.status(404).json({ message: "User not found" });
+      }
+      res.status(200).json({
+         Address: `${user.Address}, ${ward?.name}, ${district?.name}, ${province?.name}`,
+      });
    } catch (err) {
       console.log(err);
       res.status(500).json({ message: "Internal server error" });
@@ -570,6 +603,8 @@ const getAllBreederProfiles = async (req, res) => {
             DistrictCode: breeder.DistrictCode,
             WardCode: breeder.WardCode,
             ProvinceCode: breeder.ProvinceCode,
+            Active: breeder.Active,
+            Verified: breeder.Verified,
             FarmName: breeder.BreederDetail?.FarmName,
             Certificate: breeder.BreederDetail?.Certificate,
             About: breeder.BreederDetail?.About,
@@ -840,4 +875,6 @@ module.exports = {
    getDistrictByProvinceId,
    getWardByDistrictId,
    getStatisticsUsers,
+   getProfileAddressById,
+   getSumOfPayoutOfBreeder
 };
