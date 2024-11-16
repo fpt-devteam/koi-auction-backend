@@ -50,7 +50,7 @@ const deposit = async (req, res) => {
       item: JSON.stringify(items),
       embed_data: JSON.stringify(embed_data),
       amount: Amount,
-      description: Description,
+      description: Description || `Deposit ${Amount} VND to wallet`,
       bank_code: "zalopayapp",
       callback_url:
          "https://4514-118-71-221-28.ngrok-free.app/payment-service/callback",
@@ -85,7 +85,7 @@ const deposit = async (req, res) => {
          TransTypeId: 3,
          AppTransId: app_trans_id,
          BalanceBefore: wallet.Balance,
-         Description: Description,
+         Description: Description || `Deposit ${Amount} VND to wallet`,
          CreatedAt: Date.now(),
       });
    } catch (err) {
