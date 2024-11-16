@@ -48,6 +48,8 @@ namespace AuctionService.Repository
                         newSoldLots.Add(soldLot);
                     }
                 }
+            } else {
+                return await soldLots.ToListAsync();
             }
 
             return await Task.FromResult(newSoldLots);

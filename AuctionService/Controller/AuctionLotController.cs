@@ -1,4 +1,5 @@
 using AuctionService.Dto.AuctionLot;
+using AuctionService.Dto.BreederDetail;
 using AuctionService.Helper;
 using AuctionService.IRepository;
 using AuctionService.IServices;
@@ -48,15 +49,18 @@ namespace AuctionService.Controller
         public async Task<IActionResult> GetAllAuctionLot([FromQuery] AuctionLotQueryObject query)
         {
             var auctionLots = await _unitOfWork.AuctionLots.GetAllAsync(query);
-            var tasks = auctionLots.Select(async auctionLot =>
+            var breeders = await _breederService.GetAllBreederAsync();
+            Dictionary<int, BreederDetailDto> breederCache = new();
+            breeders.ForEach(b => breederCache[b.BreederId] = b);
+            var tasks = auctionLots.Select(auctionLot =>
             {
                 var auctionLotDto = auctionLot.ToAuctionLotDtoFromAuctionLot();
-                auctionLotDto!.LotDto!.BreederDetailDto = await _breederService.GetBreederByIdAsync(auctionLotDto.LotDto.BreederId);
+                // auctionLotDto!.LotDto!.BreederDetailDto = await _breederService.GetBreederByIdAsync(auctionLotDto.LotDto.BreederId);
+                auctionLotDto!.LotDto!.BreederDetailDto = breederCache[auctionLotDto.LotDto.BreederId];
                 return auctionLotDto;
             }).ToList();
 
-            var auctionLotDtos = await Task.WhenAll(tasks);
-            return Ok(auctionLotDtos);
+            return Ok(tasks);
         }
 
         [HttpGet]

@@ -42,20 +42,21 @@ namespace AuctionService.Controller
         {
 
             var lots = await _unitOfWork.Lots.GetAllAsync(query);
-
+            var breeders = await _breederService.GetAllBreederAsync();
+            Dictionary<int, BreederDetailDto> breederCache = new();
+            breeders.ForEach(b => breederCache[b.BreederId] = b);
             // Tạo LotDto và gán thông tin người dùng
-            var tasks = lots.Select(async lot =>
+            var tasks = lots.Select(lot =>
             {
-                var breeder = await _breederService.GetBreederByIdAsync(lot.BreederId);
+                // var breeder = breeders.FirstOrDefault(b => b.BreederId == lot.BreederId);
+                var breeder = breederCache[lot.BreederId];
                 var lotDto = lot.ToLotDtoFromLot();
                 lotDto.BreederDetailDto = breeder;
                 return lotDto;
             }).ToList();
 
             // Đợi tất cả các tác vụ hoàn thành
-            var lotDtos = await Task.WhenAll(tasks);
-
-            return Ok(lotDtos);
+            return Ok(tasks);
         }
 
         [HttpGet]
