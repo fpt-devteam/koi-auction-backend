@@ -17,7 +17,7 @@ namespace AuctionService.Repository
 {
     public class LotRepository : ILotRepository
     {
-        private readonly int COMPLETED = 8;
+        private readonly int COMPLETED = 9;
         private readonly AuctionManagementDbContext _context;
 
         public LotRepository(AuctionManagementDbContext context)
