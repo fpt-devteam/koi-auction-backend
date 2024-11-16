@@ -58,7 +58,7 @@ const User = sequelize.define('User', {
       type: DataTypes.STRING
    },
    Verified: {
-      type: DataTypes.BOOLEAN
+      type: DataTypes.INTEGER
    },
    CreatedAt: {
       type: DataTypes.DATE,

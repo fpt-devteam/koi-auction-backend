@@ -214,8 +214,8 @@ const register = async (req, res) => {
       if (existUser?.Phone == Phone) return res.status(400).json({ message: "Phone already exists" });
 
       const emailToken = req.session.emailToken;
-      req.session.emailToken = null;
       if (EmailToken != emailToken) return res.status(400).json({ message: "Invalid email verification code" });
+      req.session.emailToken = null;
 
       const hashedPassword = await argon2.hash(Password, 10);
 
@@ -229,7 +229,7 @@ const register = async (req, res) => {
          Email: Email,
          Active: true,
          UserRoleId: IsBreeder ? 2 : 1,
-         Verified: IsBreeder ? false : true,
+         Verified: IsBreeder ? 0 : 1,
          ProvinceCode: ProvinceCode,
          DistrictCode: DistrictCode,
          WardCode: WardCode,
@@ -268,7 +268,7 @@ const register = async (req, res) => {
 const getUnverifiedBreeders = async (req, res) => {
    try {
       const breeders = await User.findAll({
-         where: { UserRoleId: 2, Verified: false },
+         where: { UserRoleId: 2, Verified: 0 },
       });
       if (!breeders) {
          return res.status(404).json({ message: "Breeder not found" });
@@ -283,8 +283,11 @@ const getUnverifiedBreeders = async (req, res) => {
 const verifyBreeder = async (req, res) => {
    try {
       const { UserId } = req.params;
+      const { Verified } = req.body;
+      if (!UserId) return res.status(400).json({ message: "UserId is required" });
+      if (!Verified) return res.status(400).json({ message: "Verified is required" });
       await User.update(
-         { Verified: true },
+         { Verified:  Verified},
          { where: { UserId: UserId } }
       );
       res.status(201).json({ message: "Breeder Verified" });
@@ -317,8 +320,8 @@ const updateProfile = async (req, res) => {
       if (Email != user.Email) {
          if (!EmailToken) return res.status(400).json({ message: "Email verification code is required" });
          const emailToken = req.session.emailToken;
-         req.session.emailToken = null;
          if (EmailToken != emailToken) return res.status(400).json({ message: "Invalid email verification code" });
+         req.session.emailToken = null;
       }
       await User.update(
          {
