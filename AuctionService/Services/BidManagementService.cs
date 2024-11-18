@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Text.Json;
 using AuctionService.Dto.Address;
 using AuctionService.Dto.AuctionDeposit;
 using AuctionService.Dto.AuctionLot;
@@ -29,7 +30,7 @@ namespace AuctionService.Services
         private readonly IDictionary<string, UserConnectionDto> _connections;
         private readonly IHubContext<BidHub> _bidHub;
         private readonly HttpClient _httpClient;
-        private const int EXP_TIME = 2;
+        private const int EXP_TIME = 5;
 
         public BidManagementService(HttpClient httpClient, IServiceScopeFactory serviceScopeFactory, IHubContext<BidHub> bidHub, IDictionary<string, UserConnectionDto> connections)
         {
@@ -110,8 +111,9 @@ namespace AuctionService.Services
 
                     if (winner != null)
                     {
-                        var winnerAddressResponse = await _httpClient.GetAsync($"https://localhost:3000/user-service/manage/profile/address/{winner.BidderId}");
-                        var addressDto = await winnerAddressResponse.Content.ReadFromJsonAsync<AddressDto>();
+                        var winnerAddressResponse = await _httpClient.GetAsync($"http://localhost:3000/user-service/manage/profile/address/{winner.BidderId}");
+                        var content = await winnerAddressResponse.Content.ReadAsStringAsync();
+                        var addressDto = JsonSerializer.Deserialize<AddressDto>(content);
 
                         var soldLot = new Models.SoldLot
                         {

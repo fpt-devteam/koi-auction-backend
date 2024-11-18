@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
+using AuctionService.Dto.Address;
 using AuctionService.Dto.AuctionDeposit;
 using AuctionService.Dto.AuctionLot;
 using AuctionService.Dto.Wallet;
@@ -110,5 +112,17 @@ namespace AuctionService.Controllers
             }
         }
 
+        [HttpGet("test-address")]
+        public async Task<IActionResult> TestAddress()
+        {
+            Console.WriteLine("Test Address");
+            using HttpClient httpClient = new();
+            var winnerAddressResponse = await httpClient.GetAsync($"http://localhost:3000/user-service/manage/profile/address/5");
+            var content = await winnerAddressResponse.Content.ReadAsStringAsync();
+            var addressDto = JsonSerializer.Deserialize<AddressDto>(content);
+            System.Console.WriteLine($"Address: {addressDto?.Address}");
+            return Ok(addressDto);
+        }
     }
 }
+
