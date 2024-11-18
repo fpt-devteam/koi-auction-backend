@@ -18,6 +18,7 @@ namespace AuctionService.Repository
     public class LotRepository : ILotRepository
     {
         private readonly int COMPLETED = 9;
+        private readonly int PAYMENT_OVERDUE = 11;
         private readonly AuctionManagementDbContext _context;
 
         public LotRepository(AuctionManagementDbContext context)
@@ -280,31 +281,37 @@ namespace AuctionService.Repository
             // DateTime startDateTime = endDateTime.AddDays(-6); // Lấy 6 ngày trước ngày kết thúc để có 7 ngày
             endDateTime = endDateTime.AddDays(1).AddSeconds(-1);
             // Truy vấn cơ sở dữ liệu trong khoảng thời gian đã xác định
-            var lotsInRange = await (from lot in _context.Lots
-                                     join soldLot in _context.SoldLots on lot.LotId equals soldLot.SoldLotId
-                                     where lot.LotStatusId == COMPLETED &&
-                                           lot.UpdatedAt >= startDateTime &&
-                                           lot.UpdatedAt <= endDateTime
-                                     select new
-                                     {
-                                         lot.UpdatedAt,
-                                         soldLot.FinalPrice
-                                     })
+            var lotsCompletedInRange = await (from lot in _context.Lots
+                                              join soldLot in _context.SoldLots on lot.LotId equals soldLot.SoldLotId
+                                              where (lot.LotStatusId == COMPLETED || lot.LotStatusId == PAYMENT_OVERDUE) &&
+                                                    lot.UpdatedAt >= startDateTime &&
+                                                    lot.UpdatedAt <= endDateTime
+                                              select new
+                                              {
+                                                  lot.UpdatedAt,
+                                                  soldLot.FinalPrice,
+                                                  lot.LotStatusId,
+                                                  lot.StartingPrice
+                                              })
                                      .ToListAsync(); // Lấy dữ liệu vào bộ nhớ
 
             int totalDays = (endDateTime - startDateTime).Days + 1;
             // Nhóm và tính tổng doanh thu theo từng ngày
             var dailyRevenue = Enumerable.Range(0, totalDays)
                 .Select(i => startDateTime.AddDays(i))
-                .GroupJoin(lotsInRange,
+                .GroupJoin(lotsCompletedInRange,
                            date => date.Date,
                            lot => lot.UpdatedAt.Date,
                            (date, lotGroup) => new DailyRevenueDto
                            {
-                               DayName = date.ToString("MMM dd"), // Hiển thị ngày và tháng
-                               Revenue = lotGroup.Sum(x => x.FinalPrice * 0.1m)
+                               Date = date.ToString("MMM dd"), // Hiển thị ngày và tháng
+                               TotalAmount = lotGroup.Sum(x =>
+                           x.LotStatusId == COMPLETED
+                               ? x.FinalPrice * 0.1m // Doanh thu từ lot hoàn thành
+                               : x.StartingPrice * 0.2m // Doanh thu từ Payment Overdue
+                       )
                            })
-                .OrderBy(result => result.DayName)
+                .OrderBy(result => result.Date)
                 .ToList();
 
             return dailyRevenue;
