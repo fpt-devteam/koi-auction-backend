@@ -692,6 +692,7 @@ const getBreederProfileById = async (req, res) => {
 const manageUpdateProfile = async (req, res) => {
    try {
       const { Username, FirstName, LastName, Phone, Email, FarmName, Certificate, About, Active } = req.body;
+      const { ProvinceCode, DistrictCode, WardCode, Address } = req.body;
 
       const user = await User.findByPk(req.params.id);
       if (!user) {
@@ -705,6 +706,10 @@ const manageUpdateProfile = async (req, res) => {
             LastName: LastName,
             Phone: Phone,
             Email: Email,
+            ProvinceCode: ProvinceCode,
+            DistrictCode: DistrictCode,
+            WardCode: WardCode,
+            Address: Address,
             Active: Active || true,
             UpdatedAt: new Date(),
          },
