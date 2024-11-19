@@ -16,8 +16,8 @@ namespace AuctionService.Dto.SoldLot
         public decimal FinalPrice { get; set; }
 
         public DateTime CreatedAt { get; set; }
-
         public DateTime UpdatedAt { get; set; }
+        public DateTime UpdatedLot { get; set; }
         public BreederDetailDto? BreederDetailDto { get; set; }
         public int BreederId { get; set; }
         public string? Address { get; set; }
