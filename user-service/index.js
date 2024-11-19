@@ -14,6 +14,7 @@ const corsOptions = {
     "http://localhost:5173",
     "https://b4e3-2401-d800-5aec-76ef-c58c-ff24-9016-45ef.ngrok-free.app",
     "http://localhost:3000",
+    "https://koi-auction-bice.vercel.app",
   ],
   credentials: true,
 };

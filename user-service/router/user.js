@@ -33,12 +33,13 @@ router.patch("/verify-breeder/:UserId", authenticate, highRole, controller.verif
 
 router.get("/breeder/profile", authenticate, breederRole, controller.getBreederProfile);
 
+router.get("/manage/profile/address", controller.manageGetAllProfileAddresses);
+router.get("/manage/profile/address/:id", controller.getProfileAddressById);
 router.get("/manage/profile", controller.getAllProfiles); 
 router.post("/manage/profile", controller.manageCreateProfile);
 router.get("/manage/profile/:id", controller.getProfileById);
 router.patch("/manage/profile/:id", authenticate, highRole, controller.manageUpdateProfile);
 router.delete("/manage/profile/:id", authenticate, highRole, controller.manageDeleteProfile);
-router.get("/manage/profile/address/:id", controller.getProfileAddressById);
 router.get("/manage/detail-profile/:id", authenticate, highRole, controller.manageGetDetailProfile);
 
 router.get("/manage/breeder/profile", controller.getAllBreederProfiles);

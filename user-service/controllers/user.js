@@ -316,8 +316,9 @@ const emailVerification = async (req, res) => {
 const updateProfile = async (req, res) => {
    try {
       const { Username, FirstName, LastName, Phone, Email, ProvinceCode, DistrictCode, WardCode, Address, EmailToken } = req.body;
+      const { FarmName, Certificate, About } = req.body;
       const user = await User.findByPk(req.user.UserId);
-      if (Email != user.Email) {
+      if (Email && Email != user.Email) {
          if (!EmailToken) return res.status(400).json({ message: "Email verification code is required" });
          const emailToken = req.session.emailToken;
          if (EmailToken != emailToken) return res.status(400).json({ message: "Invalid email verification code" });
@@ -339,6 +340,16 @@ const updateProfile = async (req, res) => {
          },
          { where: { UserId: req.user.UserId } }
       );
+      if (user.UserRoleId == 2) {
+         await BreederDetail.update(
+            {
+               FarmName: FarmName,
+               Certificate: Certificate,
+               About: About,
+            },
+            { where: { BreederId: req.user.UserId } }
+         );
+      }
       res.status(201).json({ message: "User Updated" });
    } catch (err) {
       console.log(err);
@@ -490,6 +501,33 @@ const getProfileAddressById = async (req, res) => {
       res.status(500).json({ message: "Internal server error" });
    }
 };
+
+const manageGetAllProfileAddresses = async (req, res) => {
+   try {
+      const users = await User.findAll();
+      if (!users) {
+         return res.status(404).json({ message: "Users not found" });
+      }
+
+      const [provinces, districts, wards] = await Promise.all([
+         Province.findAll(),
+         District.findAll(),
+         Ward.findAll(),
+      ]);
+
+      const profiles = users.map((user) => {
+         return {
+            UserId: user.UserId,
+            Address: `${user.Address}, ${wards.find((w) => w.code == user.WardCode)?.name}, ${districts.find((d) => d.code == user.DistrictCode)?.name}, ${provinces.find((p) => p.code == user.ProvinceCode)?.name}`,
+         };
+      });
+      res.status(200).json(profiles);
+   } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Internal server error" });
+   }
+};
+
 
 const manageDeleteProfile = async (req, res) => {
    try {
@@ -879,5 +917,6 @@ module.exports = {
    getWardByDistrictId,
    getStatisticsUsers,
    getProfileAddressById,
-   getSumOfPayoutOfBreeder
+   getSumOfPayoutOfBreeder,
+   manageGetAllProfileAddresses,
 };
