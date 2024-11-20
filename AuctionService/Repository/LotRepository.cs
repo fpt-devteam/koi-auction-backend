@@ -17,7 +17,8 @@ namespace AuctionService.Repository
 {
     public class LotRepository : ILotRepository
     {
-        private readonly int COMPLETED = 8;
+        private readonly int COMPLETED = 9;
+        private readonly int PAYMENT_OVERDUE = 11;
         private readonly AuctionManagementDbContext _context;
 
         public LotRepository(AuctionManagementDbContext context)
@@ -53,7 +54,7 @@ namespace AuctionService.Repository
         public async Task<List<Lot>> GetAllAsync(LotQueryObject query)
         {
             var lots = _context.Lots.Include(l => l.KoiFish).ThenInclude(m => m!.KoiMedia).
-                                        Include(l => l.LotStatus).Include(l => l.AuctionLot).Include(l => l.AuctionLot.SoldLot)
+                                        Include(l => l.LotStatus).Include(l => l.AuctionLot).Include(l => l.AuctionLot!.SoldLot)
                                         .Include(l => l.AuctionMethod).AsQueryable();
 
             // Kiểm tra BreederId
@@ -185,9 +186,22 @@ namespace AuctionService.Repository
                                             Include(l => l.AuctionMethod).FirstOrDefaultAsync(l => l.LotId == id);
             if (lot == null)
                 throw new KeyNotFoundException($" Lot {id} was not found");
+
             var status = await _context.LotStatuses.FirstOrDefaultAsync(x => x.LotStatusName == updateLot.LotStatusName);
             lot.LotStatusId = status!.LotStatusId;
             return lot;
+        }
+
+        //update status of a list of lots to InAuction
+        public async Task<List<Lot>> UpdateLotsStatusToInAuctionAsync(List<int> lotIds)
+        {
+            var lots = await _context.Lots.Where(l => lotIds.Contains(l.LotId)).ToListAsync();
+            if (lots.Count == 0)
+                throw new KeyNotFoundException($" Lots were not found");
+
+            // var status = await _context.LotStatuses.FirstOrDefaultAsync(x => x.LotStatusName == "In Auction");
+            lots.ForEach(l => l.LotStatusId = (int)Enums.LotStatus.InAuction);
+            return lots;
         }
 
         public async Task<List<LotAuctionMethodStatisticDto>> GetLotAuctionMethodStatisticAsync()
@@ -259,38 +273,45 @@ namespace AuctionService.Repository
 
 
 
-        public async Task<List<DailyRevenueDto>> GetLast7DaysRevenue(int offsetWeeks)
+        public async Task<List<DailyRevenueDto>> GetStatisticsRevenue(DateTime startDateTime, DateTime endDateTime)
         {
             // Xác định khoảng thời gian 7 ngày trước đó theo offsetWeeks
-            DateTime endOfPeriod = DateTime.Today.AddDays(-7 * offsetWeeks); // Lùi về 7 * offsetWeeks ngày
-            endOfPeriod = endOfPeriod.AddDays(1).AddSeconds(-1); // Đến cuối ngày
-            DateTime startOfPeriod = endOfPeriod.AddDays(-6); // Lấy 6 ngày trước ngày kết thúc để có 7 ngày
-
+            // DateTime endDateTime = DateTime.Today.AddDays(-7 * offsetWeeks); // Lùi về 7 * offsetWeeks ngày
+            // endDateTime = endDateTime.AddDays(1).AddSeconds(-1); // Đến cuối ngày
+            // DateTime startDateTime = endDateTime.AddDays(-6); // Lấy 6 ngày trước ngày kết thúc để có 7 ngày
+            endDateTime = endDateTime.AddDays(1).AddSeconds(-1);
             // Truy vấn cơ sở dữ liệu trong khoảng thời gian đã xác định
-            var lotsInRange = await (from lot in _context.Lots
-                                     join soldLot in _context.SoldLots on lot.LotId equals soldLot.SoldLotId
-                                     where lot.LotStatusId == COMPLETED &&
-                                           lot.UpdatedAt >= startOfPeriod &&
-                                           lot.UpdatedAt <= endOfPeriod
-                                     select new
-                                     {
-                                         lot.UpdatedAt,
-                                         soldLot.FinalPrice
-                                     })
+            var lotsCompletedInRange = await (from lot in _context.Lots
+                                              join soldLot in _context.SoldLots on lot.LotId equals soldLot.SoldLotId
+                                              where (lot.LotStatusId == COMPLETED || lot.LotStatusId == PAYMENT_OVERDUE) &&
+                                                    lot.UpdatedAt >= startDateTime &&
+                                                    lot.UpdatedAt <= endDateTime
+                                              select new
+                                              {
+                                                  lot.UpdatedAt,
+                                                  soldLot.FinalPrice,
+                                                  lot.LotStatusId,
+                                                  lot.StartingPrice
+                                              })
                                      .ToListAsync(); // Lấy dữ liệu vào bộ nhớ
 
+            int totalDays = (endDateTime - startDateTime).Days + 1;
             // Nhóm và tính tổng doanh thu theo từng ngày
-            var dailyRevenue = Enumerable.Range(0, 7)
-                .Select(i => startOfPeriod.AddDays(i))
-                .GroupJoin(lotsInRange,
+            var dailyRevenue = Enumerable.Range(0, totalDays)
+                .Select(i => startDateTime.AddDays(i))
+                .GroupJoin(lotsCompletedInRange,
                            date => date.Date,
                            lot => lot.UpdatedAt.Date,
                            (date, lotGroup) => new DailyRevenueDto
                            {
-                               DayName = date.ToString("MMM dd"), // Hiển thị ngày và tháng
-                               Revenue = lotGroup.Sum(x => x.FinalPrice * 0.1m)
+                               Date = date.ToString("MMM dd"), // Hiển thị ngày và tháng
+                               TotalAmount = lotGroup.Sum(x =>
+                           x.LotStatusId == COMPLETED
+                               ? x.FinalPrice * 0.1m // Doanh thu từ lot hoàn thành
+                               : x.StartingPrice * 0.2m // Doanh thu từ Payment Overdue
+                       )
                            })
-                .OrderBy(result => result.DayName)
+                .OrderBy(result => result.Date)
                 .ToList();
 
             return dailyRevenue;

@@ -12,12 +12,12 @@ namespace AuctionService.Services
     public class TaskSchedulerService : ITaskSchedulerService
     {
         private readonly ILogger<TaskSchedulerService> _logger;
-        private readonly Dictionary<Guid, CancellationTokenSource> _scheduledTasks;
+        private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _scheduledTasks;
 
         public TaskSchedulerService(ILogger<TaskSchedulerService> logger)
         {
             _logger = logger;
-            _scheduledTasks = new Dictionary<Guid, CancellationTokenSource>();
+            _scheduledTasks = new ConcurrentDictionary<Guid, CancellationTokenSource>();
         }
 
         public Guid ScheduleTask(ScheduledTask task)
@@ -38,7 +38,6 @@ namespace AuctionService.Services
                 _logger.LogWarning($"Task {taskId} is scheduled in the past. Executing immediately.");
                 timeToExecute = TimeSpan.Zero;
             }
-            // System.Console.WriteLine("35");
             _ = ExecuteScheduledTask(taskId, task, timeToExecute, cts.Token);
             _scheduledTasks[taskId] = cts;
 
@@ -50,8 +49,6 @@ namespace AuctionService.Services
         {
             try
             {
-                // System.Console.WriteLine("47");
-                System.Console.WriteLine();
                 await Task.Delay(timeToExecute, cancellationToken); // Đợi cho đến khi đến thời điểm thực thi hoặc bị hủy
                 // System.Console.WriteLine("49");
                 if (!cancellationToken.IsCancellationRequested)
@@ -90,23 +87,27 @@ namespace AuctionService.Services
             finally
             {
                 // Xóa tác vụ khỏi danh sách sau khi hoàn thành hoặc bị hủy
-                _scheduledTasks.Remove(taskId);
+                lock (_scheduledTasks)
+                {
+                    _scheduledTasks.TryRemove(taskId, out _);
+                }
+                // _scheduledTasks.Remove(taskId);
                 _logger.LogInformation($"Task {taskId} removed from scheduled tasks.");
             }
         }
 
         public void CancelScheduledTask(Guid taskId)
         {
-            if (_scheduledTasks.TryGetValue(taskId, out var cts))
-            {
-                cts.Cancel(); // Hủy tác vụ
-                _scheduledTasks.Remove(taskId); // Loại bỏ khỏi danh sách tác vụ đã lên lịch
-                _logger.LogInformation($"Task {taskId} has been canceled.");
-            }
-            else
-            {
-                _logger.LogWarning($"Task {taskId} not found.");
-            }
+            // if (_scheduledTasks.TryGetValue(taskId, out var cts))
+            // {
+            //     cts.Cancel(); // Hủy tác vụ
+            //     _scheduledTasks.Remove(taskId); // Loại bỏ khỏi danh sách tác vụ đã lên lịch
+            //     _logger.LogInformation($"Task {taskId} has been canceled.");
+            // }
+            // else
+            // {
+            //     _logger.LogWarning($"Task {taskId} not found.");
+            // }
         }
 
 

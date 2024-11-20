@@ -10,6 +10,13 @@ const Province = require("../models/provinces");
 const District = require("../models/districts");
 const Ward = require("../models/wards");
 const moment = require("moment");
+const axios = require("axios");
+const session = require("express-session");
+const { getSumOfPayoutOfBreeder } = require("../../payment-service/controller");
+
+const mailAPI = axios.create({
+   baseURL: "http://localhost:3005",
+});
 
 const profile = async (req, res) => {
    try {
@@ -146,23 +153,14 @@ const googleFailure = async (req, res) => {
 const login = async (req, res) => {
    try {
       const reqBody = req.body;
-      if (!reqBody.Username || !reqBody.Password) {
-         return res.status(400).json({ message: "All fields are required" });
-      }
+      if (!reqBody.Username || !reqBody.Password) return res.status(400).json({ message: "All fields are required" });
 
       const user = await User.findOne({ where: { Username: reqBody.Username } });
 
-      if (!user) {
-         return res.status(401).json({ message: "Username or Password is incorrect" });
-      }
-
-      if (user.GoogleId) {
-         return res.status(401).json({ message: "Please login with Google" });
-      }
-
-      if (!user.Active) {
-         return res.status(401).json({ message: "User is not available" });
-      }
+      if (!user) return res.status(401).json({ message: "Username or Password is incorrect" });
+      if (user.GoogleId) return res.status(401).json({ message: "Please login with Google" });
+      if (!user.Active) return res.status(401).json({ message: "User is not available" });
+      if (!user.Verified) return res.status(401).json({ message: "User is not verified" });
 
       const match = await argon2.verify(user.Password, reqBody.Password);
 
@@ -191,20 +189,33 @@ const login = async (req, res) => {
 
 const register = async (req, res) => {
    try {
-      const { Username, Password, FirstName, LastName, Phone, Email } = req.body;
+      const { Username, Password, FirstName, LastName, Phone, Email, IsBreeder, EmailToken, ProvinceCode, DistrictCode, WardCode, Address } = req.body;
+      const { FarmName, Certificate, About } = req.body;
       const existUser = await User.findOne({
          where: {
             [Op.or]: [{ Username: Username }, { Email: Email }, { Phone: Phone }],
          },
       });
 
-      if (!Username || !Password || !FirstName || !LastName || !Phone || !Email) {
-         return res.status(400).json({ message: "All fields are required" });
-      }
-
+      if (!EmailToken) return res.status(400).json({ message: "Email verification code is required" })
+      if (!Username) return res.status(400).json({ message: "Username is required" });
+      if (!Password) return res.status(400).json({ message: "Password is required" });
+      if (!FirstName) return res.status(400).json({ message: "First name is required" });
+      if (!LastName) return res.status(400).json({ message: "Last name is required" });
+      if (!Phone) return res.status(400).json({ message: "Phone is required" });
+      if (!Email) return res.status(400).json({ message: "Email is required" });
+      if (!ProvinceCode) return res.status(400).json({ message: "Province code is required" });
+      if (!DistrictCode) return res.status(400).json({ message: "District code is required" });
+      if (!WardCode) return res.status(400).json({ message: "Ward code is required" });
+      if (!Address) return res.status(400).json({ message: "Address is required" });
+      
       if (existUser?.Username == Username) return res.status(400).json({ message: "Username already exists" });
       if (existUser?.Email == Email) return res.status(400).json({ message: "Email already exists" });
       if (existUser?.Phone == Phone) return res.status(400).json({ message: "Phone already exists" });
+
+      const emailToken = req.session.emailToken;
+      if (EmailToken != emailToken) return res.status(400).json({ message: "Invalid email verification code" });
+      req.session.emailToken = null;
 
       const hashedPassword = await argon2.hash(Password, 10);
 
@@ -217,12 +228,28 @@ const register = async (req, res) => {
          Phone: Phone,
          Email: Email,
          Active: true,
-         UserRoleId: 1,
+         UserRoleId: IsBreeder ? 2 : 1,
+         Verified: IsBreeder ? 0 : 1,
+         ProvinceCode: ProvinceCode,
+         DistrictCode: DistrictCode,
+         WardCode: WardCode,
+         Address: Address,
          CreatedAt: new Date(),
          UpdatedAt: new Date(),
       }).then((user) => {
          userId = user.UserId;
       });
+
+      if (IsBreeder) {
+         if (!FarmName || !Certificate) return res.status(400).json({ message: "All fields are required" });
+         
+         await BreederDetail.create({
+            BreederId: userId,
+            FarmName: FarmName,
+            Certificate: Certificate,
+            About: About,
+         });
+      }
 
       await Wallet.create({
          UserId: userId,
@@ -238,9 +265,65 @@ const register = async (req, res) => {
    }
 };
 
+const getUnverifiedBreeders = async (req, res) => {
+   try {
+      const breeders = await User.findAll({
+         where: { UserRoleId: 2, Verified: 0 },
+      });
+      if (!breeders) {
+         return res.status(404).json({ message: "Breeder not found" });
+      }
+      res.status(200).json(breeders);
+   } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Internal server error" });
+   }
+}
+
+const verifyBreeder = async (req, res) => {
+   try {
+      const { UserId } = req.params;
+      const { Verified } = req.body;
+      if (!UserId) return res.status(400).json({ message: "UserId is required" });
+      if (!Verified) return res.status(400).json({ message: "Verified is required" });
+      await User.update(
+         { Verified:  Verified},
+         { where: { UserId: UserId } }
+      );
+      res.status(201).json({ message: "Breeder Verified" });
+   } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Internal server error" });
+   }
+}
+
+const emailVerification = async (req, res) => {
+   try {
+      const { Email } = req.body;
+      const sixDigitCode = Math.floor(100000 + Math.random() * 900000);
+      req.session.emailToken = sixDigitCode;
+      req.session.cookie.maxAge = 15 * 60 * 1000;
+      const subject = "Email Verification Code";
+      const text = `Your verification code is: ${sixDigitCode}`;
+      await sendEmail(Email, subject, text);
+      res.status(200).json({ message: "Verification code sent to your Email", token: sixDigitCode }); 
+   } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Internal server error" });
+   }
+}
+
 const updateProfile = async (req, res) => {
    try {
-      const { Username, FirstName, LastName, Phone, Email, ProvinceCode, DistrictCode, WardCode, Address } = req.body;
+      const { Username, FirstName, LastName, Phone, Email, ProvinceCode, DistrictCode, WardCode, Address, EmailToken } = req.body;
+      const { FarmName, Certificate, About } = req.body;
+      const user = await User.findByPk(req.user.UserId);
+      if (Email && Email != user.Email) {
+         if (!EmailToken) return res.status(400).json({ message: "Email verification code is required" });
+         const emailToken = req.session.emailToken;
+         if (EmailToken != emailToken) return res.status(400).json({ message: "Invalid email verification code" });
+         req.session.emailToken = null;
+      }
       await User.update(
          {
             Username: Username,
@@ -257,6 +340,16 @@ const updateProfile = async (req, res) => {
          },
          { where: { UserId: req.user.UserId } }
       );
+      if (user.UserRoleId == 2) {
+         await BreederDetail.update(
+            {
+               FarmName: FarmName,
+               Certificate: Certificate,
+               About: About,
+            },
+            { where: { BreederId: req.user.UserId } }
+         );
+      }
       res.status(201).json({ message: "User Updated" });
    } catch (err) {
       console.log(err);
@@ -367,15 +460,74 @@ const getAllProfiles = async (req, res) => {
 const getProfileById = async (req, res) => {
    try {
       const user = await User.findByPk(req.params.id);
+      const province = await Province.findByPk(user?.ProvinceCode);
+      const district = await District.findByPk(user?.DistrictCode);
+      const ward = await Ward.findByPk(user?.WardCode);
       if (!user) {
          return res.status(404).json({ message: "User not found" });
       }
-      res.status(200).json(user);
+      res.status(200).json({
+         UserId: user.UserId,
+         Username: user.Username,
+         FirstName: user.FirstName,
+         LastName: user.LastName,
+         Phone: user.Phone,
+         Email: user.Email,
+         Active: user.Active,
+         UserRoleId: user.UserRoleId,
+         Address: `${user.Address}, ${ward?.name}, ${district?.name}, ${province?.name}`,
+         Verified: user.Verified,
+      });
    } catch (err) {
       console.log(err);
       res.status(500).json({ message: "Internal server error" });
    }
 };
+
+const getProfileAddressById = async (req, res) => {
+   try {
+      const user = await User.findByPk(req.params.id);
+      const province = await Province.findByPk(user?.ProvinceCode);
+      const district = await District.findByPk(user?.DistrictCode);
+      const ward = await Ward.findByPk(user?.WardCode);
+      if (!user) {
+         return res.status(404).json({ message: "User not found" });
+      }
+      res.status(200).json({
+         Address: `${user.Address}, ${ward?.name}, ${district?.name}, ${province?.name}`,
+      });
+   } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Internal server error" });
+   }
+};
+
+const manageGetAllProfileAddresses = async (req, res) => {
+   try {
+      const users = await User.findAll();
+      if (!users) {
+         return res.status(404).json({ message: "Users not found" });
+      }
+
+      const [provinces, districts, wards] = await Promise.all([
+         Province.findAll(),
+         District.findAll(),
+         Ward.findAll(),
+      ]);
+
+      const profiles = users.map((user) => {
+         return {
+            UserId: user.UserId,
+            Address: `${user.Address}, ${wards.find((w) => w.code == user.WardCode)?.name}, ${districts.find((d) => d.code == user.DistrictCode)?.name}, ${provinces.find((p) => p.code == user.ProvinceCode)?.name}`,
+         };
+      });
+      res.status(200).json(profiles);
+   } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Internal server error" });
+   }
+};
+
 
 const manageDeleteProfile = async (req, res) => {
    try {
@@ -492,6 +644,8 @@ const getAllBreederProfiles = async (req, res) => {
             DistrictCode: breeder.DistrictCode,
             WardCode: breeder.WardCode,
             ProvinceCode: breeder.ProvinceCode,
+            Active: breeder.Active,
+            Verified: breeder.Verified,
             FarmName: breeder.BreederDetail?.FarmName,
             Certificate: breeder.BreederDetail?.Certificate,
             About: breeder.BreederDetail?.About,
@@ -538,6 +692,7 @@ const getBreederProfileById = async (req, res) => {
 const manageUpdateProfile = async (req, res) => {
    try {
       const { Username, FirstName, LastName, Phone, Email, FarmName, Certificate, About, Active } = req.body;
+      const { ProvinceCode, DistrictCode, WardCode, Address } = req.body;
 
       const user = await User.findByPk(req.params.id);
       if (!user) {
@@ -551,6 +706,10 @@ const manageUpdateProfile = async (req, res) => {
             LastName: LastName,
             Phone: Phone,
             Email: Email,
+            ProvinceCode: ProvinceCode,
+            DistrictCode: DistrictCode,
+            WardCode: WardCode,
+            Address: Address,
             Active: Active || true,
             UpdatedAt: new Date(),
          },
@@ -618,6 +777,10 @@ const manageGetDetailProfile = async (req, res) => {
          FarmName: user.BreederDetail?.FarmName,
          Certificate: user.BreederDetail?.Certificate,
          About: user.BreederDetail?.About,
+         ProvinceCode: user.ProvinceCode,
+         DistrictCode: user.DistrictCode,
+         WardCode: user.WardCode,
+         Address: user.Address,
       });
    } catch (err) {
       console.log(err);
@@ -736,6 +899,9 @@ module.exports = {
    googleSuccess,
    googleFailure,
    register,
+   getUnverifiedBreeders,
+   verifyBreeder,
+   emailVerification,
    updateProfile,
    updatePassword,
    forgotPassword,
@@ -759,4 +925,7 @@ module.exports = {
    getDistrictByProvinceId,
    getWardByDistrictId,
    getStatisticsUsers,
+   getProfileAddressById,
+   getSumOfPayoutOfBreeder,
+   manageGetAllProfileAddresses,
 };

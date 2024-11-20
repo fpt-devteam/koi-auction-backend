@@ -24,7 +24,13 @@ namespace AuctionService.Mapper
                 FinalPrice = soldLot.FinalPrice,
                 CreatedAt = soldLot.CreatedAt,
                 UpdatedAt = soldLot.UpdatedAt,
-                KoiFish = soldLot!.SoldLotNavigation!.AuctionLotNavigation!.KoiFish!.ToKoiFishDtoFromKoiFish()
+                UpdatedLot = soldLot.SoldLotNavigation.AuctionLotNavigation.UpdatedAt,
+                BreederId = soldLot.BreederId,
+                Address = soldLot.Address,
+                KoiFish = soldLot.SoldLotNavigation.AuctionLotNavigation.KoiFish!.ToKoiFishDtoFromKoiFish(),
+                LotStatusId = soldLot.SoldLotNavigation.AuctionLotNavigation.LotStatusId,
+                SKU = soldLot.SoldLotNavigation.AuctionLotNavigation.Sku,
+                // Lot = soldLot.SoldLotNavigation.AuctionLotNavigation.ToLotDtoFromLot()
             };
         }
     }

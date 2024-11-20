@@ -7,6 +7,7 @@ const port = 3004;
 const corsOptions = {
    origin: [
       'http://localhost:5173',
+      "https://koi-auction-bice.vercel.app",
    ],
    credentials: true,
 };

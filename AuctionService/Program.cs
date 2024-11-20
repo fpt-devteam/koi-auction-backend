@@ -11,6 +11,7 @@ using AuctionService.HandleMethod;
 using AuctionService.Dto.UserConnection;
 using AuctionService.Hubs;
 using AuctionService.Helper;
+using AuctionService.Dto.User;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpClient<WalletService>();
@@ -47,12 +48,14 @@ builder.Services.AddScoped<IAuctionRepository, AuctionRepository>();
 builder.Services.AddScoped<IAuctionLotRepository, AuctionLotRepository>();
 builder.Services.AddScoped<IBidLogRepository, BidLogRepository>();
 builder.Services.AddScoped<ISoldLotRepository, SoldLotRepository>();
-
+builder.Services.AddScoped<IAuctionDepositRepository, AuctionDepositRepository>();
+builder.Services.AddScoped<IAuctionDepositService, AuctionDepositService>();
 
 builder.Services.AddScoped<ISoldLotService, SoldLotService>();
 builder.Services.AddScoped<IBidLogService, BidLogService>();
 builder.Services.AddScoped<BidService>();
 builder.Services.AddScoped<WalletService>();
+builder.Services.AddScoped<MailService>();
 builder.Services.AddScoped<ILotService, LotService>();
 
 builder.Services.AddSingleton<BidManagementService>();
@@ -61,7 +64,7 @@ builder.Services.AddScoped<IAuctionLotService, AuctionLotService>();
 
 builder.Services.AddSingleton<ITaskSchedulerService, TaskSchedulerService>();
 
-
+builder.Services.AddScoped<UserSevice>();
 builder.Services.AddScoped<BreederDetailService>();
 
 builder.Services.AddScoped<IAuctionStatusRepository, AuctionStatusRepository>();

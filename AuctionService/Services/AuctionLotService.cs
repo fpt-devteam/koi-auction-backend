@@ -17,8 +17,6 @@ namespace AuctionService.Services
 {
     public class AuctionLotService : IAuctionLotService
     {
-        private const int BREAK_TIME = 1;
-
         private IAuctionService _auctionService;
         private readonly BidManagementService _bidManagementService;
         private readonly ITaskSchedulerService _taskSchedulerService;
@@ -74,13 +72,8 @@ namespace AuctionService.Services
         public async Task<List<AuctionLot>> CreateListAsync(List<CreateAuctionLotDto> auctionLotDtos)
         {
             var auctionLots = auctionLotDtos.Select(dto => dto.ToAuctionLotFromCreateAuctionLotDto()).ToList();
-            foreach (var auctionLot in auctionLots)
-            {
-                await _unitOfWork.Lots.UpdateLotStatusAsync(auctionLot.AuctionLotId, new Dto.Lot.UpdateLotStatusDto
-                {
-                    LotStatusName = "In auction"
-                });
-            }
+            List<int> auctionLotIds = auctionLots.Select(a => a.AuctionLotId).ToList();
+            await _unitOfWork.Lots.UpdateLotsStatusToInAuctionAsync(auctionLotIds);
             await _unitOfWork.AuctionLots.CreateListAsync(auctionLots);
             await _unitOfWork.SaveChangesAsync();
             return auctionLots;
@@ -100,7 +93,6 @@ namespace AuctionService.Services
                     throw new Exception("An error occurred while saving the data");
                 }
             }
-            // _taskSchedulerService.ScheduleTask(() => StartAuctionLotAsync(auctionLotId), startTime);
             _taskSchedulerService.ScheduleTask(new ScheduledTask
             {
                 ExecuteAt = startTime,
@@ -111,7 +103,6 @@ namespace AuctionService.Services
         public async Task StartAuctionLotAsync(int auctionLotId)
         {
             Console.WriteLine($"Auction lot {auctionLotId} is starting!");
-
             using (var scope = _serviceScopeFactory.CreateScope())
             {
                 IUnitOfWork unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
@@ -126,8 +117,6 @@ namespace AuctionService.Services
                 //set up auction bid dto in bid service
                 AuctionLotBidDto auctionLotBidDto = auctionLot.ToAuctionLotBidDtoFromAuctionLot();
                 await _bidManagementService.StartAuctionLotAsync(auctionLotBidDto);
-
-
 
                 DateTime endTimePredict = auctionLot.StartTime!.Value.Add(auctionLot.Duration);
                 // Schedule extended time auction lot
@@ -148,13 +137,13 @@ namespace AuctionService.Services
                         });
                         break;
                     case (int)BidMethodType.AscendingBid:
-                        if (_bidManagementService.BidService!.CurrentStrategy is AscendingBidStrategy strategyAsc)
+                        if (_bidManagementService.BidServices[auctionLotId].CurrentStrategy is AscendingBidStrategy strategyAsc)
                         {
                             strategyAsc.CountdownFinished += async (id) => await EndAuctionLotAsync(auctionLotId);
                         }
                         break;
                     case (int)BidMethodType.DescendingBid:
-                        if (_bidManagementService.BidService!.CurrentStrategy is DescendingBidStrategy strategyDesc)
+                        if (_bidManagementService.BidServices[auctionLotId].CurrentStrategy is DescendingBidStrategy strategyDesc)
                         {
                             strategyDesc.CountdownFinished += async (id) => await EndAuctionLotAsync(auctionLotId);
                         }
@@ -163,8 +152,6 @@ namespace AuctionService.Services
                     default:
                         throw new ArgumentException("Invalid auctionLotMethodId");
                 }
-                // DateTime startExtendedTime = auctionLot.StartTime!.Value.Add(auctionLot.Duration).AddSeconds(-3 * EXTENDED_TIME);
-                // ScheduleExentedPhase(auctionLotId, startExtendedTime);
             }
         }
         public async Task EndAuctionLotAsync(int auctionLotId)
@@ -178,38 +165,14 @@ namespace AuctionService.Services
                 auctionLot = await unitOfWork.AuctionLots.GetAuctionLotById(auctionLotId);
                 auctionLot.AuctionLotStatusId = (int)Enums.AuctionLotStatus.Ended;
                 auctionLot.EndTime = DateTime.Now;
-
-                if (!await unitOfWork.SaveChangesAsync())
+                await unitOfWork.SaveChangesAsync();
+                await _bidManagementService.EndAuctionLotAsync(auctionLotId);
+                if (!await unitOfWork.AuctionLots.IsAuctionLotInAuction(auctionLot.AuctionId))
                 {
-                    throw new Exception("An error occurred while saving the data");
-                }
-            }
-
-            await _bidManagementService.EndAuctionLotAsync();
-
-            AuctionLot? nextLot = null;
-            using (var scope = _serviceScopeFactory.CreateScope())
-            {
-                var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
-                nextLot = await unitOfWork.AuctionLots.GetAuctionLotByOrderInAuction(auctionLot.AuctionId, auctionLot.OrderInAuction + 1);
-                if (nextLot != null)
-                {
-                    DateTime? nextStartTime = auctionLot.EndTime?.AddMinutes(BREAK_TIME);
-                    await ScheduleAuctionLotAsync(nextLot.AuctionLotId, nextStartTime!.Value);
-                }
-                else
-                {
-                    // Nếu là AuctionLot cuối cùng trong phiên đấu giá thì cập nhật trạng thái phiên đấu giá
                     await _auctionService.EndAuctionAsync(auctionLot.AuctionId);
                 }
-                if (!await unitOfWork.SaveChangesAsync())
-                {
-                    throw new Exception("An error occurred while saving the data");
-                }
             }
-
         }
-
         public Task<List<AuctionLotBidDto>> SearchAuctionLot(AuctionLotQueryObject queryObject)
         {
             throw new NotImplementedException();
@@ -231,8 +194,6 @@ StartAuctionLot sẽ cập nhật
 EndAuctionLot sẽ cập nhật
     status,
     endTime của AuctionLot trong cơ sở dữ liệu
-    ScheduleAuctionLot cho AuctionLot tiếp theo
-    hoặc EndAuction nếu là AuctionLot cuối cùng
     thông báo qua SignalR -> auction lot is ending
 */
 

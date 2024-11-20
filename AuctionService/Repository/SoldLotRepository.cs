@@ -1,4 +1,5 @@
 using AuctionService.Data;
+using AuctionService.Dto.SoldLot;
 using AuctionService.Helper;
 using AuctionService.IRepository;
 using AuctionService.Models;
@@ -30,7 +31,28 @@ namespace AuctionService.Repository
 
             if (query.UserID.HasValue)
                 soldLots = soldLots.Where(x => x.WinnerId == query.UserID.Value);
-            return await soldLots.ToListAsync();
+            if (query.BreederID.HasValue)
+                soldLots = soldLots.Where(x => x.BreederId == query.BreederID.Value);
+
+            //1. lot query -> lot status id
+            //2. soldLot == lot ON lotId
+            //3. soldLot -> lot -> lotStatusId
+            
+            var newSoldLots = new List<SoldLot>();
+            if (query.LotStatusID.HasValue) {
+                foreach (var soldLot in soldLots)
+                {
+                    var lotStatusId = soldLot.SoldLotNavigation.AuctionLotNavigation.LotStatusId;
+                    if (lotStatusId == query.LotStatusID.Value)
+                    {
+                        newSoldLots.Add(soldLot);
+                    }
+                }
+            } else {
+                return await soldLots.ToListAsync();
+            }
+
+            return await Task.FromResult(newSoldLots);
         }
 
         public async Task<SoldLot> GetSoldLotById(int id)

@@ -9,13 +9,14 @@ const Wallet = require('../models/wallet');
 const TransactionType = require('../models/transaction-type');
 const TransactionStatus = require('../models/transaction-status');
 const BreederDetail = require('../../user-service/models/breeder');
+const { json } = require('body-parser');
 
 const PAYOUT = 4;
 const WITHDRAW = 1;
 const SUCCESS = 2;
 
 const deposit = async (req, res) => {
-   const { Amount } = req.body;
+   const { Amount, Description } = req.body;
    const { UserId } = req.user;
 
    if (!Amount) return res.status(400).json({ message: "Amount is required" });
@@ -50,7 +51,7 @@ const deposit = async (req, res) => {
       item: JSON.stringify(items),
       embed_data: JSON.stringify(embed_data),
       amount: Amount,
-      description: "Thanh toán hóa đơn",
+      description: Description || `Deposit ${Amount} VND to wallet`,
       bank_code: "zalopayapp",
       callback_url:
          "https://4514-118-71-221-28.ngrok-free.app/payment-service/callback",
@@ -85,7 +86,7 @@ const deposit = async (req, res) => {
          TransTypeId: 3,
          AppTransId: app_trans_id,
          BalanceBefore: wallet.Balance,
-         Description: "Nạp tiền vào ví",
+         Description: Description || `Deposit ${Amount} VND to wallet`,
          CreatedAt: Date.now(),
       });
    } catch (err) {
@@ -270,7 +271,6 @@ const getTransactionHistory = async (req, res) => {
 
       let result = [];
       await Promise.all(transactions.map(async (transaction) => {
-         const wallet = await Wallet.findByPk(transaction.WalletId);
          result.push({
             TransId: transaction.TransId,
             UserId: wallet.UserId,
@@ -281,6 +281,7 @@ const getTransactionHistory = async (req, res) => {
             BalanceBefore: transaction.BalanceBefore,
             BalanceAfter: transaction.BalanceAfter,
             Description: transaction.Description,
+            CreatedAt: transaction.CreatedAt,
          });
       }));
 
@@ -291,8 +292,45 @@ const getTransactionHistory = async (req, res) => {
    }
 }
 
+const refund = async (req, res) => {
+   const { UserId, SoldLotId, Description, Amount } = req.body;
+   if (!UserId) return res.status(400).json({ message: "UserId is required" });
+   if (!Amount) return res.status(400).json({ message: "Amount is required" });
+   if (isNaN(Amount)) return res.status(400).json({ message: "Amount must be a number" });
+   if (Amount <= 0) return res.status(400).json({ message: "Amount must be greater than 0" });
+
+   const wallet = await Wallet.findOne({ where: { UserId: UserId } });
+   if (!wallet) return res.status(404).json({ message: "User not found" });
+
+   try {
+      await Transaction.create({
+         UserId: UserId,
+         Amount: Amount,
+         WalletId: wallet.WalletId,
+         StatusId: 2,
+         TransTypeId: 5,
+         SoldLotId: SoldLotId,
+         BalanceBefore: wallet.Balance,
+         Description: Description,
+         CreatedAt: Date.now(),
+      });
+
+      await Wallet.update(
+         { Balance: wallet.Balance + Amount },
+         { where: { WalletId: wallet.WalletId } }
+      );
+      
+      return res.status(200).json({ message: "Refund successfully" });
+   }
+   catch (err) {
+      console.log(err);
+      return res.status(500).json({ message: "Internal Server Error" });
+   }
+}
+
+
 const payment = async (req, res) => {
-   const { Amount, SoldLotId } = req.body;
+   const { Amount, SoldLotId, Description } = req.body;
    const { UserId } = req.user;
 
    if (!Amount) return res.status(400).json({ message: "Amount is required" });
@@ -315,7 +353,7 @@ const payment = async (req, res) => {
          TransTypeId: 2,
          SoldLotId: SoldLotId,
          BalanceBefore: wallet.Balance,
-         Description: "Thanh toán hóa đơn",
+         Description: Description,
          CreatedAt: Date.now(),
       });
 
@@ -378,12 +416,17 @@ const getAllTransactionHistory = async (req, res) => {
       }
    });
 
+   let walletToUserId = {};
+   let walletList = await Wallet.findAll();
+   walletList.forEach((wallet) => {
+      walletToUserId[wallet.WalletId] = wallet.UserId;
+   });
+
    let result = [];
    await Promise.all(transactions.map(async (transaction) => {
-      const wallet = await Wallet.findByPk(transaction.WalletId);
       result.push({
          TransId: transaction.TransId,
-         UserId: wallet.UserId,
+         UserId: walletToUserId[transaction.WalletId],
          Amount: transaction.Amount,
          WalletId: transaction.WalletId,
          Status: transactionStatus.find((status) => status.TransStatusId == transaction.StatusId).TransStatusName,
@@ -391,6 +434,7 @@ const getAllTransactionHistory = async (req, res) => {
          BalanceBefore: transaction.BalanceBefore,
          BalanceAfter: transaction.BalanceAfter,
          Description: transaction.Description,
+         CreatedAt: transaction.CreatedAt
       });
    }));
 
@@ -424,10 +468,9 @@ const getTransactionHistoryByUserId = async (req, res) => {
 
       let result = [];
       await Promise.all(transactions.map(async (transaction) => {
-         const wallet = await Wallet.findByPk(transaction.WalletId);
          result.push({
             TransId: transaction.TransId,
-            UserId: wallet.UserId,
+            UserId: UserId,
             Amount: transaction.Amount,
             WalletId: transaction.WalletId,
             Status: transactionStatus.find((status) => status.TransStatusId == transaction.StatusId).TransStatusName,
@@ -445,10 +488,9 @@ const getTransactionHistoryByUserId = async (req, res) => {
 
 const internalPayment = async (req, res) => {
    console.log(`req.body = ${JSON.stringify(req.body)}`);
-   const { amount, soldLotId } = req.body;
+   const { userId, soldLotId, amount, description } = req.body;
    const Amount = Number(amount);
-   let { UserId } = req.params;
-   UserId = Number(UserId);
+   const UserId = Number(userId);
    console.log("amount = ", amount);
    console.warn("UserId = ", UserId);
    console.warn("Amount = ", Amount);
@@ -475,7 +517,7 @@ const internalPayment = async (req, res) => {
          TransTypeId: 2,
          BalanceBefore: wallet.Balance,
          SoldLotId: soldLotId,
-         Description: "Thanh toán hóa đơn",
+         Description: description,
          CreatedAt: Date.now(),
       });
 
@@ -489,6 +531,52 @@ const internalPayment = async (req, res) => {
       console.log(err);
       return res.status(500).json({ message: "Internal Server Error" });
    }
+}
+
+const internalRefundMany = async (req, res) => {
+   let ListRefund = req.body;
+   console.log(req.body);
+   console.log(ListRefund);
+   if (!ListRefund) return res.status(400).json({ message: "ListRefund is required" });
+   await Promise.all(ListRefund.map(async (refund) => {
+      const { userId, amount, description } = refund;
+      
+      if (!amount) return res.status(400).json({ message: "Amount is required" });
+      if (isNaN(amount)) return res.status(400).json({ message: "Amount must be a number" });
+      if (amount <= 0) return res.status(400).json({ message: "Amount must be greater than 0" });
+      
+      const Amount = Number(amount);
+      const UserId = Number(userId);
+      const Description = description || "Refund";
+      const wallet = await Wallet.findOne({ where: { UserId: UserId } });
+      if (!wallet) return res.status(404).json({ message: "User not found" });
+
+      console.log("Amount = ", Amount);
+      console.log("UserId = ", UserId);
+      console.log(wallet);
+
+      try {
+         await Transaction.create({
+            UserId: UserId,
+            Amount: Amount,
+            WalletId: wallet.WalletId,
+            StatusId: 2,
+            TransTypeId: 5,
+            BalanceBefore: wallet.Balance,
+            Description: Description,
+            CreatedAt: Date.now(),
+         });
+
+         await Wallet.update(
+            { Balance: wallet.Balance + Amount },
+            { where: { WalletId: wallet.WalletId } }
+         );
+      } catch (err) {
+         console.log(err);
+         return res.status(500).json({ message: "Internal Server Error" });
+      }
+   }));
+   return res.status(200).json({ message: "Refund successfully" });
 }
 
 const withdraw = async (req, res) => {
@@ -523,7 +611,7 @@ const withdraw = async (req, res) => {
 };
 
 const payout = async (req, res) => {
-   const { BreederId, Amount } = req.body;
+   const { BreederId, Amount, Description } = req.body;
 
    if (!BreederId) return res.status(400).json({ message: "BreederId is required" });
    if (!Amount) return res.status(400).json({ message: "Amount is required" });
@@ -547,7 +635,7 @@ const payout = async (req, res) => {
             StatusId: 2,
             TransTypeId: 4,
             BalanceBefore: wallet.Balance,
-            Description: "Thanh toán hóa đơn",
+            Description: Description,
             CreatedAt: Date.now(),
          }),
          await Wallet.update(
@@ -637,7 +725,7 @@ const getStatisticsTransactionHistory = async (req, res) => {
          if (date < start || date > end) {
             resultFlag = false;
          }
-      } 
+      }
       if (dayAmount) {
          const date = moment(transaction.CreatedAt).format("YYYY-MM-DD");
          const dateBefore = moment().subtract(dayAmount, "days").format("YYYY-MM-DD");
@@ -695,8 +783,10 @@ const getBreederStatisticsTransactionHistory = async (req, res) => {
 // WHERE [TransTypeId] = 4 AND StatusId = 2 
 
 const getSumOfPayoutOfBreeder = async (req, res) => {
-   const { userId } = req.query;
-   let { dayAmount } = req.query;
+   const { userId } = req.params;
+   let { startDate, endDate } = req.query;
+
+   if (!userId) return res.status(400).json({ message: "UserId is required" });
 
    try {
       const wallet = await Wallet.findOne({ where: { UserId: userId } });
@@ -712,22 +802,31 @@ const getSumOfPayoutOfBreeder = async (req, res) => {
       });
 
       // Khởi tạo một mảng để lưu kết quả với kích thước dayAmount
-      console.log("wallet", wallet);
-      let result = [];
-      for (let i = 0; i <= dayAmount; i++) {
-         // Tính ngày cho từng phần tử
-         const date = moment().subtract(i, 'days').format('YYYY-MM-DD');
-         // Tính tổng payout cho ngày đó
-         const totalAmount = transactions
-            .filter((transaction) => moment(transaction.CreatedAt).format('YYYY-MM-DD') === date)
-            .reduce((sum, transaction) => sum + transaction.Amount, 0);
-         
-         // Thêm đối tượng với ngày và tổng số tiền vào mảng kết quả
-         const dateFormatted = moment(date).format('MMM DD');
-         result.push({ dateFormatted, totalAmount });
+      let totalAmountInDate = {};
+      let start = moment(startDate).add(1, 'days').utcOffset(0).format("YYYY-MM-DDTHH:mm:ss.SSS[Z]");
+      let end = moment(endDate).add(2, 'days').utcOffset(0).format("YYYY-MM-DDTHH:mm:ss.SSS[Z]");
+      for (let i =  0; i <= moment(endDate).diff(startDate, 'days'); i++) {
+         const date = moment(startDate).add(i + 1, 'days').utcOffset(0).format("MMM DD");
+         totalAmountInDate[date] = 0;
+      }
+      
+      transactions.forEach((transaction) => {
+         const date = moment(transaction.CreatedAt).utcOffset(0).format("YYYY-MM-DDTHH:mm:ss.SSS[Z]");
+         if (start <= date && date <= end) {
+            const convertedDate = moment(date).utcOffset(0).format("MMM DD");
+            totalAmountInDate[convertedDate] = (totalAmountInDate[convertedDate] || 0) + transaction.Amount;
+         }
+      });
+
+      const finalResult = [];
+      for (const [date, totalAmount] of Object.entries(totalAmountInDate)) {
+         finalResult.push({
+            date: date,
+            totalAmount: totalAmount
+         });
       }
 
-      res.status(200).json(result);
+      res.status(200).json(finalResult);
    } catch (error) {
       console.error("Error fetching payout data:", error);
       res.status(500).json({ message: "Internal Server Error" });
@@ -768,6 +867,7 @@ const getSumOfSuccessTransactionByTransTypeId = async (req, res) => {
 module.exports = {
    deposit,
    payment,
+   refund,
    callback,
    getWalletBalance,
    getTransactionHistory,
@@ -776,6 +876,7 @@ module.exports = {
    getTransactionHistoryByUserId,
    getAllTransactionHistory,
    internalPayment,
+   internalRefundMany,
    withdraw,
    payout,
    updateUserWithdrawStatusById,
@@ -784,3 +885,4 @@ module.exports = {
    getSumOfPayoutOfBreeder,
    getSumOfSuccessTransactionByTransTypeId
 };
+

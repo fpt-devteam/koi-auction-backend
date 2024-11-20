@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AuctionService.Helper;
 using AuctionService.IServices;
+using AuctionService.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AuctionService.Controller
@@ -14,9 +15,10 @@ namespace AuctionService.Controller
     {
         //get sold lot by id
         private readonly ISoldLotService _service;
-        public SoldLotController(ISoldLotService service)
+        public SoldLotController(ISoldLotService service, BreederDetailService breederService, UserSevice userSevice)
         {
             _service = service;
+
         }
 
         [HttpGet]

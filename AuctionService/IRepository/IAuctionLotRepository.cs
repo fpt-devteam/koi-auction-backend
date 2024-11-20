@@ -22,5 +22,7 @@ namespace AuctionService.IRepository
 
         Task<AuctionLot?> GetAuctionLotByOrderInAuction(int auctionId, int orderInAuction);
 
+        Task<bool> IsAuctionLotInAuction(int auctionId);
+
     }
 }

@@ -23,9 +23,9 @@ public partial class Lot
 
     public virtual AuctionLot? AuctionLot { get; set; }
 
-    public virtual AuctionMethod? AuctionMethod { get; set; }
+    public virtual AuctionMethod AuctionMethod { get; set; } = null!;
 
     public virtual KoiFish? KoiFish { get; set; }
 
-    public virtual LotStatus LotStatus { get; set; } = null!;
+    public virtual LotStatus? LotStatus { get; set; }
 }

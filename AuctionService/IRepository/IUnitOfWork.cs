@@ -13,6 +13,7 @@ namespace AuctionService.IRepository
         IAuctionLotStatusRepository AuctionLotStatuses { get; }
         IBidLogRepository BidLog { get; }
         ISoldLotRepository SoldLot { get; }
+        IAuctionDepositRepository AuctionDeposits { get; }
         Task<bool> SaveChangesAsync();
 
     }
