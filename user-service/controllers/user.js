@@ -777,6 +777,10 @@ const manageGetDetailProfile = async (req, res) => {
          FarmName: user.BreederDetail?.FarmName,
          Certificate: user.BreederDetail?.Certificate,
          About: user.BreederDetail?.About,
+         ProvinceCode: user.ProvinceCode,
+         DistrictCode: user.DistrictCode,
+         WardCode: user.WardCode,
+         Address: user.Address,
       });
    } catch (err) {
       console.log(err);
