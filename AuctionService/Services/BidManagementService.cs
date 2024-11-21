@@ -135,8 +135,15 @@ namespace AuctionService.Services
                         });
                         //send websocket to winner
                         // 
-                        string winnerConnectionId = _connections.FirstOrDefault(x => x.Value.UserId == winner.BidderId).Key;
-                        await _bidHub.Clients.Client(winnerConnectionId).SendAsync(WsMess.ReceivePendingPayment, soldLot);
+                        try
+                        {
+                            string winnerConnectionId = _connections.FirstOrDefault(x => x.Value.UserId == winner.BidderId).Key;
+                            await _bidHub.Clients.Client(winnerConnectionId).SendAsync(WsMess.ReceivePendingPayment, soldLot);
+                        }
+                        catch (Exception e)
+                        {
+                            System.Console.WriteLine(e.Message);
+                        }
                     }
 
                     await unitOfWork.SaveChangesAsync();
