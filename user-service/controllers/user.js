@@ -359,11 +359,19 @@ const updateProfile = async (req, res) => {
 
 const updatePassword = async (req, res) => {
    try {
-      const { Password } = req.body;
+      const { CurrentPassword, Password } = req.body;
       if (!Password) {
          return res.status(400).json({ message: "Password is required" });
       }
+      if (!CurrentPassword) return res.status(400).json({ message: "Current Password is required" });
+      const user = await User.findByPk(req.user.UserId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      if (user.GoogleId) return res.status(400).json({ message: "Please login with Google" });
       const hashedPassword = await argon2.hash(Password, 10);
+
+      const match = await argon2.verify(user.Password, CurrentPassword);
+      if (!match) return res.status(401).json({ message: "Current Password is incorrect" });
+
       await User.update(
          { Password: hashedPassword },
          { where: { UserId: req.user.UserId } }
