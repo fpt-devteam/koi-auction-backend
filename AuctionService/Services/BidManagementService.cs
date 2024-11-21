@@ -137,12 +137,17 @@ namespace AuctionService.Services
                         // 
                         string winnerConnectionId = _connections.FirstOrDefault(x => x.Value.UserId == winner.BidderId).Key;
                         await _bidHub.Clients.Client(winnerConnectionId).SendAsync(WsMess.ReceivePendingPayment, soldLot);
-
                     }
 
-                    var auctionDepositService = scope.ServiceProvider.GetRequiredService<IAuctionDepositService>();
+                    await unitOfWork.SaveChangesAsync();
+                    await _bidHub.Clients.Group(auctionLotId.ToString()).SendAsync(WsMess.ReceiveWinner, winner);
+                    await _bidHub.Clients.Group(auctionLotId.ToString()).SendAsync(WsMess.ReceiveFetchAuctionLot);
+                    await _bidHub.Clients.Group(auctionLotId.ToString()).SendAsync(WsMess.ReceiveFetchBidLog);
+                    await _bidHub.Clients.Group(auctionLotId.ToString()).SendAsync(WsMess.ReceiveFetchWinnerPrice);
+                    await _bidHub.Clients.Group(auctionLotId.ToString()).SendAsync(WsMess.ReceiveEndAuctionLot);
 
                     //call user service to update user wallet
+                    var auctionDepositService = scope.ServiceProvider.GetRequiredService<IAuctionDepositService>();
                     var penRefundList = await auctionDepositService.GetAuctionDepositByStatus(curBidService.AuctionLotBidDto!.AuctionLotId, Enums.AuctionDepositStatus.PendingRefund);
                     penRefundList.RemoveAll(a => a.UserId == winner?.BidderId);
                     List<RefundDto> refundList = new List<RefundDto>();
@@ -157,15 +162,7 @@ namespace AuctionService.Services
                     }
                     var walletService = scope.ServiceProvider.GetRequiredService<WalletService>();
                     await walletService.RefundAsync(refundList);
-
                     await auctionDepositService.UpdateRefundedStatus(curBidService.AuctionLotBidDto!.AuctionLotId, winner?.BidderId ?? -1);
-
-                    await unitOfWork.SaveChangesAsync();
-                    await _bidHub.Clients.Group(auctionLotId.ToString()).SendAsync(WsMess.ReceiveWinner, winner);
-                    await _bidHub.Clients.Group(auctionLotId.ToString()).SendAsync(WsMess.ReceiveFetchAuctionLot);
-                    await _bidHub.Clients.Group(auctionLotId.ToString()).SendAsync(WsMess.ReceiveFetchBidLog);
-                    await _bidHub.Clients.Group(auctionLotId.ToString()).SendAsync(WsMess.ReceiveFetchWinnerPrice);
-                    await _bidHub.Clients.Group(auctionLotId.ToString()).SendAsync(WsMess.ReceiveEndAuctionLot);
                 }
             }
             catch (Exception e)

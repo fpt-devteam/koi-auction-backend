@@ -28,7 +28,7 @@ namespace AuctionService.Dto.SoldLot
         public string? SKU { get; set; }
         // public LotDto? Lot { get; set; }
         public DateTime? ExpTime { get; set; }
-
+        public decimal StartingPrice { get; set; }
 
     }
 }

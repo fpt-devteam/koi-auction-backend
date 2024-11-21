@@ -30,6 +30,7 @@ namespace AuctionService.Mapper
                 KoiFish = soldLot.SoldLotNavigation.AuctionLotNavigation.KoiFish!.ToKoiFishDtoFromKoiFish(),
                 LotStatusId = soldLot.SoldLotNavigation.AuctionLotNavigation.LotStatusId,
                 SKU = soldLot.SoldLotNavigation.AuctionLotNavigation.Sku,
+                StartingPrice = soldLot.SoldLotNavigation.AuctionLotNavigation.StartingPrice
                 // Lot = soldLot.SoldLotNavigation.AuctionLotNavigation.ToLotDtoFromLot()
             };
         }
