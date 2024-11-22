@@ -359,11 +359,19 @@ const updateProfile = async (req, res) => {
 
 const updatePassword = async (req, res) => {
    try {
-      const { Password } = req.body;
+      const { CurrentPassword, Password } = req.body;
       if (!Password) {
          return res.status(400).json({ message: "Password is required" });
       }
+      if (!CurrentPassword) return res.status(400).json({ message: "Current Password is required" });
+      const user = await User.findByPk(req.user.UserId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      if (user.GoogleId) return res.status(400).json({ message: "Please login with Google" });
       const hashedPassword = await argon2.hash(Password, 10);
+
+      const match = await argon2.verify(user.Password, CurrentPassword);
+      if (!match) return res.status(401).json({ message: "Current Password is incorrect" });
+
       await User.update(
          { Password: hashedPassword },
          { where: { UserId: req.user.UserId } }
@@ -378,15 +386,18 @@ const updatePassword = async (req, res) => {
 const forgotPassword = async (req, res) => {
    try {
       const { Email } = req.body;
+      if (!Email) return res.status(400).json({ message: "Email is required" });
+
       const user = await User.findOne({ where: { Email: Email } });
 
       if (!user) {
          return res.status(404).json({ message: "User not found" });
       }
-      const token = sign({ UserId: user.UserId }, process.env.JWT_SECRET, {
+      const token = sign({ UserId: user.UserId, Used: false }, process.env.JWT_SECRET, {
          expiresIn: "15m",
       });
-      const resetLink = `http://localhost:3000/reset-Password/${token}`;
+      req.session.resetToken = token;
+      const resetLink = `http://localhost:5173/reset-password?token=${token}`;
       const subject = "Password Reset Link";
       const text = `Click on the link to reset your Password: ${resetLink}`;
       await sendEmail(Email, subject, text);
@@ -400,7 +411,18 @@ const forgotPassword = async (req, res) => {
 const resetPassword = async (req, res) => {
    try {
       const { Password } = req.body;
-      const token = req.params.token;
+      const { token } = req.params;
+      if (!Password) return res.status(400).json({ message: "Password is required" });
+      
+      if (!token) {
+         return res.status(401).json({ message: "Invalid or expired token" });
+      }
+      if (!req.session.resetToken) {
+         return res.status(401).json({ message: "Invalid or expired token" });
+      }
+      if (req.session.resetToken != token) {
+         return res.status(401).json({ message: "Invalid or expired token" });
+      }
 
       verify(token, process.env.JWT_SECRET, async (err, decoded) => {
          if (err) {
@@ -419,6 +441,8 @@ const resetPassword = async (req, res) => {
             { where: { UserId: user.UserId } }
          );
       });
+      
+      req.session.resetToken = null;
       res.status(201).json({ message: "Password Updated" });
    } catch (err) {
       console.log(err);
@@ -698,6 +722,16 @@ const manageUpdateProfile = async (req, res) => {
       if (!user) {
          return res.status(404).json({ message: "User not found" });
       }
+
+      const existUser = await User.findOne({
+         where: {
+            [Op.or]: [{ Username: Username }, { Email: Email }, { Phone: Phone }],
+            [Op.not]: { UserId: req.params.id },
+         },
+      });
+      if (existUser?.Username == Username) return res.status(400).json({ message: "Username already exists" });
+      if (existUser?.Email == Email) return res.status(400).json({ message: "Email already exists" });
+      if (existUser?.Phone == Phone) return res.status(400).json({ message: "Phone already exists" });
 
       await User.update(
          {

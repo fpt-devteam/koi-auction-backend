@@ -538,43 +538,57 @@ const internalRefundMany = async (req, res) => {
    console.log(req.body);
    console.log(ListRefund);
    if (!ListRefund) return res.status(400).json({ message: "ListRefund is required" });
-   await Promise.all(ListRefund.map(async (refund) => {
-      const { userId, amount, description } = refund;
-      
-      if (!amount) return res.status(400).json({ message: "Amount is required" });
-      if (isNaN(amount)) return res.status(400).json({ message: "Amount must be a number" });
-      if (amount <= 0) return res.status(400).json({ message: "Amount must be greater than 0" });
-      
-      const Amount = Number(amount);
-      const UserId = Number(userId);
-      const Description = description || "Refund";
-      const wallet = await Wallet.findOne({ where: { UserId: UserId } });
-      if (!wallet) return res.status(404).json({ message: "User not found" });
 
-      console.log("Amount = ", Amount);
-      console.log("UserId = ", UserId);
-      console.log(wallet);
-
-      try {
-         await Transaction.create({
-            UserId: UserId,
-            Amount: Amount,
-            WalletId: wallet.WalletId,
-            StatusId: 2,
-            TransTypeId: 5,
-            BalanceBefore: wallet.Balance,
-            Description: Description,
-            CreatedAt: Date.now(),
-         });
-
-         await Wallet.update(
-            { Balance: wallet.Balance + Amount },
-            { where: { WalletId: wallet.WalletId } }
-         );
-      } catch (err) {
-         console.log(err);
-         return res.status(500).json({ message: "Internal Server Error" });
+   let mappedUserId = [];
+   ListRefund.map((refund) => {
+      if (!refund.userId) return res.status(400).json({ message: "UserId is required" });
+      if (!refund.amount) return res.status(400).json({ message: "Amount is required" });
+      if (isNaN(refund.userId)) return res.status(400).json({ message: "UserId must be a number" });
+      if (isNaN(refund.amount)) return res.status(400).json({ message: "Amount must be a number" });
+      if (refund.amount <= 0) return res.status(400).json({ message: "Amount must be greater than 0" });
+      if (!mappedUserId[refund.userId]) {
+         mappedUserId[refund.userId] = [];
       }
+      mappedUserId[refund.userId].push({
+         amount: refund.amount,
+         description: refund.description
+      });
+   });
+
+   console.log(mappedUserId);
+
+   await Promise.all(Object.keys(mappedUserId).map(async (userId) => {
+      const wallet = await Wallet.findOne({ where: { UserId: userId } });
+      if (!wallet) return res.status(404).json({ message: "User not found" });
+      let currentBalance = wallet.Balance;
+      mappedUserId[userId].map(async (refund) => {
+         const { amount, description } = refund;
+         const Amount = Number(amount);
+
+         currentBalance += Amount;
+
+         const Description = description || "Refund"; 
+         try {
+            await Transaction.create({
+               UserId: userId,
+               Amount: Amount,
+               WalletId: wallet.WalletId,
+               StatusId: 2,
+               TransTypeId: 5,
+               BalanceBefore: currentBalance - Amount,
+               Description: Description,
+               CreatedAt: Date.now(),
+            });
+
+            await Wallet.update(
+               { Balance: currentBalance },
+               { where: { WalletId: wallet.WalletId } }
+            );
+         } catch (err) {
+            console.log(err);
+            return res.status(500).json({ message: "Internal Server Error" });
+         }
+      })
    }));
    return res.status(200).json({ message: "Refund successfully" });
 }
